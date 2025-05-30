@@ -1,0 +1,507 @@
+{% extends "base_layout.html" %}
+
+{% block title %} YDÇ Günlük Satış Raporu - Yagcilar Holding{% endblock %}
+
+{% block head %}
+<!-- SheetJS kütüphanesi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+    @media (max-width: 768px) {
+    .col-md-2 {
+        margin-bottom: 10px;
+    }
+}
+
+.card-body {
+    padding: 15px 10px;
+}
+
+.card-title {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.summary-numbers {
+    font-size: 1.3em;
+}
+    .report-container {
+        padding: 20px;
+    }
+
+    .card-header-custom {
+        background-color: #282965;
+        color: white;
+        font-weight: bold;
+    }
+
+    .group-row {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    .group-row:hover {
+        background-color: #e9ecef;
+    }
+
+    .group-row.expanded {
+        background-color: #d6d8db;
+    }
+
+    .detail-row {
+        display: none !important;
+    }
+
+    .detail-row.show {
+        display: table-row !important;
+    }
+
+    .expand-icon {
+        transition: transform 0.3s;
+    }
+
+    .expanded .expand-icon {
+        transform: rotate(90deg);
+    }
+
+    .summary-numbers {
+        font-weight: bold;
+        color: #282965;
+    }
+
+    .export-buttons {
+        margin-bottom: 20px;
+    }
+
+    .details-table {
+        margin-left: 20px;
+    }
+
+    .details-table th, .details-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="card">
+        <div class="card-header card-header-custom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Günlük Satış Raporu
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-calendar"></i> Tarih: {{ now.strftime('%d.%m.%Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Export Butonları -->
+            <div class="export-buttons">
+                <button id="exportExcel" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Excel'e Aktar
+                </button>
+                <button id="exportExcelDetailed" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> Detaylı Excel Export
+                </button>
+                <button id="expandAll" class="btn btn-secondary">
+                    <i class="fas fa-expand"></i> Tümünü Aç
+                </button>
+                <button id="collapseAll" class="btn btn-secondary">
+                    <i class="fas fa-compress"></i> Tümünü Kapat
+                </button>
+            </div>
+
+         <!-- Özet Bilgiler -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Cari</h6>
+                <h4 class="summary-numbers">{{ grouped_data|length }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Brüt KG</h6>
+                <h4 class="summary-numbers">{{ "{:,.2f}".format(grouped_data|sum(attribute='total_brut_kg')) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Net KG</h6>
+                <h4 class="summary-numbers">{{ "{:,.2f}".format(grouped_data|sum(attribute='total_net_kg')) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Fire KG</h6>
+                <h4 class="summary-numbers">{{ "{:,.2f}".format(grouped_data|sum(attribute='total_fire_kg')) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Tutar</h6>
+                <h4 class="summary-numbers">{{ "{:,.2f}".format(grouped_data|sum(attribute='total_tutar')) }} TL</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h6 class="card-title">Toplam Döviz</h6>
+                <h4 class="summary-numbers">{{ "{:,.2f}".format(grouped_data|sum(attribute='total_doviz_toplam')) }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- Ana Tablo -->
+            <div class="table-responsive">
+                <table id="gunlukSatisTable" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th>Cari</th>
+                            <th>Toplam Brüt KG</th>
+                            <th>Toplam Net KG</th>
+                            <th>Toplam Fire KG</th>
+                            <th>Toplam Hurda</th>
+                            <th>Toplam Tutar</th>
+                            <th>Toplam Döviz</th>
+                            <th>İşlem Sayısı</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in grouped_data %}
+                        <tr class="group-row" data-cari="{{ group.cari }}">
+                            <td class="text-center">
+                                <i class="fas fa-chevron-right expand-icon"></i>
+                            </td>
+                            <td>{{ group.cari }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_brut_kg) }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_net_kg) }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_fire_kg) }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_hurda) }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_tutar) }}</td>
+                            <td class="text-end">{{ "{:,.2f}".format(group.total_doviz_toplam) }}</td>
+                            <td class="text-center">{{ group.details|length }}</td>
+                        </tr>
+                        <tr class="detail-row" data-cari="{{ group.cari }}">
+                            <td colspan="9" style="padding: 0;">
+                                <div class="p-3">
+                                    <table class="table table-sm table-hover details-table">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th></th>
+                                                <th>Satış Elemanı</th>
+                                                <th>Malzeme Grup Kodu</th>
+                                                <th>Malzeme Adı</th>
+                                                <th>Brüt KG</th>
+                                                <th>Net KG</th>
+                                                <th>Fire KG</th>
+                                                <th>Hurda</th>
+                                                <th>Birim Fiyat</th>
+                                                <th>Fiyat</th>
+                                                <th>Tutar</th>
+                                                <th>Döviz Toplam</th>
+                                                <th>Döviz</th>
+                                                <th>Vade</th>
+                                                <th>Teslim Tarihi</th>
+                                                <th>İrsaliye Tarihi</th>
+                                                <th>Teslim Durum</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in group.details %}
+                                            <tr>
+                                                <td></td>
+                                                <td>{{ item.satis_elemani }}</td>
+                                                <td>{{ item.malzeme_grup_kodu }}</td>
+                                                <td>{{ item.malzeme_adi }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.brut_kg) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.net_kg) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.fire_kg) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.hurda) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.birim_fiyat) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.fiyat) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.tutar) }}</td>
+                                                <td class="text-end">{{ "{:,.2f}".format(item.doviz_toplam) }}</td>
+                                                <td>{{ item.doviz_turu }}</td>
+                                                <td>{{ item.vade }}</td>
+                                                <td>{{ item.teslim_tarihi }}</td>
+                                                <td>{{ item.irsaliye_tarihi }}</td>
+                                                <td>{{ item.teslim_durum }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gruplandırılmış veriyi JavaScript'e aktar -->
+<script>
+    var groupedData = {{ grouped_data | tojson | safe }};
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Grup satırına tıklama olayı
+    $(document).on('click', '.group-row', function() {
+        var $groupRow = $(this);
+        var $detailRow = $groupRow.next('.detail-row');
+
+        // Toggle expanded class
+        $groupRow.toggleClass('expanded');
+
+        // Toggle detail row
+        $detailRow.toggleClass('show');
+    });
+
+    // Tümünü aç/kapat butonları
+    $('#expandAll').click(function() {
+        $('.group-row').addClass('expanded');
+        $('.detail-row').addClass('show');
+    });
+
+    $('#collapseAll').click(function() {
+        $('.group-row').removeClass('expanded');
+        $('.detail-row').removeClass('show');
+    });
+
+    // Excel Export - Basit
+    $('#exportExcel').click(function() {
+        var wb = XLSX.utils.book_new();
+
+        // Ana tablo verisi
+        var wsData = [
+            ['Cari', 'Toplam Brüt KG', 'Toplam Net KG', 'Toplam Fire KG', 'Toplam Hurda', 'Toplam Tutar', 'Toplam Döviz', 'İşlem Sayısı']
+        ];
+
+        groupedData.forEach(function(group) {
+            wsData.push([
+                group.cari,
+                group.total_brut_kg,
+                group.total_net_kg,
+                group.total_fire_kg,
+                group.total_hurda,
+                group.total_tutar,
+                group.total_doviz_toplam,
+                group.details.length
+            ]);
+        });
+
+        var ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, "Özet");
+
+        // Dosyayı indir
+        XLSX.writeFile(wb, 'Gunluk_Satis_Raporu_' + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + '.xlsx');
+    });
+
+    // Excel Export - Detaylı (Düzeltilmiş)
+$('#exportExcelDetailed').click(function() {
+    var wb = XLSX.utils.book_new();
+    var wsData = [];
+
+    // Her cari grubu için
+    groupedData.forEach(function(group) {
+        // Grup başlık satırı (koyu ve renkli)
+        wsData.push([
+            'CARİ: ' + group.cari,
+            '', '', '', '', '', '', ''
+        ]);
+
+        // Grup özet satırı
+        wsData.push([
+            'Özet Bilgiler:',
+            'Toplam Brüt KG: ' + group.total_brut_kg.toFixed(2),
+            'Toplam Net KG: ' + group.total_net_kg.toFixed(2),
+            'Toplam Fire KG: ' + group.total_fire_kg.toFixed(2),
+            'Toplam Hurda: ' + group.total_hurda.toFixed(2),
+            'Toplam Tutar: ' + group.total_tutar.toFixed(2),
+            'Toplam Döviz: ' + group.total_doviz_toplam.toFixed(2),
+            'İşlem Sayısı: ' + group.details.length
+        ]);
+
+        // Boş satır
+        wsData.push(['']);
+
+        // Detay başlık satırı
+        wsData.push([
+            'Satış Elemanı',
+            'Malzeme Grup Kodu',
+            'Malzeme Adı',
+            'Brüt KG',
+            'Net KG',
+            'Fire KG',
+            'Hurda',
+            'Birim Fiyat',
+            'Fiyat',
+            'Tutar',
+            'Döviz Toplam',
+            'Döviz',
+            'Vade',
+            'Teslim Tarihi',
+            'İrsaliye Tarihi',
+            'Teslim Durum'
+        ]);
+
+        // Detay satırları
+        group.details.forEach(function(detail) {
+            wsData.push([
+                detail.satis_elemani,
+                detail.malzeme_grup_kodu,
+                detail.malzeme_adi,
+                detail.brut_kg,
+                detail.net_kg,
+                detail.fire_kg,
+                detail.hurda,
+                detail.birim_fiyat,
+                detail.fiyat,
+                detail.tutar,
+                detail.doviz_toplam,
+                detail.doviz_turu,
+                detail.vade,
+                detail.teslim_tarihi,
+                detail.irsaliye_tarihi,
+                detail.teslim_durum
+            ]);
+        });
+
+        // Gruplar arası boşluk
+        wsData.push(['']);
+        wsData.push(['']);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Sütun genişliklerini ayarla
+    ws['!cols'] = [
+        {wch: 15}, {wch: 15}, {wch: 30}, {wch: 10}, {wch: 10},
+        {wch: 10}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 12},
+        {wch: 12}, {wch: 8}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 12}
+    ];
+
+    // Stil ekle
+    if (!ws['!rows']) ws['!rows'] = [];
+    var rowIndex = 0;
+
+    groupedData.forEach(function(group) {
+        // Cari başlık satırını kalın ve mavi yap
+        var cariRow = ws[XLSX.utils.encode_cell({r: rowIndex, c: 0})];
+        if (cariRow) {
+            cariRow.s = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "282965" } }
+            };
+        }
+        // Diğer hücreleri de aynı stilde yap
+        for (var col = 1; col < 8; col++) {
+            var cell = ws[XLSX.utils.encode_cell({r: rowIndex, c: col})];
+            if (!cell) ws[XLSX.utils.encode_cell({r: rowIndex, c: col})] = { v: '' };
+            ws[XLSX.utils.encode_cell({r: rowIndex, c: col})].s = {
+                fill: { fgColor: { rgb: "282965" } }
+            };
+        }
+        rowIndex++;
+
+        // Özet satırını gri yap
+        for (var col = 0; col < 8; col++) {
+            var cell = ws[XLSX.utils.encode_cell({r: rowIndex, c: col})];
+            if (cell) {
+                cell.s = {
+                    font: { bold: true },
+                    fill: { fgColor: { rgb: "E8E8E8" } }
+                };
+            }
+        }
+        rowIndex++;
+
+        // Boş satır
+        rowIndex++;
+
+        // Detay başlık satırını kalın yap
+        for (var col = 0; col < 16; col++) {
+            var cell = ws[XLSX.utils.encode_cell({r: rowIndex, c: col})];
+            if (cell) {
+                cell.s = {
+                    font: { bold: true },
+                    fill: { fgColor: { rgb: "F0F0F0" } }
+                };
+            }
+        }
+        rowIndex++;
+
+        // Detay satırları
+        rowIndex += group.details.length;
+
+        // Gruplar arası boşluk
+        rowIndex += 2;
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, "Detaylı Rapor");
+
+    /// Özet sayfası verilerini güncelle
+var summaryData = [
+    ['GÜNLÜK SATIŞ RAPORU ÖZETİ'],
+    [''],
+    ['Rapor Tarihi:', new Date().toLocaleDateString('tr-TR')],
+    [''],
+    ['GENEL ÖZET'],
+    ['Toplam Cari Sayısı:', groupedData.length],
+    ['Toplam Brüt KG:', groupedData.reduce((sum, g) => sum + g.total_brut_kg, 0).toFixed(2)],
+    ['Toplam Net KG:', groupedData.reduce((sum, g) => sum + g.total_net_kg, 0).toFixed(2)],
+    ['Toplam Fire KG:', groupedData.reduce((sum, g) => sum + g.total_fire_kg, 0).toFixed(2)],
+    ['Toplam Tutar:', groupedData.reduce((sum, g) => sum + g.total_tutar, 0).toFixed(2) + ' TL'],
+    ['Toplam Döviz:', groupedData.reduce((sum, g) => sum + g.total_doviz_toplam, 0).toFixed(2)],
+    [''],
+    ['CARİ BAZINDA ÖZET']
+];
+
+    // Her cari için özet
+    groupedData.forEach(function(group) {
+        summaryData.push([
+            group.cari,
+            'Net KG: ' + group.total_net_kg.toFixed(2),
+            'Tutar: ' + group.total_tutar.toFixed(2),
+            'İşlem: ' + group.details.length
+        ]);
+    });
+
+    var wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+
+    // Özet sayfası stillerini ayarla
+    wsSummary['!cols'] = [
+        {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}
+    ];
+
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Özet");
+
+    // Dosyayı indir
+    XLSX.writeFile(wb, 'Gunluk_Satis_Raporu_Detayli_' + new Date().toLocaleDateString('tr-TR').replace(/\./g, '_') + '.xlsx');
+});
+});
+</script>
+{% endblock %}

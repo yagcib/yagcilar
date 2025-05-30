@@ -1,0 +1,272 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<style>
+    .form-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .action-buttons {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .action-buttons .btn {
+        min-width: 120px;
+        margin: 0 10px;
+    }
+    
+    .input-with-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .input-with-label label {
+        width: 120px;
+        text-align: right;
+        margin-right: 15px;
+        font-weight: 500;
+    }
+    
+    .input-with-label .form-control {
+        flex: 1;
+    }
+    
+    .input-with-label .input-group {
+        flex: 1;
+    }
+    
+    .input-group-text {
+        background-color: #f3f6f4;
+        border-color: #ced4da;
+        color: #495057;
+    }
+    
+    .data-table td, .data-table th {
+        vertical-align: middle;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 767.98px) {
+        .input-with-label {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .input-with-label label {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-tasks me-2"></i> Günlük Yapılanlar</h5>
+    </div>
+    <div class="card-body">
+        <form id="gunlukForm" method="POST" action="{{ url_for('gunluk_yapilanlar_add') }}">
+            <div class="row">
+                <div class="col-md-8 mx-auto form-container">
+                    <div class="input-with-label">
+                        <label for="cari_proje">Cari / Proje:</label>
+                        <input type="text" id="cari_proje" name="cari_proje" class="form-control">
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="konu">Konu:</label>
+                        <input type="text" id="konu" name="konu" class="form-control" required>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="detay">Detay:</label>
+                        <textarea id="detay" name="detay" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="miktar">Miktar:</label>
+                        <div class="input-group">
+                            <input type="number" id="miktar" name="miktar" class="form-control" min="0" step="0.01" value="0">
+                            <span class="input-group-text">KG</span>
+                        </div>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="adet">Adet:</label>
+                        <div class="input-group">
+                            <input type="number" id="adet" name="adet" class="form-control" min="0" value="0">
+                            <span class="input-group-text">ADET</span>
+                        </div>
+                    </div>
+
+                    <!-- Gizli alanlar -->
+                    <input type="hidden" name="tarih" value="{{ now.strftime('%Y-%m-%d') }}">
+
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> KAYDET
+                        </button>
+                        <button type="reset" class="btn btn-danger">
+                            <i class="fas fa-times me-1"></i> TEMİZLE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Yapılanlar Listesi -->
+<div class="card mt-4">
+   <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-list me-2"></i> Son Kayıtlar</h5>
+        <div>
+            <a href="{{ url_for('gunluk_yapilanlar_download_excel') }}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel me-1"></i> Excel'e Aktar
+            </a>
+            {% if is_admin %}
+            <small class="text-muted ms-3">Admin olarak tüm kayıtları görüntülüyorsunuz</small>
+            {% else %}
+            <small class="text-muted ms-3">Kendi kayıtlarınızı görüntülüyorsunuz</small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover data-table">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Cari/Proje</th>
+                        <th>Konu</th>
+                        <th>Detay</th>
+                        <th>Miktar</th>
+                        <th>Adet</th>
+                        <th class="text-center">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in gunluk_data %}
+                    <tr>
+                        <td>{{ item.tarih.strftime('%d/%m/%Y') if item.tarih else '' }}</td>
+                        <td>{{ item.cari_proje }}</td>
+                        <td>{{ item.konu }}</td>
+                        <td>{{ item.detay }}</td>
+                        <td>{{ item.miktar }} {% if item.miktar %}KG{% endif %}</td>
+                        <td>{{ item.adet }} {% if item.adet %}ADET{% endif %}</td>
+                        <td class="text-center table-actions">
+                            {% if 20 in permissions and permissions[20].can_edit or is_admin or item.olusturan_id == session.user_id %}
+                            <a href="{{ url_for('gunluk_yapilanlar_edit', gunluk_id=item.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+
+                            {% if 20 in permissions and permissions[20].can_delete or is_admin or item.olusturan_id == session.user_id %}
+                            <button class="btn btn-sm btn-danger delete-item" data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Silme Onay Modalı -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Kayıt Silme Onayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.getElementById('gunlukForm');
+
+        form.addEventListener('submit', function(event) {
+            const konuInput = document.getElementById('konu');
+
+            if (!konuInput.value.trim()) {
+                event.preventDefault();
+                alert('Konu alanı zorunludur.');
+                konuInput.focus();
+            }
+        });
+
+        // Silme işlemi için
+        let deleteItemId = null;
+        
+        const deleteButtons = document.querySelectorAll('.delete-item');
+        const confirmDeleteButton = document.getElementById('confirmDelete');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                deleteItemId = this.getAttribute('data-id');
+            });
+        });
+        
+        confirmDeleteButton.addEventListener('click', function() {
+            if (deleteItemId) {
+                // AJAX ile silme işlemi
+                fetch(`/gunluk-yapilanlar/delete/${deleteItemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Başarılı mesajı göster ve sayfayı yenile
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        // Hata mesajı göster
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('İşlem sırasında bir hata oluştu.');
+                })
+                .finally(() => {
+                    // Modal'ı kapat
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                    modal.hide();
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

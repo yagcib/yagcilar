@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yağcılar Holding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f3f6f4;
+            width: 280px;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed {
+            margin-left: -280px;
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+            padding: .75rem 1.5rem;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #262262;
+            background-color: rgba(38, 34, 98, 0.1);
+            border-left-color: #262262;
+        }
+
+        .sidebar .nav-link.active {
+            color: #262262;
+            background-color: rgba(38, 34, 98, 0.1);
+            border-left-color: #262262;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
+            background-color: #262262 !important;
+        }
+
+        .navbar-brand {
+            padding: .75rem 1.5rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            color: white !important;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .navbar-brand img {
+            margin-right: 12px;
+        }
+
+        .content {
+            margin-left: 280px;
+            padding: 70px 20px 20px;
+            transition: all 0.3s;
+        }
+
+        .content.expanded {
+            margin-left: 0;
+        }
+
+        .dropdown-menu {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .1);
+            border: none;
+            border-radius: 8px;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .submenu {
+            padding-left: 20px;
+        }
+
+        #sidebarToggle {
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff !important;
+        }
+
+        .stat-card {
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, .2);
+        }
+
+        .stat-card .card-body {
+            padding: 25px;
+        }
+
+        .stat-icon {
+            font-size: 36px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+
+        .admin-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .sidebar-buttons {
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .sidebar-btn {
+            display: block;
+            background-color: #262262;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: left;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .sidebar-btn:hover {
+            background-color: #1e1a4f;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-btn i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-dark fixed-top">
+        <div class="container-fluid">
+            <button id="sidebarToggle" class="btn">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="navbar-container">
+                <a class="navbar-brand mx-auto" href="#">
+                    <i class="fas fa-industry me-2"></i>
+                    Yağcılar Holding
+                    <span class="admin-badge">ADMİN</span>
+                </a>
+            </div>
+
+            <div class="user-menu">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ fullname if fullname else username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}"><i class="fas fa-key me-2"></i> Şifre Değiştir</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Çıkış</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-buttons">
+            <a href="#" class="sidebar-btn">
+                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+            </a>
+        </div>
+
+        <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#userSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-users"></i> Kullanıcı Yönetimi
+                        <i class="fas fa-caret-down float-end"></i>
+                    </a>
+                    <div class="collapse" id="userSubmenu">
+                        <ul class="nav flex-column submenu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin_users') }}">
+                                    <i class="fas fa-list"></i> Kullanıcı Listesi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin_users_add') }}">
+                                    <i class="fas fa-user-plus"></i> Kullanıcı Ekle
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_roles') }}">
+                        <i class="fas fa-shield-alt"></i> Rol Yönetimi
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_menus') }}">
+                        <i class="fas fa-bars"></i> Menü Yönetimi
+                    </a>
+                </li>
+
+                <!-- Dinamik olarak oluşturulan menüler buraya gelecek -->
+                {% for menu in menus %}
+                    {% if menu.can_view %}
+                        {% if menu.children is defined and menu.children|length > 0 %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="#submenu{{ menu.id }}" data-bs-toggle="collapse">
+                                    <i class="fas {{ menu.icon }}"></i> {{ menu.name }}
+                                    <i class="fas fa-caret-down float-end"></i>
+                                </a>
+                                <div class="collapse" id="submenu{{ menu.id }}">
+                                    <ul class="nav flex-column submenu">
+                                        {% for child in menu.children %}
+                                            {% if child.can_view %}
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ child.url }}">
+                                                        <i class="fas {{ child.icon }}"></i> {{ child.name }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ menu.url }}">
+                                    <i class="fas {{ menu.icon }}"></i> {{ menu.name }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-home"></i> Normal Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content" id="content">
+        <div class="container-fluid">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tachometer-alt me-1"></i> Yönetim Paneli
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-4">Hoş Geldiniz, {{ fullname if fullname else username }}</h5>
+
+                    <p>Bu admin dashboard sayfasından kullanıcıları, rolleri ve menüleri yönetebilirsiniz.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary stat-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                                <div class="col-8 text-end">
+                                    <div class="stat-number">0</div>
+                                    <div class="stat-title">Kullanıcılar</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('admin_users') }}" class="text-white">
+                            <div class="card-footer d-flex align-items-center justify-content-between bg-primary">
+                                <span>Detayları Görüntüle</span>
+                                <span><i class="fas fa-angle-right"></i></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-white bg-success stat-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                </div>
+                                <div class="col-8 text-end">
+                                    <div class="stat-number">0</div>
+                                    <div class="stat-title">Roller</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('admin_roles') }}" class="text-white">
+                            <div class="card-footer d-flex align-items-center justify-content-between bg-success">
+                                <span>Detayları Görüntüle</span>
+                                <span><i class="fas fa-angle-right"></i></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-white bg-info stat-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-bars"></i>
+                                    </div>
+                                </div>
+                                <div class="col-8 text-end">
+                                    <div class="stat-number">0</div>
+                                    <div class="stat-title">Menüler</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('admin_menus') }}" class="text-white">
+                            <div class="card-footer d-flex align-items-center justify-content-between bg-info">
+                                <span>Detayları Görüntüle</span>
+                                <span><i class="fas fa-angle-right"></i></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning stat-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                                <div class="col-8 text-end">
+                                    <div class="stat-number">0</div>
+                                    <div class="stat-title">Log Kayıtları</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#" class="text-white">
+                            <div class="card-footer d-flex align-items-center justify-content-between bg-warning">
+                                <span>Detayları Görüntüle</span>
+                                <span><i class="fas fa-angle-right"></i></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-7">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-clipboard-list me-1"></i> Yapılacaklar Listesi
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-check text-success me-2"></i> Kullanıcı yetkilendirme sistemi</span>
+                                    <span class="badge bg-success rounded-pill">Tamamlandı</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-check text-success me-2"></i> Rol bazlı yetkilendirme</span>
+                                    <span class="badge bg-success rounded-pill">Tamamlandı</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-check text-success me-2"></i> Şifre sıfırlama sistemi</span>
+                                    <span class="badge bg-success rounded-pill">Tamamlandı</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-spinner text-warning me-2"></i> XML işleme modüllerinin entegrasyonu</span>
+                                    <span class="badge bg-warning rounded-pill">Devam Ediyor</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-clock text-secondary me-2"></i> Raporlama sistemi</span>
+                                    <span class="badge bg-secondary rounded-pill">Planlandı</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-bell me-1"></i> Son Aktiviteler
+                        </div>
+                        <div class="card-body">
+                          <div class="list-group">
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Yeni kullanıcı eklendi</h6>
+                                        <small class="text-muted">3 dakika önce</small>
+                                    </div>
+                                    <p class="mb-1">Admin tarafından yeni kullanıcı oluşturuldu.</p>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Kullanıcı giriş yaptı</h6>
+                                        <small class="text-muted">10 dakika önce</small>
+                                    </div>
+                                    <p class="mb-1">test kullanıcısı sisteme giriş yaptı.</p>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Rol izinleri güncellendi</h6>
+                                        <small class="text-muted">1 saat önce</small>
+                                    </div>
+                                    <p class="mb-1">Manager rolü için yeni izinler eklendi.</p>
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Yeni menü eklendi</h6>
+                                        <small class="text-muted">2 saat önce</small>
+                                    </div>
+                                    <p class="mb-1">XML İşlemleri menüsü sisteme eklendi.</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
+</html>

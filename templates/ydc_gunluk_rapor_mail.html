@@ -1,0 +1,2928 @@
+{% extends 'base_layout.html' %}
+
+{% block title %}YDC Günlük Rapor{% endblock %}
+
+{% block head %}
+<!-- Bootstrap Select -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<!-- Chart.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<!-- Custom CSS -->
+<style>
+    body {
+        padding-top: 20px;
+    }
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+        margin-bottom: 20px;
+    }
+    .card-header {
+        background-color: #282965;
+        color: white;
+        font-weight: 600;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    .nav-tabs .nav-link {
+        color: #282965;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #282965;
+        font-weight: 600;
+        border-bottom: 3px solid #282965;
+    }
+    .filter-section {
+        background-color: #f0f2f5;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .table-responsive {
+        border-radius: 0 0 10px 10px;
+    }
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+        margin: 10px;
+    }
+    .bootstrap-select {
+        width: 100% !important;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .btn-filter {
+        background-color: #282965;
+        color: white;
+    }
+    .btn-filter:hover {
+        background-color: #1e1a4f;
+        color: white;
+    }
+    .btn-mail {
+        background-color: #28a745;
+        color: white;
+        margin-left: 10px;
+    }
+    .btn-mail:hover {
+        background-color: #218838;
+        color: white;
+    }
+    .loading-spinner {
+        text-align: center;
+        padding: 30px;
+    }
+    .summary-card {
+        margin-bottom: 20px;
+    }
+    .summary-card .card-body {
+        padding: 15px;
+    }
+    .summary-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #282965;
+    }
+    .summary-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .trend-up {
+        color: #28a745;
+    }
+    .trend-down {
+        color: #dc3545;
+    }
+
+    /* Tablo genel stil ayarları */
+    .table thead th {
+        background-color: #282965 !important;
+        color: white !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-weight: bold !important;
+    }
+
+    /* Tüm tablo hücrelerini ortala */
+    .table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
+
+    /* İlk sütun için özel stil (sol hizalama) */
+    .table td:first-child {
+        text-align: left !important;
+    }
+
+    /* Detaylı Satış Raporu için renklendirme */
+    #report2Table tbody tr td:nth-child(5),  /* BRÜT KG */
+    #report2Table tbody tr td:nth-child(6),  /* NET KG */
+    #report2Table tbody tr td:nth-child(14), /* DÖVİZLİ TUTAR */
+    #report2Table tbody tr td:nth-child(15) { /* TUTAR (TL) */
+        background-color: rgba(227, 242, 253, 0.5); /* Açık mavi */
+        font-weight: 500;
+    }
+
+    #report2Table tbody tr td:nth-child(9),  /* BRÜT ORT. FİYAT (TL) */
+    #report2Table tbody tr td:nth-child(10), /* NET ORT. FİYAT (TL) */
+    #report2Table tbody tr td:nth-child(11), /* BRÜT ORT. FİYAT (DÖVİZ) */
+    #report2Table tbody tr td:nth-child(12) { /* NET ORT. FİYAT (DÖVİZ) */
+        background-color: rgba(200, 230, 201, 0.5); /* Açık yeşil */
+        font-weight: 500;
+    }
+
+    #report2Table tbody tr td:nth-child(7),  /* FİRE KG */
+    #report2Table tbody tr td:nth-child(8) { /* HURDA */
+        background-color: rgba(255, 224, 178, 0.5); /* Açık turuncu */
+        font-weight: 500;
+    }
+
+    /* Rapor 3 ve 4 için tablo hücre stillerini iyileştirme */
+    #report3Table tbody tr td:nth-child(2),  /* BRÜT KG */
+    #report3Table tbody tr td:nth-child(4),  /* NET KG */
+    #report4Table tbody tr td:nth-child(3),  /* BRÜT KG */
+    #report4Table tbody tr td:nth-child(5) { /* NET KG */
+        background-color: rgba(227, 242, 253, 0.5); /* Açık mavi */
+        font-weight: 500;
+    }
+
+    #report3Table tbody tr td:nth-child(3),  /* BRÜT ORT. FİYAT */
+    #report3Table tbody tr td:nth-child(5),  /* NET ORT.FİYAT */
+    #report4Table tbody tr td:nth-child(4),  /* BRÜT ORT. FİYAT */
+    #report4Table tbody tr td:nth-child(6) { /* NET ORT.FİYAT */
+        background-color: rgba(200, 230, 201, 0.5); /* Açık yeşil */
+        font-weight: 500;
+    }
+
+    #report3Table tbody tr td:nth-child(6),  /* TUTAR (TL) */
+    #report4Table tbody tr td:nth-child(7) { /* TUTAR (TL) */
+        background-color: rgba(255, 224, 178, 0.5); /* Açık turuncu */
+        font-weight: 500;
+    }
+
+    /* Toplam satırları highlight stil */
+    #report1Table tfoot tr td,
+    #report2Table tfoot tr td,
+    #report3Table tfoot tr td,
+    #report4Table tfoot tr td {
+        background-color: #ffe0b2 !important; /* Turuncu highlight */
+        font-weight: bold;
+        border-top: 2px solid #282965;
+        border-bottom: 2px solid #282965;
+    }
+
+    /* Mail Gönder Modal Stilleri */
+    .modal-header {
+        background-color: #282965;
+        color: white;
+    }
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+    .form-control:focus {
+        border-color: #282965;
+        box-shadow: 0 0 0 0.2rem rgba(40, 41, 101, 0.25);
+    }
+    .mail-progress {
+        display: none;
+    }
+    .mail-success {
+        display: none;
+        color: #28a745;
+    }
+    .mail-error {
+        display: none;
+        color: #dc3545;
+    }
+    /* Genel Analiz Raporu için Stil */
+    .analysis-card {
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .analysis-card .card-header {
+        background-color: #282965;
+        color: white;
+        padding: 12px 15px;
+        font-weight: 600;
+    }
+    .analysis-card .card-body {
+        padding: 15px;
+    }
+    .analysis-description {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-chart-bar me-2"></i>YDC Günlük Rapor</h5>
+        <button type="button" class="btn btn-mail" id="sendMailBtn">
+            <i class="fas fa-envelope me-2"></i>Mail Gönder
+        </button>
+    </div>
+    <div class="card-body">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="report1-tab" data-bs-toggle="tab" data-bs-target="#report1" type="button" role="tab">
+                    Muhasebe Grup Raporu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="report2-tab" data-bs-toggle="tab" data-bs-target="#report2" type="button" role="tab">
+                    Detaylı Satış Raporu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="report3-tab" data-bs-toggle="tab" data-bs-target="#report3" type="button" role="tab">
+                    Günlük Hedef Raporu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="report4-tab" data-bs-toggle="tab" data-bs-target="#report4" type="button" role="tab">
+                    Aylık Hedef Raporu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="report5-tab" data-bs-toggle="tab" data-bs-target="#report5" type="button" role="tab">
+                    Genel Analiz Raporu
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab content -->
+        <div class="tab-content" id="reportTabsContent">
+            <!-- Report 1 Content - Muhasebe Grup Raporu -->
+            <div class="tab-pane fade show active" id="report1" role="tabpanel">
+                <!-- Filters for Report 1 -->
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report1Date" class="form-label">Tarih</label>
+                                <input type="date" class="form-control" id="report1Date">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report1Cari" class="form-label">Cari Adı</label>
+                                <select class="selectpicker form-control" id="report1Cari" multiple data-live-search="true" title="Cari Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report1MuhasebeGrup" class="form-label">Muhasebe Grup Kodu</label>
+                                <select class="selectpicker form-control" id="report1MuhasebeGrup" multiple data-live-search="true" title="Muhasebe Grup Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report1SatisElemani" class="form-label">Satış Elemanı</label>
+                                <select class="selectpicker form-control" id="report1SatisElemani" multiple data-live-search="true" title="Satış Elemanı Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-filter" id="report1FilterBtn">
+                                <i class="fas fa-filter me-2"></i>Filtrele
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Toplam Brüt KG</div>
+                                <div class="summary-value" id="report1TotalBrutKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Toplam Net KG</div>
+                                <div class="summary-value" id="report1TotalNetKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Ortalama Brüt Fiyat</div>
+                                <div class="summary-value" id="report1AvgBrutPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Ortalama Net Fiyat</div>
+                                <div class="summary-value" id="report1AvgNetPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Toplam Tutar (TL)</div>
+                                <div class="summary-value" id="report1TotalAmount">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report 1 Chart -->
+                <div class="chart-container">
+                    <canvas id="report1Chart"></canvas>
+                </div>
+
+                <!-- Report 1 Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover" id="report1Table">
+                        <thead style="background-color: #282965; color: white;">
+                            <tr>
+                                <th>MUHASEBE GRUP İSMİ</th>
+                                <th>BRÜT KG</th>
+                                <th>BRÜT ORT. FİYAT (TL)</th>
+                                <th>NET KG</th>
+                                <th>NET ORT.FİYAT (TL)</th>
+                                <th>TUTAR (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                        <tfoot style="background-color: #ffe0b2; font-weight: bold; border-top: 2px solid #282965; border-bottom: 2px solid #282965;">
+                            <tr>
+                                <td><strong>TOPLAM</strong></td>
+                                <td id="report1FooterTotalBrutKg">0</td>
+                                <td id="report1FooterAvgBrutFiyat">0 ₺</td>
+                                <td id="report1FooterTotalNetKg">0</td>
+                                <td id="report1FooterAvgNetFiyat">0 ₺</td>
+                                <td id="report1FooterTotalTutar">0 ₺</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Report 2 Content - Detaylı Satış Raporu -->
+            <div class="tab-pane fade" id="report2" role="tabpanel">
+                <!-- Filters for Report 2 -->
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report2Date" class="form-label">Tarih</label>
+                                <input type="date" class="form-control" id="report2Date">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report2Cari" class="form-label">Cari Adı</label>
+                                <select class="selectpicker form-control" id="report2Cari" multiple data-live-search="true" title="Cari Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report2MalzemeGrup" class="form-label">Malzeme Grup Kodu</label>
+                                <select class="selectpicker form-control" id="report2MalzemeGrup" multiple data-live-search="true" title="Malzeme Grup Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report2SatisElemani" class="form-label">Satış Elemanı</label>
+                                <select class="selectpicker form-control" id="report2SatisElemani" multiple data-live-search="true" title="Satış Elemanı Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-filter" id="report2FilterBtn">
+                                <i class="fas fa-filter me-2"></i>Filtrele
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report 2 Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover" id="report2Table">
+                        <thead style="background-color: #282965; color: white;">
+                            <tr>
+                                <th style="width: 12%">CARİ</th>
+                                <th style="width: 4%">SATIŞ ELEMANI</th>
+                                <th style="width: 4%">MALZEME GRUP</th>
+                                <th style="width: 12%">ÜRÜN ADI</th>
+                                <th style="width: 4%">BRÜT KG</th>
+                                <th style="width: 4%">NET KG</th>
+                                <th style="width: 4%">FİRE KG</th>
+                                <th style="width: 4%">HURDA</th>
+                                <th style="width: 4%">BRÜT ORT. FİYAT (TL)</th>
+                                <th style="width: 4%">NET ORT. FİYAT (TL)</th>
+                                <th style="width: 4%">BRÜT ORT. FİYAT (DÖVİZ)</th>
+                                <th style="width: 4%">NET ORT. FİYAT (DÖVİZ)</th>
+                                <th style="width: 3%">DÖVİZ</th>
+                                <th style="width: 4%">DÖVİZLİ TUTAR</th>
+                                <th style="width: 4%">TUTAR (TL)</th>
+                                <th style="width: 3%">VADE</th>
+                                <th style="width: 4%">TESLİM TARİHİ</th>
+                                <th style="width: 4%">İRSALİYE TARİHİ</th>
+                                <th style="width: 4%">TESLİM DURUM</th>
+                                <th style="width: 4%">FATURA DURUMU</th>
+                                <th style="width: 4%">ÖDEME DURUMU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                        <tfoot style="background-color: #ffe0b2; font-weight: bold; border-top: 2px solid #282965; border-bottom: 2px solid #282965;">
+                            <tr>
+                                <td colspan="4"><strong>TOPLAM</strong></td>
+                                <td id="report2TotalBrutKg">0</td>
+                                <td id="report2TotalNetKg">0</td>
+                                <td id="report2TotalFireKg">0</td>
+                                <td id="report2TotalHurda">0</td>
+                                <td id="report2AvgBrutFiyatTL">0 ₺</td>
+                                <td id="report2AvgNetFiyatTL">0 ₺</td>
+                                <td id="report2AvgBrutFiyatDoviz">0</td>
+                                <td id="report2AvgNetFiyatDoviz">0</td>
+                                <td></td>
+                                <td id="report2TotalDovizTutar">0</td>
+                                <td id="report2TotalTutarTL">0 ₺</td>
+                                <td></td>
+                                <td colspan="5"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Report 3 Content - Günlük Hedef Raporu -->
+            <div class="tab-pane fade" id="report3" role="tabpanel">
+                <!-- Filters for Report 3 -->
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report3Month" class="form-label">Ay</label>
+                                <input type="month" class="form-control" id="report3Month">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report3Cari" class="form-label">Cari Adı</label>
+                                <select class="selectpicker form-control" id="report3Cari" multiple data-live-search="true" title="Cari Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report3MuhasebeGrup" class="form-label">Muhasebe Grup Kodu</label>
+                                <select class="selectpicker form-control" id="report3MuhasebeGrup" multiple data-live-search="true" title="Muhasebe Grup Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report3SatisElemani" class="form-label">Satış Elemanı</label>
+                                <select class="selectpicker form-control" id="report3SatisElemani" multiple data-live-search="true" title="Satış Elemanı Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-filter" id="report3FilterBtn">
+                                <i class="fas fa-filter me-2"></i>Filtrele
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards for Report 3 -->
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Günlük Ortalama Brüt KG</div>
+                                <div class="summary-value" id="report3AvgDailyBrutKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Günlük Ortalama Net KG</div>
+                                <div class="summary-value" id="report3AvgDailyNetKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Günlük Brüt Ort. Birim Fiyat</div>
+                                <div class="summary-value" id="report3AvgDailyBrutPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Günlük Net Ort. Birim Fiyat</div>
+                                <div class="summary-value" id="report3AvgDailyNetPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Günlük Ortalama Tutar</div>
+                                <div class="summary-value" id="report3AvgDailyAmount">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report 3 Chart -->
+                <div class="chart-container">
+                    <canvas id="report3Chart"></canvas>
+                </div>
+
+                <!-- Report 3 Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover" id="report3Table">
+                        <thead style="background-color: #282965; color: white;">
+                            <tr>
+                                <th>TARİH</th>
+                                <th>BRÜT KG</th>
+                                <th>BRÜT ORT. FİYAT (TL)</th>
+                                <th>NET KG</th>
+                                <th>NET ORT.FİYAT (TL)</th>
+                                <th>TUTAR (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                        <tfoot style="background-color: #ffe0b2; font-weight: bold; border-top: 2px solid #282965; border-bottom: 2px solid #282965;">
+                            <tr>
+                                <td><strong>TOPLAM</strong></td>
+                                <td id="report3TotalBrutKg">0</td>
+                                <td id="report3AvgBrutFiyat">0 ₺</td>
+                                <td id="report3TotalNetKg">0</td>
+                                <td id="report3AvgNetFiyat">0 ₺</td>
+                                <td id="report3TotalTutar">0 ₺</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Report 4 Content - Aylık Hedef Raporu -->
+            <div class="tab-pane fade" id="report4" role="tabpanel">
+                <!-- Filters for Report 4 -->
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report4Year" class="form-label">Yıl</label>
+                                <select class="form-select" id="report4Year">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report4Cari" class="form-label">Cari Adı</label>
+                                <select class="selectpicker form-control" id="report4Cari" multiple data-live-search="true" title="Cari Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report4MuhasebeGrup" class="form-label">Muhasebe Grup Kodu</label>
+                                <select class="selectpicker form-control" id="report4MuhasebeGrup" multiple data-live-search="true" title="Muhasebe Grup Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report4SatisElemani" class="form-label">Satış Elemanı</label>
+                                <select class="selectpicker form-control" id="report4SatisElemani" multiple data-live-search="true" title="Satış Elemanı Seçiniz">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-filter" id="report4FilterBtn">
+                                <i class="fas fa-filter me-2"></i>Filtrele
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Cards for Report 4 -->
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Aylık Ortalama Brüt KG</div>
+                                <div class="summary-value" id="report4AvgMonthlyBrutKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Aylık Ortalama Net KG</div>
+                                <div class="summary-value" id="report4AvgMonthlyNetKg">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Aylık Brüt Ort. Birim Fiyat</div>
+                                <div class="summary-value" id="report4AvgMonthlyBrutPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Aylık Net Ort. Birim Fiyat</div>
+                                <div class="summary-value" id="report4AvgMonthlyNetPrice">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="summary-label">Aylık Ortalama Tutar</div>
+                                <div class="summary-value" id="report4AvgMonthlyAmount">0 ₺</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report 4 Chart -->
+                <div class="chart-container">
+                    <canvas id="report4Chart"></canvas>
+                </div>
+
+                <!-- Report 4 Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover" id="report4Table">
+                        <thead style="background-color: #282965; color: white;">
+                            <tr>
+                                <th>SIRA NO</th>
+                                <th>AY</th>
+                                <th>BRÜT KG</th>
+                                <th>BRÜT ORT. FİYAT (TL)</th>
+                                <th>NET KG</th>
+                                <th>NET ORT.FİYAT (TL)</th>
+                                <th>TUTAR (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via JavaScript -->
+                        </tbody>
+                        <tfoot style="background-color: #ffe0b2; font-weight: bold; border-top: 2px solid #282965; border-bottom: 2px solid #282965;">
+                            <tr>
+                                <td></td>
+                                <td><strong>TOPLAM</strong></td>
+                                <td id="report4TotalBrutKg">0</td>
+                                <td id="report4AvgBrutFiyat">0 ₺</td>
+                                <td id="report4TotalNetKg">0</td>
+                                <td id="report4AvgNetFiyat">0 ₺</td>
+                                <td id="report4TotalTutar">0 ₺</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Report 5 Content - Genel Analiz Raporu -->
+            <div class="tab-pane fade" id="report5" role="tabpanel">
+                <!-- Filters for Report 5 -->
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report5Year" class="form-label">Yıl</label>
+                                <select class="form-select" id="report5Year">
+                                    <!-- Options will be loaded via JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report5Month" class="form-label">Ay</label>
+                                <select class="form-select" id="report5Month">
+                                    <option value="0">Tüm Aylar</option>
+                                    <option value="1">Ocak</option>
+                                    <option value="2">Şubat</option>
+                                    <option value="3">Mart</option>
+                                    <option value="4">Nisan</option>
+                                    <option value="5">Mayıs</option>
+                                    <option value="6">Haziran</option>
+                                    <option value="7">Temmuz</option>
+                                    <option value="8">Ağustos</option>
+                                    <option value="9">Eylül</option>
+                                    <option value="10">Ekim</option>
+                                    <option value="11">Kasım</option>
+                                    <option value="12">Aralık</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="report5TopCount" class="form-label">Listeleme Sayısı</label>
+                                <select class="form-select" id="report5TopCount">
+                                    <option value="10">Top 10</option>
+                                    <option value="15">Top 15</option>
+                                    <option value="20" selected>Top 20</option>
+                                    <option value="30">Top 30</option>
+                                    <option value="50">Top 50</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-filter w-100" id="report5FilterBtn">
+                                <i class="fas fa-filter me-2"></i>Analiz Yap
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Customers by Amount TL -->
+                <div class="analysis-card">
+                    <div class="card-header">
+                        <i class="fas fa-crown me-2"></i>En Çok Satış Yapılan Müşteriler - Tutar (TL) Bazlı
+                    </div>
+                    <div class="card-body">
+                        <p class="analysis-description">Bu grafik, seçilen dönemde Tutar (TL) bazında en çok satış yapılan müşterileri göstermektedir.</p>
+                        <div class="chart-container">
+                            <canvas id="topCustomersTLChart"></canvas>
+                        </div>
+
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped table-bordered table-hover" id="top20CustomersTLTable">
+                                <thead style="background-color: #282965; color: white;">
+                                    <tr>
+                                        <th>SIRA</th>
+                                        <th>CARİ</th>
+                                        <th>NET KG</th>
+                                        <th>TUTAR (TL)</th>
+                                        <th>TOPLAM İÇİNDEKİ PAYI (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be loaded via JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2"><strong>TOPLAM</strong></td>
+                                        <td id="topCustomersTLTotalNetKg">0</td>
+                                        <td id="topCustomersTLTotalAmount">0 ₺</td>
+                                        <td id="topCustomersTLTotalShare">100%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Customers by KG -->
+                <div class="analysis-card">
+                    <div class="card-header">
+                        <i class="fas fa-weight me-2"></i>En Çok Satış Yapılan Müşteriler - Net KG Bazlı
+                    </div>
+                    <div class="card-body">
+                        <p class="analysis-description">Bu grafik, seçilen dönemde Net KG bazında en çok satış yapılan müşterileri göstermektedir.</p>
+                        <div class="chart-container">
+                            <canvas id="topCustomersKGChart"></canvas>
+                        </div>
+
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped table-bordered table-hover" id="top20CustomersKGTable">
+                                <thead style="background-color: #282965; color: white;">
+                                    <tr>
+                                        <th>SIRA</th>
+                                        <th>CARİ</th>
+                                        <th>NET KG</th>
+                                        <th>TUTAR (TL)</th>
+                                        <th>TOPLAM İÇİNDEKİ PAYI (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be loaded via JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2"><strong>TOPLAM</strong></td>
+                                        <td id="topCustomersKGTotalNetKg">0</td>
+                                        <td id="topCustomersKGTotalAmount">0 ₺</td>
+                                        <td id="topCustomersKGTotalShare">100%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Top Material Groups by TL -->
+                    <div class="col-md-6">
+                        <div class="analysis-card">
+                            <div class="card-header">
+                                <i class="fas fa-layer-group me-2"></i>En Çok Satılan Malzeme Grupları - Tutar (TL)
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="topMaterialGroupsTLChart"></canvas>
+                                </div>
+
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-striped table-bordered table-hover" id="topMaterialGroupsTLTable">
+                                        <thead style="background-color: #282965; color: white;">
+                                            <tr>
+                                                <th>SIRA</th>
+                                                <th>MALZEME GRUP</th>
+                                                <th>TUTAR (TL)</th>
+                                                <th>PAY (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Material Groups by KG -->
+                    <div class="col-md-6">
+                        <div class="analysis-card">
+                            <div class="card-header">
+                                <i class="fas fa-layer-group me-2"></i>En Çok Satılan Malzeme Grupları - Net KG
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="topMaterialGroupsKGChart"></canvas>
+                                </div>
+
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-striped table-bordered table-hover" id="topMaterialGroupsKGTable">
+                                        <thead style="background-color: #282965; color: white;">
+                                            <tr>
+                                                <th>SIRA</th>
+                                                <th>MALZEME GRUP</th>
+                                                <th>NET KG</th>
+                                                <th>PAY (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <!-- Top Products by TL -->
+                    <div class="col-md-6">
+                        <div class="analysis-card">
+                            <div class="card-header">
+                                <i class="fas fa-box-open me-2"></i>En Çok Satılan Ürünler - Tutar (TL)
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="topProductsTLChart"></canvas>
+                                </div>
+
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-striped table-bordered table-hover" id="topProductsTLTable">
+                                        <thead style="background-color: #282965; color: white;">
+                                            <tr>
+                                                <th>SIRA</th>
+                                                <th>ÜRÜN ADI</th>
+                                                <th>TUTAR (TL)</th>
+                                                <th>PAY (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Products by KG -->
+                    <div class="col-md-6">
+                        <div class="analysis-card">
+                            <div class="card-header">
+                                <i class="fas fa-box-open me-2"></i>En Çok Satılan Ürünler - Net KG
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="topProductsKGChart"></canvas>
+                                </div>
+
+                                <div class="table-responsive mt-4">
+                                    <table class="table table-striped table-bordered table-hover" id="topProductsKGTable">
+                                        <thead style="background-color: #282965; color: white;">
+                                            <tr>
+                                                <th>SIRA</th>
+                                                <th>ÜRÜN ADI</th>
+                                                <th>NET KG</th>
+                                                <th>PAY (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data will be loaded via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Sales Trend -->
+                <div class="analysis-card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line me-2"></i>Aylık Satış Trendi
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="monthlySalesTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mail Gönder Modal -->
+<div class="modal fade" id="mailModal" tabindex="-1" aria-labelledby="mailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mailModalLabel">
+                    <i class="fas fa-envelope me-2"></i>YDC Günlük Rapor Mail Gönder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="mailForm">
+                    <div class="mb-3">
+                        <label for="mailSubject" class="form-label">Konu</label>
+                        <input type="text" class="form-control" id="mailSubject" value="" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mailRecipients" class="form-label">Alıcılar (E-posta adresleri)</label>
+                        <textarea class="form-control" id="mailRecipients" rows="3" placeholder="E-posta adreslerini virgülle ayırarak girin (örn: mail1@example.com, mail2@example.com)" required>dogukanturan@ydcmetal.com.tr, bayramyagci@yagcilar.com.tr</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mailNote" class="form-label">Not (İsteğe bağlı)</label>
+                        <textarea class="form-control" id="mailNote" rows="3" placeholder="Mail içeriğine eklemek istediğiniz not..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeReport1" checked>
+                            <label class="form-check-label" for="includeReport1">
+                                Muhasebe Grup Raporu
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeReport2" checked>
+                            <label class="form-check-label" for="includeReport2">
+                                Detaylı Satış Raporu
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeReport3" checked>
+                            <label class="form-check-label" for="includeReport3">
+                                Günlük Hedef Raporu
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeReport4" checked>
+                            <label class="form-check-label" for="includeReport4">
+                                Aylık Hedef Raporu
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeReport5">
+                            <label class="form-check-label" for="includeReport5">
+                                Genel Analiz Raporu
+                            </label>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Progress, Success, Error Messages -->
+                <div class="mail-progress">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span>Mail gönderiliyor...</span>
+                    </div>
+                </div>
+
+                <div class="mail-success">
+                    <div class="alert alert-success mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Mail başarıyla gönderildi!
+                    </div>
+                </div>
+
+                <div class="mail-error">
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i><span id="errorMessage">Mail gönderilirken bir hata oluştu.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-mail" id="sendMailConfirmBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Mail Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Bootstrap Select -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<!-- Custom JavaScript -->
+<script>
+    // Set default dates
+    $(document).ready(function() {
+        // Set today's date for date pickers
+        const today = new Date();
+        const dateString = today.toISOString().split('T')[0];
+        $("#report1Date, #report2Date").val(dateString);
+
+        // Set current month for month picker
+        const monthString = today.toISOString().split('T')[0].substring(0, 7);
+        $("#report3Month").val(monthString);
+
+        // Populate year dropdown for Report 4 and Report 5
+        const currentYear = today.getFullYear();
+        for (let year = currentYear - 5; year <= currentYear; year++) {
+            $("#report4Year, #report5Year").append(`<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`);
+        }
+
+        // Initialize all tabs
+        initializeReport1();
+        initializeReport2();
+        initializeReport3();
+        initializeReport4();
+        initializeReport5();
+
+        // Initialize select pickers
+        $('.selectpicker').selectpicker();
+
+        // Load filter options
+        loadFilterOptions();
+
+        // Mail gönder button click event
+        $('#sendMailBtn').on('click', function() {
+            $('#mailModal').modal('show');
+            updateSubject(); // Otomatik olarak tarih ekleyen konu
+        });
+
+        // Mail gönder confirm button click event
+        $('#sendMailConfirmBtn').on('click', function() {
+            sendMail();
+        });
+
+        // Kolon renkleri için CSS güncelleme
+        updateStyles();
+    });
+
+    // Kolon renkleri için CSS güncelleme
+    function updateStyles() {
+        // Malzeme Detaylı Satış Raporu için kolon renklerini güncelleme
+        const styleElement = document.createElement('style');
+        styleElement.innerHTML = `
+            /* Detaylı Satış Raporu için renklendirme */
+            #report2Table tbody tr td:nth-child(5),  /* BRÜT KG */
+            #report2Table tbody tr td:nth-child(6),  /* NET KG */
+            #report2Table tbody tr td:nth-child(14), /* DÖVİZLİ TUTAR */
+            #report2Table tbody tr td:nth-child(15) { /* TUTAR (TL) */
+                background-color: rgba(227, 242, 253, 0.5); /* Açık mavi */
+                font-weight: 500;
+            }
+
+            #report2Table tbody tr td:nth-child(9),  /* BRÜT ORT. FİYAT (TL) */
+            #report2Table tbody tr td:nth-child(10), /* NET ORT. FİYAT (TL) */
+            #report2Table tbody tr td:nth-child(11), /* BRÜT ORT. FİYAT (DÖVİZ) */
+            #report2Table tbody tr td:nth-child(12) { /* NET ORT. FİYAT (DÖVİZ) */
+                background-color: rgba(200, 230, 201, 0.5); /* Açık yeşil */
+                font-weight: 500;
+            }
+
+            #report2Table tbody tr td:nth-child(7),  /* FİRE KG */
+            #report2Table tbody tr td:nth-child(8) { /* HURDA */
+                background-color: rgba(255, 224, 178, 0.5); /* Açık turuncu */
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(styleElement);
+    }
+
+    // Otomatik konu güncelleme
+    function updateSubject() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+
+        // Tarih formatı: DD.MM.YYYY
+        const formattedDate = `${day}.${month}.${year}`;
+
+        // Konu alanını güncelle
+        document.getElementById('mailSubject').value = `${formattedDate} - YDÇ Metal Günlük Satış Raporu`;
+    }
+
+    // Load filter options from server
+    function loadFilterOptions() {
+        $.ajax({
+            url: "/ydc-gunluk-rapor-mail/filter-options",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    // Populate cari options
+                    response.cari_list.forEach(item => {
+                        $('select[id$="Cari"]').each(function() {
+                            $(this).append(`<option value="${item}">${item}</option>`);
+                        });
+                    });
+
+                    // Populate muhasebe grup options
+                    response.muhasebe_grup_list.forEach(item => {
+                        $('select[id$="MuhasebeGrup"]').each(function() {
+                            $(this).append(`<option value="${item}">${item}</option>`);
+                        });
+                    });
+
+                    // Populate malzeme grup options
+                    response.malzeme_grup_list.forEach(item => {
+                        $('select[id$="MalzemeGrup"]').each(function() {
+                            $(this).append(`<option value="${item}">${item}</option>`);
+                        });
+                    });
+
+                    // Populate satis elemani options
+                    response.satis_elemani_list.forEach(item => {
+                        $('select[id$="SatisElemani"]').each(function() {
+                            $(this).append(`<option value="${item}">${item}</option>`);
+                        });
+                    });
+
+                    // Refresh select pickers
+                    $('.selectpicker').selectpicker('refresh');
+                } else {
+                    console.error("Error loading filter options:", response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error loading filter options:", error);
+            }
+        });
+    }
+
+    // Send mail function
+    function sendMail() {
+        // Validate form
+        const subject = $('#mailSubject').val().trim();
+        const recipients = $('#mailRecipients').val().trim();
+
+        if (!subject || !recipients) {
+            alert('Lütfen konu ve alıcı alanlarını doldurunuz.');
+            return;
+        }
+
+        // Check if at least one report is selected
+        const includeReport1 = $('#includeReport1').is(':checked');
+        const includeReport2 = $('#includeReport2').is(':checked');
+        const includeReport3 = $('#includeReport3').is(':checked');
+        const includeReport4 = $('#includeReport4').is(':checked');
+        const includeReport5 = $('#includeReport5').is(':checked');
+
+        if (!includeReport1 && !includeReport2 && !includeReport3 && !includeReport4 && !includeReport5) {
+            alert('Lütfen en az bir rapor seçiniz.');
+            return;
+        }
+
+        // Show progress
+        $('.mail-progress').show();
+        $('.mail-success').hide();
+        $('.mail-error').hide();
+        $('#sendMailConfirmBtn').prop('disabled', true);
+
+        // Prepare mail data
+        const mailData = {
+            subject: subject,
+            recipients: recipients.split(',').map(email => email.trim()),
+            note: $('#mailNote').val().trim(),
+            include_reports: {
+                report1: includeReport1,
+                report2: includeReport2,
+                report3: includeReport3,
+                report4: includeReport4,
+                report5: includeReport5
+            },
+            filters: {
+                report1: {
+                    date: $('#report1Date').val(),
+                    cari: $('#report1Cari').val() || [],
+                    muhasebe_grup: $('#report1MuhasebeGrup').val() || [],
+                    satis_elemani: $('#report1SatisElemani').val() || []
+                },
+                report2: {
+                    date: $('#report2Date').val(),
+                    cari: $('#report2Cari').val() || [],
+                    malzeme_grup: $('#report2MalzemeGrup').val() || [],
+                    satis_elemani: $('#report2SatisElemani').val() || []
+                },
+                report3: {
+                    month: $('#report3Month').val(),
+                    cari: $('#report3Cari').val() || [],
+                    muhasebe_grup: $('#report3MuhasebeGrup').val() || [],
+                    satis_elemani: $('#report3SatisElemani').val() || []
+                },
+                report4: {
+                    year: $('#report4Year').val(),
+                    cari: $('#report4Cari').val() || [],
+                    muhasebe_grup: $('#report4MuhasebeGrup').val() || [],
+                    satis_elemani: $('#report4SatisElemani').val() || []
+                },
+                report5: {
+                    year: $('#report5Year').val(),
+                    month: $('#report5Month').val(),
+                    top_count: $('#report5TopCount').val()
+                }
+            }
+        };
+
+        // Send mail request
+        $.ajax({
+            url: "/ydc-gunluk-rapor-mail/send-mail",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(mailData),
+            success: function(response) {
+                $('.mail-progress').hide();
+                $('#sendMailConfirmBtn').prop('disabled', false);
+
+                if (response.success) {
+                    $('.mail-success').show();
+                    setTimeout(function() {
+                        $('#mailModal').modal('hide');
+                        $('.mail-success').hide();
+                    }, 2000);
+                } else {
+                    $('.mail-error').show();
+                    $('#errorMessage').text(response.error || 'Mail gönderilirken bir hata oluştu.');
+                }
+            },
+            error: function(xhr, status, error) {
+                $('.mail-progress').hide();
+                $('.mail-error').show();
+                $('#sendMailConfirmBtn').prop('disabled', false);
+                $('#errorMessage').text('Sunucu ile iletişim hatası: ' + error);
+            }
+        });
+    }
+
+    // Initialize DataTables
+    function initDataTable(tableId, columns, buttons = true, pageLength = 10) {
+        return $(`#${tableId}`).DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
+            },
+            dom: buttons ? 'Bfrtip' : 'frtip',
+            buttons: buttons ? [
+                {
+                    extend: 'copy',
+                    text: '<i class="fas fa-copy"></i> Kopyala',
+                    className: 'btn btn-sm btn-secondary'
+                },
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    className: 'btn btn-sm btn-success'
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="fas fa-file-pdf"></i> PDF',
+                    className: 'btn btn-sm btn-danger'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print"></i> Yazdır',
+                    className: 'btn btn-sm btn-info'
+                }
+            ] : [],
+            columns: columns,
+            responsive: true,
+            processing: true,
+            paging: true,
+            lengthChange: true,
+            pageLength: pageLength,
+            searching: true,
+            ordering: true,
+            info: true,
+            autoWidth: false
+        });
+    }
+
+    // Format number for display
+    function formatNumber(num, decimals = 2) {
+        return num.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    // Report 1 - Muhasebe Grup Raporu
+    function initializeReport1() {
+        // Initialize DataTable with 100 rows per page
+        const report1Table = initDataTable('report1Table', [
+            { data: 'muhasebe_grup_ismi' },
+            { data: 'brut_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'brut_ort_fiyat', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'net_ort_fiyat', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } }
+        ], true, 100);
+
+        // Initialize Chart
+        const report1ChartCtx = document.getElementById('report1Chart').getContext('2d');
+        const report1Chart = new Chart(report1ChartCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'BRÜT KG',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'NET KG',
+                        data: [],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'TUTAR (TL, ÷1000)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'KG'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'TUTAR (TL, ÷1000)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter button click event
+        $('#report1FilterBtn').on('click', function() {
+            loadReport1Data();
+        });
+
+        // Initial data load
+        loadReport1Data();
+
+        // Function to load report 1 data
+        function loadReport1Data() {
+            // Show loading spinner
+            $('#report1Table tbody').html('<tr><td colspan="6" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+
+            // Clear summary cards
+            $('#report1TotalBrutKg').text('0');
+            $('#report1TotalNetKg').text('0');
+            $('#report1AvgBrutPrice').text('0 ₺');
+            $('#report1AvgNetPrice').text('0 ₺'); // Yeni eklenen alan
+            $('#report1TotalAmount').text('0 ₺');
+
+            // Clear footer totals
+            $('#report1FooterTotalBrutKg').text('0');
+            $('#report1FooterAvgBrutFiyat').text('0 ₺');
+            $('#report1FooterTotalNetKg').text('0');
+            $('#report1FooterAvgNetFiyat').text('0 ₺');
+            $('#report1FooterTotalTutar').text('0 ₺');
+
+            // Get selected values
+            const date = $('#report1Date').val();
+            const cari = $('#report1Cari').val() || [];
+            const muhasebeGrup = $('#report1MuhasebeGrup').val() || [];
+            const satisElemani = $('#report1SatisElemani').val() || [];
+
+            // Fetch data from server
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/report1-data",
+                type: "POST",
+                data: {
+                    date: date,
+                    'cari[]': cari,
+                    'muhasebe_grup[]': muhasebeGrup,
+                    'satis_elemani[]': satisElemani
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Clear and reload the table
+                        report1Table.clear().rows.add(data).draw();
+
+                        // Update chart
+                        report1Chart.data.labels = data.map(item => item.muhasebe_grup_ismi);
+                        report1Chart.data.datasets[0].data = data.map(item => item.brut_kg);
+                        report1Chart.data.datasets[1].data = data.map(item => item.net_kg);
+                        report1Chart.data.datasets[2].data = data.map(item => item.tutar_tl / 1000); // Divide by 1000 to make chart readable
+                        report1Chart.update();
+
+                        // Update summary cards
+                        const summary = response.summary;
+                        $('#report1TotalBrutKg').text(formatNumber(summary.total_brut_kg));
+                        $('#report1TotalNetKg').text(formatNumber(summary.total_net_kg));
+                        $('#report1AvgBrutPrice').text(formatNumber(summary.avg_brut_price) + ' ₺');
+                        $('#report1AvgNetPrice').text(formatNumber(summary.avg_net_price) + ' ₺'); // Yeni eklenen alan
+                        $('#report1TotalAmount').text(formatNumber(summary.total_tutar) + ' ₺');
+
+                        // Update footer totals
+                        $('#report1FooterTotalBrutKg').text(formatNumber(summary.total_brut_kg));
+                        $('#report1FooterAvgBrutFiyat').text(formatNumber(summary.avg_brut_price) + ' ₺');
+                        $('#report1FooterTotalNetKg').text(formatNumber(summary.total_net_kg));
+                        $('#report1FooterAvgNetFiyat').text(formatNumber(summary.avg_net_price) + ' ₺');
+                        $('#report1FooterTotalTutar').text(formatNumber(summary.total_tutar) + ' ₺');
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        report1Table.clear().draw();
+                        report1Chart.data.labels = [];
+                        report1Chart.data.datasets[0].data = [];
+                        report1Chart.data.datasets[1].data = [];
+                        report1Chart.data.datasets[2].data = [];
+                        report1Chart.update();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    report1Table.clear().draw();
+                    $('#report1Table tbody').html('<tr><td colspan="6" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+    }
+
+    // Report 2 - Detaylı Satış Raporu
+    function initializeReport2() {
+        // Initialize DataTable with 1000 rows per page
+        const report2Table = initDataTable('report2Table', [
+            { data: 'cari', width: '14%' },
+            { data: 'satis_elemani', width: '4%' },
+            { data: 'malzeme_grup', width: '4%' },
+            { data: 'urun_adi', width: '13%' },
+            { data: 'brut_kg', width: '4%', render: function(data) { return formatNumber(data); } },
+            { data: 'net_kg', width: '4%', render: function(data) { return formatNumber(data); } },
+            { data: 'fire_kg', width: '4%', render: function(data) { return formatNumber(data); } },
+            { data: 'hurda', width: '4%', render: function(data) { return formatNumber(data); } },
+            { data: 'brut_ort_fiyat_tl', width: '4%', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'net_ort_fiyat_tl', width: '4%', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'brut_ort_fiyat_doviz', width: '4%', render: function(data, type, row) { return formatNumber(data) + (row.doviz !== 'TL' ? ' ' + row.doviz : ''); } },
+            { data: 'net_ort_fiyat_doviz', width: '4%', render: function(data, type, row) { return formatNumber(data) + (row.doviz !== 'TL' ? ' ' + row.doviz : ''); } },
+            { data: 'doviz', width: '3%' },
+            { data: 'dovizli_tutar', width: '4%', render: function(data, type, row) { return formatNumber(data) + (row.doviz !== 'TL' ? ' ' + row.doviz : ''); } },
+            { data: 'tutar_tl', width: '4%', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'vade', width: '3%' },
+            { data: 'teslim_tarihi', width: '4%' },
+            { data: 'irsaliye_tarihi', width: '4%' },
+            { data: 'teslim_durum', width: '4%' },
+            { data: 'fatura_durumu', width: '4%' },
+            { data: 'odeme_durumu', width: '4%' }
+        ], true, 1000);
+
+        // Filter button click event
+        $('#report2FilterBtn').on('click', function() {
+            loadReport2Data();
+        });
+
+        // Initial data load
+        loadReport2Data();
+
+        // Function to load report 2 data
+        function loadReport2Data() {
+            // Show loading spinner
+            $('#report2Table tbody').html('<tr><td colspan="20" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+
+            // Clear summary totals
+            $('#report2TotalBrutKg').text('0');
+            $('#report2TotalNetKg').text('0');
+            $('#report2TotalFireKg').text('0');
+            $('#report2TotalHurda').text('0');
+            $('#report2AvgBrutFiyatTL').text('0 ₺');
+            $('#report2AvgNetFiyatTL').text('0 ₺');
+            $('#report2AvgBrutFiyatDoviz').text('0');
+            $('#report2AvgNetFiyatDoviz').text('0');
+            $('#report2TotalDovizTutar').text('0');
+            $('#report2TotalTutarTL').text('0 ₺');
+
+            // Get selected values
+            const date = $('#report2Date').val();
+            const cari = $('#report2Cari').val() || [];
+            const malzemeGrup = $('#report2MalzemeGrup').val() || [];
+            const satisElemani = $('#report2SatisElemani').val() || [];
+
+            // Fetch data from server
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/report2-data",
+                type: "POST",
+                data: {
+                    date: date,
+                    'cari[]': cari,
+                    'malzeme_grup[]': malzemeGrup,
+                    'satis_elemani[]': satisElemani
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Birim fiyatları hesapla ve veri setine ekle
+                        data.forEach(item => {
+                            item.brut_ort_fiyat_tl = item.brut_kg > 0 ? item.tutar_tl / item.brut_kg : 0;
+                            item.net_ort_fiyat_tl = item.net_kg > 0 ? item.tutar_tl / item.net_kg : 0;
+                            item.brut_ort_fiyat_doviz = (item.brut_kg > 0 && item.dovizli_tutar > 0) ? item.dovizli_tutar / item.brut_kg : 0;
+                            item.net_ort_fiyat_doviz = (item.net_kg > 0 && item.dovizli_tutar > 0) ? item.dovizli_tutar / item.net_kg : 0;
+                        });
+
+                        // Clear and reload the table
+                        report2Table.clear().rows.add(data).draw();
+
+                        // Calculate totals
+                        let totalBrutKg = 0;
+                        let totalNetKg = 0;
+                        let totalFireKg = 0;
+                        let totalHurda = 0;
+                        let totalDovizTutar = 0;
+                        let totalTutarTL = 0;
+
+                        data.forEach(item => {
+                            totalBrutKg += item.brut_kg;
+                            totalNetKg += item.net_kg;
+                            totalFireKg += item.fire_kg;
+                            totalHurda += item.hurda;
+                            totalDovizTutar += item.dovizli_tutar;
+                            totalTutarTL += item.tutar_tl;
+                        });
+
+                        // Calculate averages
+                        const avgBrutFiyatTL = totalBrutKg > 0 ? totalTutarTL / totalBrutKg : 0;
+                        const avgNetFiyatTL = totalNetKg > 0 ? totalTutarTL / totalNetKg : 0;
+                        const avgBrutFiyatDoviz = totalBrutKg > 0 ? totalDovizTutar / totalBrutKg : 0;
+                        const avgNetFiyatDoviz = totalNetKg > 0 ? totalDovizTutar / totalNetKg : 0;
+
+                        // Update totals in footer
+                        $('#report2TotalBrutKg').text(formatNumber(totalBrutKg));
+                        $('#report2TotalNetKg').text(formatNumber(totalNetKg));
+                        $('#report2TotalFireKg').text(formatNumber(totalFireKg));
+                        $('#report2TotalHurda').text(formatNumber(totalHurda));
+                        $('#report2AvgBrutFiyatTL').text(formatNumber(avgBrutFiyatTL) + ' ₺');
+                        $('#report2AvgNetFiyatTL').text(formatNumber(avgNetFiyatTL) + ' ₺');
+                        $('#report2AvgBrutFiyatDoviz').text(formatNumber(avgBrutFiyatDoviz));
+                        $('#report2AvgNetFiyatDoviz').text(formatNumber(avgNetFiyatDoviz));
+                        $('#report2TotalDovizTutar').text(formatNumber(totalDovizTutar));
+                        $('#report2TotalTutarTL').text(formatNumber(totalTutarTL) + ' ₺');
+
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        report2Table.clear().draw();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    report2Table.clear().draw();
+                    $('#report2Table tbody').html('<tr><td colspan="21" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+    }
+
+    // Report 3 - Günlük Hedef Raporu
+    function initializeReport3() {
+        // Initialize DataTable - set to display 100 rows
+        const report3Table = initDataTable('report3Table', [
+            { data: 'tarih' },
+            { data: 'brut_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'brut_ort_fiyat', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'net_ort_fiyat', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } }
+        ], true, 100); // 100 rows per page
+
+        // Initialize Chart
+        const report3ChartCtx = document.getElementById('report3Chart').getContext('2d');
+        const report3Chart = new Chart(report3ChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'BRÜT KG',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'NET KG',
+                        data: [],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'TUTAR (TL, ÷1000)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'KG'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'TUTAR (TL, ÷1000)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter button click event
+        $('#report3FilterBtn').on('click', function() {
+            loadReport3Data();
+        });
+
+        // Initial data load
+        loadReport3Data();
+
+        // Function to load report 3 data
+        function loadReport3Data() {
+            // Show loading spinner
+            $('#report3Table tbody').html('<tr><td colspan="6" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+
+            // Clear totals
+            $('#report3TotalBrutKg').text('0');
+            $('#report3AvgBrutFiyat').text('0 ₺');
+            $('#report3TotalNetKg').text('0');
+            $('#report3AvgNetFiyat').text('0 ₺');
+            $('#report3TotalTutar').text('0 ₺');
+
+            // Clear summary cards
+            $('#report3AvgDailyBrutKg').text('0');
+            $('#report3AvgDailyNetKg').text('0');
+            $('#report3AvgDailyBrutPrice').text('0 ₺');
+            $('#report3AvgDailyNetPrice').text('0 ₺');
+            $('#report3AvgDailyAmount').text('0 ₺');
+
+            // Get selected values
+            const month = $('#report3Month').val();
+            const cari = $('#report3Cari').val() || [];
+            const muhasebeGrup = $('#report3MuhasebeGrup').val() || [];
+            const satisElemani = $('#report3SatisElemani').val() || [];
+
+            // Fetch data from server
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/report3-data",
+                type: "POST",
+                data: {
+                    month: month,
+                    'cari[]': cari,
+                    'muhasebe_grup[]': muhasebeGrup,
+                    'satis_elemani[]': satisElemani
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Sort data by date (assuming format DD.MM.YYYY)
+                        data.sort((a, b) => {
+                            const partsA = a.tarih.split('.');
+                            const partsB = b.tarih.split('.');
+                            // Convert to YYYY-MM-DD for proper comparison
+                            const dateA = new Date(`${partsA[2]}-${partsA[1]}-${partsA[0]}`);
+                            const dateB = new Date(`${partsB[2]}-${partsB[1]}-${partsB[0]}`);
+                            return dateA - dateB;
+                        });
+
+                        // Clear and reload the table
+                        report3Table.clear().rows.add(data).draw();
+
+                        // Calculate totals
+                        let totalBrutKg = 0;
+                        let totalNetKg = 0;
+                        let totalTutar = 0;
+
+                        data.forEach(item => {
+                            totalBrutKg += item.brut_kg;
+                            totalNetKg += item.net_kg;
+                            totalTutar += item.tutar_tl;
+                        });
+
+                        // Calculate averages
+                        const avgBrutFiyat = totalBrutKg > 0 ? totalTutar / totalBrutKg : 0;
+                        const avgNetFiyat = totalNetKg > 0 ? totalTutar / totalNetKg : 0;
+
+                        // Calculate daily averages
+                        const dayCount = data.length;
+                        const avgDailyBrutKg = dayCount > 0 ? totalBrutKg / dayCount : 0;
+                        const avgDailyNetKg = dayCount > 0 ? totalNetKg / dayCount : 0;
+                        const avgDailyAmount = dayCount > 0 ? totalTutar / dayCount : 0;
+
+                        // Update totals
+                        $('#report3TotalBrutKg').text(formatNumber(totalBrutKg));
+                        $('#report3AvgBrutFiyat').text(formatNumber(avgBrutFiyat) + ' ₺');
+                        $('#report3TotalNetKg').text(formatNumber(totalNetKg));
+                        $('#report3AvgNetFiyat').text(formatNumber(avgNetFiyat) + ' ₺');
+                        $('#report3TotalTutar').text(formatNumber(totalTutar) + ' ₺');
+
+                        // Update summary cards
+                        $('#report3AvgDailyBrutKg').text(formatNumber(avgDailyBrutKg));
+                        $('#report3AvgDailyNetKg').text(formatNumber(avgDailyNetKg));
+                        $('#report3AvgDailyBrutPrice').text(formatNumber(avgBrutFiyat) + ' ₺');
+                        $('#report3AvgDailyNetPrice').text(formatNumber(avgNetFiyat) + ' ₺');
+                        $('#report3AvgDailyAmount').text(formatNumber(avgDailyAmount) + ' ₺');
+
+                        // Update chart
+                        report3Chart.data.labels = data.map(item => item.tarih);
+                        report3Chart.data.datasets[0].data = data.map(item => item.brut_kg);
+                        report3Chart.data.datasets[1].data = data.map(item => item.net_kg);
+                        report3Chart.data.datasets[2].data = data.map(item => item.tutar_tl / 1000); // Divide by 1000 to make chart readable
+                        report3Chart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        report3Table.clear().draw();
+                        report3Chart.data.labels = [];
+                        report3Chart.data.datasets[0].data = [];
+                        report3Chart.data.datasets[1].data = [];
+                        report3Chart.data.datasets[2].data = [];
+                        report3Chart.update();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    report3Table.clear().draw();
+                    $('#report3Table tbody').html('<tr><td colspan="6" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+    }
+
+    // Report 4 - Aylık Hedef Raporu
+    function initializeReport4() {
+        // Initialize DataTable with 100 rows per page
+        const report4Table = initDataTable('report4Table', [
+            { data: 'ay_no', width: '5%' },
+            { data: 'ay_name', width: '10%' },
+            { data: 'brut_kg', width: '15%', render: function(data) { return formatNumber(data); } },
+            { data: 'brut_ort_fiyat', width: '15%', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'net_kg', width: '15%', render: function(data) { return formatNumber(data); } },
+            { data: 'net_ort_fiyat', width: '15%', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'tutar_tl', width: '15%', render: function(data) { return formatNumber(data) + ' ₺'; } }
+        ], true, 100);
+
+        // Initialize Chart
+        const report4ChartCtx = document.getElementById('report4Chart').getContext('2d');
+        const report4Chart = new Chart(report4ChartCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'BRÜT KG',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'NET KG',
+                        data: [],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'TUTAR (TL, ÷1000)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'KG'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'TUTAR (TL, ÷1000)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter button click event
+        $('#report4FilterBtn').on('click', function() {
+            loadReport4Data();
+        });
+
+        // Initial data load
+        loadReport4Data();
+
+        // Function to load report 4 data
+        function loadReport4Data() {
+            // Show loading spinner
+            $('#report4Table tbody').html('<tr><td colspan="7" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+
+            // Clear totals
+            $('#report4TotalBrutKg').text('0');
+            $('#report4AvgBrutFiyat').text('0 ₺');
+            $('#report4TotalNetKg').text('0');
+            $('#report4AvgNetFiyat').text('0 ₺');
+            $('#report4TotalTutar').text('0 ₺');
+
+            // Clear summary cards
+            $('#report4AvgMonthlyBrutKg').text('0');
+            $('#report4AvgMonthlyNetKg').text('0');
+            $('#report4AvgMonthlyBrutPrice').text('0 ₺');
+            $('#report4AvgMonthlyNetPrice').text('0 ₺');
+            $('#report4AvgMonthlyAmount').text('0 ₺');
+
+            // Get selected values
+            const year = $('#report4Year').val();
+            const cari = $('#report4Cari').val() || [];
+            const muhasebeGrup = $('#report4MuhasebeGrup').val() || [];
+            const satisElemani = $('#report4SatisElemani').val() || [];
+
+            // Fetch data from server
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/report4-data",
+                type: "POST",
+                data: {
+                    year: year,
+                    'cari[]': cari,
+                    'muhasebe_grup[]': muhasebeGrup,
+                    'satis_elemani[]': satisElemani
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Ay isimlerini hazırla ve doğru sırada olduğundan emin ol
+                        const aylarSirali = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+                                          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+                        // Verilere ay_no ekle ve sırala
+                        const enhancedData = data.map(item => {
+                            const ayIndex = aylarSirali.indexOf(item.ay_name) + 1;
+                            return {
+                                ...item,
+                                ay_no: ayIndex
+                            };
+                        });
+
+                        // Verileri ay numarasına göre sırala
+                        enhancedData.sort((a, b) => a.ay_no - b.ay_no);
+
+                        // Clear and reload the table
+                        report4Table.clear().rows.add(enhancedData).draw();
+
+                        // Calculate totals
+                        let totalBrutKg = 0;
+                        let totalNetKg = 0;
+                        let totalTutar = 0;
+
+                        enhancedData.forEach(item => {
+                            totalBrutKg += item.brut_kg;
+                            totalNetKg += item.net_kg;
+                            totalTutar += item.tutar_tl;
+                        });
+
+                        // Calculate averages
+                        const avgBrutFiyat = totalBrutKg > 0 ? totalTutar / totalBrutKg : 0;
+                        const avgNetFiyat = totalNetKg > 0 ? totalTutar / totalNetKg : 0;
+
+                        // Calculate monthly averages
+                        const monthCount = enhancedData.length;
+                        const avgMonthlyBrutKg = monthCount > 0 ? totalBrutKg / monthCount : 0;
+                        const avgMonthlyNetKg = monthCount > 0 ? totalNetKg / monthCount : 0;
+                        const avgMonthlyAmount = monthCount > 0 ? totalTutar / monthCount : 0;
+
+                        // Update totals
+                        $('#report4TotalBrutKg').text(formatNumber(totalBrutKg));
+                        $('#report4AvgBrutFiyat').text(formatNumber(avgBrutFiyat) + ' ₺');
+                        $('#report4TotalNetKg').text(formatNumber(totalNetKg));
+                        $('#report4AvgNetFiyat').text(formatNumber(avgNetFiyat) + ' ₺');
+                        $('#report4TotalTutar').text(formatNumber(totalTutar) + ' ₺');
+
+                        // Update summary cards
+                        $('#report4AvgMonthlyBrutKg').text(formatNumber(avgMonthlyBrutKg));
+                        $('#report4AvgMonthlyNetKg').text(formatNumber(avgMonthlyNetKg));
+                        $('#report4AvgMonthlyBrutPrice').text(formatNumber(avgBrutFiyat) + ' ₺');
+                        $('#report4AvgMonthlyNetPrice').text(formatNumber(avgNetFiyat) + ' ₺');
+                        $('#report4AvgMonthlyAmount').text(formatNumber(avgMonthlyAmount) + ' ₺');
+
+                        // Update chart
+                        report4Chart.data.labels = enhancedData.map(item => item.ay_name);
+                        report4Chart.data.datasets[0].data = enhancedData.map(item => item.brut_kg);
+                        report4Chart.data.datasets[1].data = enhancedData.map(item => item.net_kg);
+                        report4Chart.data.datasets[2].data = enhancedData.map(item => item.tutar_tl / 1000); // Divide by 1000 to make chart readable
+                        report4Chart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        report4Table.clear().draw();
+                        report4Chart.data.labels = [];
+                        report4Chart.data.datasets[0].data = [];
+                        report4Chart.data.datasets[1].data = [];
+                        report4Chart.data.datasets[2].data = [];
+                        report4Chart.update();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    report4Table.clear().draw();
+                    $('#report4Table tbody').html('<tr><td colspan="7" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+    }
+
+    // Report 5 - Genel Analiz Raporu
+    function initializeReport5() {
+        // Initialize DataTables
+        const top20CustomersTLTable = initDataTable('top20CustomersTLTable', [
+            { data: 'sira' },
+            { data: 'cari' },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        const top20CustomersKGTable = initDataTable('top20CustomersKGTable', [
+            { data: 'sira' },
+            { data: 'cari' },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        const topMaterialGroupsTLTable = initDataTable('topMaterialGroupsTLTable', [
+            { data: 'sira' },
+            { data: 'malzeme_grup' },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        const topMaterialGroupsKGTable = initDataTable('topMaterialGroupsKGTable', [
+            { data: 'sira' },
+            { data: 'malzeme_grup' },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        const topProductsTLTable = initDataTable('topProductsTLTable', [
+            { data: 'sira' },
+            { data: 'urun_adi' },
+            { data: 'tutar_tl', render: function(data) { return formatNumber(data) + ' ₺'; } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        const topProductsKGTable = initDataTable('topProductsKGTable', [
+            { data: 'sira' },
+            { data: 'urun_adi' },
+            { data: 'net_kg', render: function(data) { return formatNumber(data); } },
+            { data: 'pay', render: function(data) { return formatNumber(data, 1) + '%'; } }
+        ], false, 20);
+
+        // Initialize Charts
+        const topCustomersTLChartCtx = document.getElementById('topCustomersTLChart').getContext('2d');
+        const topCustomersTLChart = new Chart(topCustomersTLChartCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Tutar (TL)',
+                    data: [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'TUTAR (TL)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const topCustomersKGChartCtx = document.getElementById('topCustomersKGChart').getContext('2d');
+        const topCustomersKGChart = new Chart(topCustomersKGChartCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Net KG',
+                    data: [],
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'NET KG'
+                        }
+                    }
+                }
+            }
+        });
+
+        const topMaterialGroupsTLChartCtx = document.getElementById('topMaterialGroupsTLChart').getContext('2d');
+        const topMaterialGroupsTLChart = new Chart(topMaterialGroupsTLChartCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Tutar (TL)',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(199, 199, 199, 0.5)',
+                        'rgba(83, 102, 255, 0.5)',
+                        'rgba(40, 159, 64, 0.5)',
+                        'rgba(210, 199, 199, 0.5)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(40, 159, 64, 1)',
+                        'rgba(210, 199, 199, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        const topMaterialGroupsKGChartCtx = document.getElementById('topMaterialGroupsKGChart').getContext('2d');
+        const topMaterialGroupsKGChart = new Chart(topMaterialGroupsKGChartCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Net KG',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(199, 199, 199, 0.5)',
+                        'rgba(83, 102, 255, 0.5)',
+                        'rgba(40, 159, 64, 0.5)',
+                        'rgba(210, 199, 199, 0.5)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(40, 159, 64, 1)',
+                        'rgba(210, 199, 199, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        // Initialize Charts for Top Products
+        const topProductsTLChartCtx = document.getElementById('topProductsTLChart').getContext('2d');
+        const topProductsTLChart = new Chart(topProductsTLChartCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Tutar (TL)',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(199, 199, 199, 0.5)',
+                        'rgba(83, 102, 255, 0.5)',
+                        'rgba(40, 159, 64, 0.5)',
+                        'rgba(210, 199, 199, 0.5)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(40, 159, 64, 1)',
+                        'rgba(210, 199, 199, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        const topProductsKGChartCtx = document.getElementById('topProductsKGChart').getContext('2d');
+        const topProductsKGChart = new Chart(topProductsKGChartCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Net KG',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(199, 199, 199, 0.5)',
+                        'rgba(83, 102, 255, 0.5)',
+                        'rgba(40, 159, 64, 0.5)',
+                        'rgba(210, 199, 199, 0.5)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(40, 159, 64, 1)',
+                        'rgba(210, 199, 199, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        // Initialize Chart for Monthly Sales Trend
+        const monthlySalesTrendChartCtx = document.getElementById('monthlySalesTrendChart').getContext('2d');
+        const monthlySalesTrendChart = new Chart(monthlySalesTrendChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'BRÜT KG',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'NET KG',
+                        data: [],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'TUTAR (TL, ÷1000)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'KG'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'TUTAR (TL, ÷1000)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter button click event
+        $('#report5FilterBtn').on('click', function() {
+            loadReport5Data();
+        });
+
+        // Initial data load
+        loadReport5Data();
+
+        // Function to load all Report 5 data
+        function loadReport5Data() {
+            const year = $('#report5Year').val();
+            const month = $('#report5Month').val();
+            const topCount = $('#report5TopCount').val();
+
+            // Show loading indicators or clear previous data
+            clearReport5Data();
+
+            // Load Top Customers by TL
+            loadTopCustomersByTL(year, month, topCount);
+
+            // Load Top Customers by KG
+            loadTopCustomersByKG(year, month, topCount);
+
+            // Load Top Material Groups by TL
+            loadTopMaterialGroupsByTL(year, month, topCount);
+
+            // Load Top Material Groups by KG
+            loadTopMaterialGroupsByKG(year, month, topCount);
+
+            // Load Top Products by TL
+            loadTopProductsByTL(year, month, topCount);
+
+            // Load Top Products by KG
+            loadTopProductsByKG(year, month, topCount);
+
+            // Load Monthly Sales Trend
+            loadMonthlySalesTrend(year);
+        }
+
+        // Clear all Report 5 data
+        function clearReport5Data() {
+            // Clear tables
+            $('#top20CustomersTLTable tbody').html('<tr><td colspan="5" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+            $('#top20CustomersKGTable tbody').html('<tr><td colspan="5" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+            $('#topMaterialGroupsTLTable tbody').html('<tr><td colspan="4" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+            $('#topMaterialGroupsKGTable tbody').html('<tr><td colspan="4" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+            $('#topProductsTLTable tbody').html('<tr><td colspan="4" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+            $('#topProductsKGTable tbody').html('<tr><td colspan="4" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>');
+
+            // Clear totals
+            $('#topCustomersTLTotalNetKg').text('0');
+            $('#topCustomersTLTotalAmount').text('0 ₺');
+            $('#topCustomersTLTotalShare').text('100%');
+            $('#topCustomersKGTotalNetKg').text('0');
+            $('#topCustomersKGTotalAmount').text('0 ₺');
+            $('#topCustomersKGTotalShare').text('100%');
+
+            // Clear charts
+            topCustomersTLChart.data.labels = [];
+            topCustomersTLChart.data.datasets[0].data = [];
+            topCustomersTLChart.update();
+
+            topCustomersKGChart.data.labels = [];
+            topCustomersKGChart.data.datasets[0].data = [];
+            topCustomersKGChart.update();
+
+            topMaterialGroupsTLChart.data.labels = [];
+            topMaterialGroupsTLChart.data.datasets[0].data = [];
+            topMaterialGroupsTLChart.update();
+
+            topMaterialGroupsKGChart.data.labels = [];
+            topMaterialGroupsKGChart.data.datasets[0].data = [];
+            topMaterialGroupsKGChart.update();
+
+            topProductsTLChart.data.labels = [];
+            topProductsTLChart.data.datasets[0].data = [];
+            topProductsTLChart.update();
+
+            topProductsKGChart.data.labels = [];
+            topProductsKGChart.data.datasets[0].data = [];
+            topProductsKGChart.update();
+
+            monthlySalesTrendChart.data.labels = [];
+            monthlySalesTrendChart.data.datasets[0].data = [];
+            monthlySalesTrendChart.data.datasets[1].data = [];
+            monthlySalesTrendChart.data.datasets[2].data = [];
+            monthlySalesTrendChart.update();
+        }
+
+        // Load Top Customers by TL
+        function loadTopCustomersByTL(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-customers-by-tl",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        const summary = response.summary;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.cari}</td>
+                                    <td>${formatNumber(item.net_kg)}</td>
+                                    <td>${formatNumber(item.tutar_tl)} ₺</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.cari);
+                                chartData.push(item.tutar_tl);
+                            }
+                        });
+
+                        $('#top20CustomersTLTable tbody').html(tableHtml);
+
+                        // Update totals
+                        $('#topCustomersTLTotalNetKg').text(formatNumber(summary.total_kg));
+                        $('#topCustomersTLTotalAmount').text(formatNumber(summary.total_amount) + ' ₺');
+
+                        // Update chart
+                        topCustomersTLChart.data.labels = chartLabels;
+                        topCustomersTLChart.data.datasets[0].data = chartData;
+                        topCustomersTLChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#top20CustomersTLTable tbody').html('<tr><td colspan="5" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#top20CustomersTLTable tbody').html('<tr><td colspan="5" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Top Customers by KG
+        function loadTopCustomersByKG(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-customers-by-kg",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+                        const summary = response.summary;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.cari}</td>
+                                    <td>${formatNumber(item.net_kg)}</td>
+                                    <td>${formatNumber(item.tutar_tl)} ₺</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.cari);
+                                chartData.push(item.net_kg);
+                            }
+                        });
+
+                        $('#top20CustomersKGTable tbody').html(tableHtml);
+
+                        // Update totals
+                        $('#topCustomersKGTotalNetKg').text(formatNumber(summary.total_kg));
+                        $('#topCustomersKGTotalAmount').text(formatNumber(summary.total_amount) + ' ₺');
+
+                        // Update chart
+                        topCustomersKGChart.data.labels = chartLabels;
+                        topCustomersKGChart.data.datasets[0].data = chartData;
+                        topCustomersKGChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#top20CustomersKGTable tbody').html('<tr><td colspan="5" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#top20CustomersKGTable tbody').html('<tr><td colspan="5" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Top Material Groups by TL
+        function loadTopMaterialGroupsByTL(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-material-groups-by-tl",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.malzeme_grup}</td>
+                                    <td>${formatNumber(item.tutar_tl)} ₺</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.malzeme_grup);
+                                chartData.push(item.tutar_tl);
+                            }
+                        });
+
+                        $('#topMaterialGroupsTLTable tbody').html(tableHtml);
+
+                        // Update chart
+                        topMaterialGroupsTLChart.data.labels = chartLabels;
+                        topMaterialGroupsTLChart.data.datasets[0].data = chartData;
+                        topMaterialGroupsTLChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#topMaterialGroupsTLTable tbody').html('<tr><td colspan="4" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#topMaterialGroupsTLTable tbody').html('<tr><td colspan="4" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Top Material Groups by KG
+        function loadTopMaterialGroupsByKG(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-material-groups-by-kg",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.malzeme_grup}</td>
+                                    <td>${formatNumber(item.net_kg)}</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.malzeme_grup);
+                                chartData.push(item.net_kg);
+                            }
+                        });
+
+                        $('#topMaterialGroupsKGTable tbody').html(tableHtml);
+
+                        // Update chart
+                        topMaterialGroupsKGChart.data.labels = chartLabels;
+                        topMaterialGroupsKGChart.data.datasets[0].data = chartData;
+                        topMaterialGroupsKGChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#topMaterialGroupsKGTable tbody').html('<tr><td colspan="4" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#topMaterialGroupsKGTable tbody').html('<tr><td colspan="4" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Top Products by TL
+        function loadTopProductsByTL(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-products-by-tl",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.urun_adi}</td>
+                                    <td>${formatNumber(item.tutar_tl)} ₺</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.urun_adi);
+                                chartData.push(item.tutar_tl);
+                            }
+                        });
+
+                        $('#topProductsTLTable tbody').html(tableHtml);
+
+                        // Update chart
+                        topProductsTLChart.data.labels = chartLabels;
+                        topProductsTLChart.data.datasets[0].data = chartData;
+                        topProductsTLChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#topProductsTLTable tbody').html('<tr><td colspan="4" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#topProductsTLTable tbody').html('<tr><td colspan="4" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Top Products by KG
+        function loadTopProductsByKG(year, month, topCount) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/top-products-by-kg",
+                type: "POST",
+                data: {
+                    year: year,
+                    month: month,
+                    top_count: topCount
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Clear and populate table
+                        let tableHtml = '';
+                        let chartLabels = [];
+                        let chartData = [];
+
+                        data.forEach((item, index) => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.urun_adi}</td>
+                                    <td>${formatNumber(item.net_kg)}</td>
+                                    <td>${formatNumber(item.pay, 1)}%</td>
+                                </tr>
+                            `;
+
+                            // For chart - Only include top 10 for better visualization
+                            if (index < 10) {
+                                chartLabels.push(item.urun_adi);
+                                chartData.push(item.net_kg);
+                            }
+                        });
+
+                        $('#topProductsKGTable tbody').html(tableHtml);
+
+                        // Update chart
+                        topProductsKGChart.data.labels = chartLabels;
+                        topProductsKGChart.data.datasets[0].data = chartData;
+                        topProductsKGChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                        $('#topProductsKGTable tbody').html('<tr><td colspan="4" class="text-center">Veri bulunamadı</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                    $('#topProductsKGTable tbody').html('<tr><td colspan="4" class="text-center text-danger">Veri yüklenirken hata oluştu: ' + error + '</td></tr>');
+                }
+            });
+        }
+
+        // Load Monthly Sales Trend
+        function loadMonthlySalesTrend(year) {
+            $.ajax({
+                url: "/ydc-gunluk-rapor-mail/monthly-sales-trend",
+                type: "POST",
+                data: {
+                    year: year
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Sort by ay_no
+                        data.sort((a, b) => parseInt(a.ay) - parseInt(b.ay));
+
+                        let labels = [];
+                        let brutKgData = [];
+                        let netKgData = [];
+                        let tutarTLData = [];
+
+                        data.forEach(item => {
+                            labels.push(item.ay_name);
+                            brutKgData.push(item.brut_kg);
+                            netKgData.push(item.net_kg);
+                            tutarTLData.push(item.tutar_tl / 1000); // Divide by 1000 for better visualization
+                        });
+
+                        // Update chart
+                        monthlySalesTrendChart.data.labels = labels;
+                        monthlySalesTrendChart.data.datasets[0].data = brutKgData;
+                        monthlySalesTrendChart.data.datasets[1].data = netKgData;
+                        monthlySalesTrendChart.data.datasets[2].data = tutarTLData;
+                        monthlySalesTrendChart.update();
+                    } else {
+                        console.error('Veri yüklenirken bir hata oluştu:', response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Sunucu ile iletişim hatası:', error);
+                    console.error('Durum kodu:', xhr.status);
+                    console.error('Yanıt:', xhr.responseText);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

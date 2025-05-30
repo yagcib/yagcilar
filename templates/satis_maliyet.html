@@ -1,0 +1,893 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Satış ve Maliyet{% endblock %}
+
+{% block head %}
+<style>
+    .card {
+        margin-bottom: 20px;
+        border-color: #e3e3e3;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e3e3e3;
+    }
+    .card-header h6 {
+        color: #495057;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .btn-add-row {
+        margin-bottom: 10px;
+        background-color: #6c9dc6;
+        border-color: #6c9dc6;
+    }
+    .btn-add-row:hover {
+        background-color: #5a85ab;
+        border-color: #5a85ab;
+    }
+    .summary-row {
+        font-weight: bold;
+        background-color: #f2f7ff;
+    }
+    .delete-row {
+        cursor: pointer;
+        color: #dc3545;
+    }
+    .delete-row:hover {
+        color: #bd2130;
+    }
+    .required::after {
+        content: ' *';
+        color: #dc3545;
+    }
+    .tab-pane {
+        padding: 20px;
+        background-color: #ffffff;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+    .nav-tabs .nav-link.active {
+        background-color: #f0f7ff;
+        border-bottom-color: #f0f7ff;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .input-highlight {
+        background-color: #f8f9ff;
+    }
+    .btn-success {
+        background-color: #5cb377;
+        border-color: #5cb377;
+    }
+    .btn-success:hover {
+        background-color: #4a9d64;
+        border-color: #4a9d64;
+    }
+    #malzemeTable thead {
+        background-color: #edf5ff;
+    }
+    #savedCostsTable thead {
+        background-color: #edf5ff;
+    }
+    .btn-info {
+        background-color: #6baed6;
+        border-color: #6baed6;
+    }
+    .btn-primary {
+        background-color: #5a7db5;
+        border-color: #5a7db5;
+    }
+    .modal-header {
+        background-color: #f0f7ff;
+    }
+    .negative-value {
+        color: #dc3545;
+    }
+    .vade-card {
+        background-color: #f0f7fa;
+        border-top: 0;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+</style>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calculator"></i> Satış ve Maliyet</h5>
+            </div>
+            <div class="card-body">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs mb-3" id="maliyetTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="new-tab" data-bs-toggle="tab" data-bs-target="#new"
+                                type="button" role="tab" aria-controls="new" aria-selected="true">
+                            <i class="fas fa-plus-circle"></i> Yeni Maliyet
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved"
+                                type="button" role="tab" aria-controls="saved" aria-selected="false">
+                            <i class="fas fa-list"></i> Kaydedilmiş Maliyetler
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content" id="maliyetTabsContent">
+                    <!-- Yeni Maliyet Tab -->
+                    <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new-tab">
+                        <form id="satisMaliyetForm" method="POST" action="{{ url_for('satis_maliyet') }}">
+                    <!-- Kayıt Tipi ve Proje Seçimi -->
+<div class="card mb-3">
+    <div class="card-header bg-light" style="background-color: #f0f0fa !important;">
+        <h6 class="mb-0">Kayıt Tipi Bilgileri</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label required">Kayıt Tipi</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="kayit_tipi" id="tipTeklif" value="Teklif" required>
+                    <label class="form-check-label" for="tipTeklif">Teklif</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="kayit_tipi" id="tipSiparis" value="Sipariş" required>
+                    <label class="form-check-label" for="tipSiparis">Sipariş</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="is_proje" name="is_proje" value="1">
+                    <label class="form-check-label" for="is_proje">Proje</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+                            <!-- Sipariş Bilgileri -->
+                            <div class="card">
+                                <div class="card-header bg-light" style="background-color: #e6f0fa !important;">
+                                    <h6 class="mb-0">Sipariş Bilgileri</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="is_emri_no" class="required">İş Emri No</label>
+                                                <input type="text" class="form-control" id="is_emri_no" name="is_emri_no" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="siparis_tarihi">Sipariş Tarihi</label>
+                                                <input type="date" class="form-control" id="siparis_tarihi" name="siparis_tarihi"
+                                                       value="{{ now.strftime('%Y-%m-%d') }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="teslim_tarihi">Teslim Tarihi</label>
+                                                <input type="date" class="form-control" id="teslim_tarihi" name="teslim_tarihi"
+                                                       value="{{ now.strftime('%Y-%m-%d') }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="cari">Cari</label>
+                                                <select class="form-select cari-select" id="cari" name="cari">
+                                                    <option value="">Seçiniz</option>
+                                                    {% for cari in cari_list %}
+                                                    <option value="{{ cari.definition }}">{{ cari.definition }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <div class="form-group">
+                                                <label for="aciklama">Açıklama</label>
+                                                <textarea class="form-control" id="aciklama" name="aciklama" rows="2"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="doviz">Döviz</label>
+                                                <select class="form-select" id="doviz" name="doviz">
+                                                    <option value="TL">TL</option>
+                                                    <option value="USD">USD</option>
+                                                    <option value="EUR">EUR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- Malzeme Bilgileri -->
+                            <div class="card">
+                                <div class="card-header bg-light" style="background-color: #f0f5fa !important;">
+                                    <h6 class="mb-0">Malzeme Bilgileri</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="brut_kg">Brüt Kg</label>
+                                                <input type="number" step="0.01" class="form-control input-highlight" id="brut_kg" name="brut_kg" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="fire_kg">Fire Kg</label>
+                                                <input type="number" step="0.01" class="form-control input-highlight" id="fire_kg" name="fire_kg" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="net_kg">Net Kg</label>
+                                                <input type="number" step="0.01" class="form-control input-highlight" id="net_kg" name="net_kg" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="sure">Süre (SS:DD:SS)</label>
+                                                <input type="text" class="form-control time-input input-highlight" id="sure" name="sure" placeholder="00:00:00" value="00:00:00">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="bukum_kg">Büküm Kg</label>
+                                                <input type="number" step="0.01" class="form-control input-highlight" id="bukum_kg" name="bukum_kg" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label for="vurus_sayisi">Vuruş Sayısı</label>
+                                                <input type="number" class="form-control input-highlight" id="vurus_sayisi" name="vurus_sayisi" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- Malzeme ve İşçilik Fiyatları -->
+                            <div class="card">
+                                <div class="card-header bg-light" style="background-color: #f0f7fa !important;">
+                                    <h6 class="mb-0">Malzeme ve İşçilik Fiyatları</h6>
+                                </div>
+                                <div class="card-body">
+                                    <button type="button" class="btn btn-sm btn-primary btn-add-row mb-3">
+                                        <i class="fas fa-plus"></i> Satır Ekle
+                                    </button>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="malzemeTable">
+    <thead class="table-light">
+        <tr>
+            <th>Tür</th>
+            <th>Malzeme</th>
+            <th>Miktar</th>
+            <th>Birim</th>
+            <th>Satış Br.Fiyat</th>
+            <th>Maliyet Br.Fiyat</th>
+            <th>Maliyet Toplam</th>
+            <th>Satış Toplam</th>
+            <th>Not</th>
+            <th>İşlem</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <select class="form-select tur-select" name="tur">
+                    <option value="">Seçiniz</option>
+                    <option value="Hammadde">Hammadde</option>
+                    <option value="Hizmet">Hizmet</option>
+                    <option value="İşçilik">İşçilik</option>
+                    <option value="Nakliye">Nakliye</option>
+                    <option value="Hurda">Hurda</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="malzeme">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control miktar-input" name="miktar" value="0">
+            </td>
+            <td>
+                <select class="form-select birim-select" name="birim">
+                    <option value="KG">KG</option>
+                    <option value="ADET">ADET</option>
+                    <option value="METRE">METRE</option>
+                    <option value="LITRE">LITRE</option>
+                    <option value="SAAT">SAAT</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control satis-birim-fiyat-input" name="satis_birim_fiyat" value="0">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control maliyet-birim-fiyat-input" name="maliyet_birim_fiyat" value="0">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control maliyet-toplam-fiyat" name="maliyet_toplam_fiyat" value="0" readonly style="background-color: #e9f5ff;">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control satis-toplam-fiyat" name="satis_toplam_fiyat" value="0" readonly style="background-color: #e9f5ff;">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="not_detay">
+            </td>
+            <td class="text-center">
+                <i class="fas fa-trash-alt delete-row"></i>
+            </td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr class="summary-row">
+            <td colspan="6" class="text-end">Ara Toplam (Maliyet):</td>
+            <td>
+                <input type="number" step="0.01" class="form-control" id="ara_toplam" name="ara_toplam" value="0" readonly style="background-color: #e9f5ff; font-weight: bold;">
+            </td>
+            <td colspan="2"></td>
+            <td></td>
+        </tr>
+        <tr class="summary-row">
+            <td colspan="6" class="text-end">Ara Toplam (Satış):</td>
+            <td></td>
+            <td>
+                <input type="number" step="0.01" class="form-control" id="ara_toplam_satis" name="ara_toplam_satis" value="0" readonly style="background-color: #e9f5ff; font-weight: bold;">
+            </td>
+            <td colspan="1"></td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- Vade ve Satış Fiyatı Bilgileri -->
+                            <div class="card vade-card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="satis_fiyati_aciklama">Satış Fiyatı Açıklama</label>
+                                                <textarea class="form-control" id="satis_fiyati_aciklama" name="satis_fiyati_aciklama" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="vade_yuzde">Vade %</label>
+                                                        <input type="number" step="0.01" class="form-control vade-input" id="vade_yuzde" name="vade_yuzde" value="0">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="vade_gun">Vade Gün</label>
+                                                        <input type="number" class="form-control" id="vade_gun" name="vade_gun" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="hesaplanan_fiyat">Hesaplanan Fiyat</label>
+                                                        <input type="number" step="0.01" class="form-control" id="hesaplanan_fiyat" name="hesaplanan_fiyat" value="0" readonly style="background-color: #e9f5ff;">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="gerceklesen_satis_fiyati">Gerçekleşen Satış Fiyatı</label>
+                                                        <input type="number" step="0.01" class="form-control" id="gerceklesen_satis_fiyati" name="gerceklesen_satis_fiyati" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- Form Submission -->
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Kaydet
+                                </button>
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> İptal
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="saved" role="tabpanel" aria-labelledby="saved-tab">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="savedCostsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Kayıt Tipi</th>
+                    <th>Proje</th>
+                    <th>İş Emri No</th>
+                    <th>Cari</th>
+                    <th>Sipariş Tarihi</th>
+                    <th>Teslim Tarihi</th>
+                    <th>Net Kg</th>
+                    <th>Büküm Kg</th>
+                    <th>Ara Toplam</th>
+                    <th>Oluşturma Tarihi</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in saved_costs %}
+                <tr>
+                    <td>{{ item.kayit_tipi or 'Belirtilmemiş' }}</td>
+                    <td>{% if item.is_proje %}Evet{% else %}Hayır{% endif %}</td>
+                    <td>{{ item.is_emri_no }}</td>
+                    <td>{{ item.cari }}</td>
+                    <td>{{ item.siparis_tarihi }}</td>
+                    <td>{{ item.teslim_tarihi }}</td>
+                    <td>{{ item.net_kg }}</td>
+                    <td>{{ item.bukum_kg }}</td>
+                    <td>{{ item.ara_toplam|float|round(2) }}</td>
+                    <td>{{ item.olusturma_tarihi }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-info view-details" data-id="{{ item.sale_id }}"
+                                    data-bs-toggle="modal" data-bs-target="#costDetailsModal">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <a href="{{ url_for('satis_maliyet_edit', sale_id=item.sale_id) }}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-danger delete-cost" data-id="{{ item.sale_id }}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+                        <!-- Modal for Cost Details -->
+                        <div class="modal fade" id="costDetailsModal" tabindex="-1" aria-labelledby="costDetailsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="costDetailsModalLabel">Maliyet Detayları</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="costDetailsContent">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Yükleniyor...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable for saved costs
+        $('#savedCostsTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/tr.json'
+            },
+            order: [[7, 'desc']], // Sort by creation date desc
+            responsive: true,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tümü"]]
+        });
+
+        // Initialize Select2 for Cari dropdown
+        $('.cari-select').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Cari seçin veya arayın...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Set default date for teslim_tarihi if it's empty
+        if ($('#teslim_tarihi').val() === '') {
+            $('#teslim_tarihi').val(new Date().toISOString().substr(0, 10));
+        }
+
+        // Flag to track which field was most recently changed
+        var lastChanged = '';
+
+        // Calculate weight values based on which field was modified
+        function calculateWeightValues() {
+            var brutKg = parseFloat($('#brut_kg').val()) || 0;
+            var fireKg = parseFloat($('#fire_kg').val()) || 0;
+            var netKg = parseFloat($('#net_kg').val()) || 0;
+
+            // If Brüt or Fire was changed, calculate Net
+            if (lastChanged === 'brut' || lastChanged === 'fire') {
+                netKg = brutKg - fireKg;
+                $('#net_kg').val(netKg.toFixed(2));
+            }
+            // If Net was changed, calculate Fire
+            else if (lastChanged === 'net') {
+                fireKg = brutKg - netKg;
+                $('#fire_kg').val(fireKg.toFixed(2));
+            }
+        }
+
+      // Calculate row total amount
+function calculateRowTotal(row) {
+    // Temel değerleri al
+    var miktar = parseFloat($(row).find('.miktar-input').val()) || 0;
+    var maliyetBirimFiyat = parseFloat($(row).find('.maliyet-birim-fiyat-input').val()) || 0;
+    var satisBirimFiyat = parseFloat($(row).find('.satis-birim-fiyat-input').val()) || 0;
+    var tur = $(row).find('.tur-select').val();
+
+    // Toplam değerleri hesapla
+    var maliyetToplam = miktar * maliyetBirimFiyat;
+    var satisToplam = miktar * satisBirimFiyat;
+
+    // Değerleri iki ondalık basamağa yuvarla
+    maliyetToplam = parseFloat(maliyetToplam.toFixed(2));
+    satisToplam = parseFloat(satisToplam.toFixed(2));
+
+    // Tür "Hurda" ise değerleri negatif yap
+    if (tur === 'Hurda') {
+        maliyetToplam = -Math.abs(maliyetToplam);
+        satisToplam = -Math.abs(satisToplam);
+
+        // Negatif değerleri visual olarak belirt
+        $(row).find('.maliyet-toplam-fiyat').addClass('negative-value');
+        $(row).find('.satis-toplam-fiyat').addClass('negative-value');
+    } else {
+        // Hurda değilse, negatif stil sınıflarını kaldır
+        $(row).find('.maliyet-toplam-fiyat').removeClass('negative-value');
+        $(row).find('.satis-toplam-fiyat').removeClass('negative-value');
+    }
+
+    // Hesaplanan değerleri ilgili alanlara yaz
+    $(row).find('.maliyet-toplam-fiyat').val(maliyetToplam.toFixed(2));
+    $(row).find('.satis-toplam-fiyat').val(satisToplam.toFixed(2));
+
+    // Genel toplamları yeniden hesapla
+    calculateGrandTotal();
+}
+
+     // Genel toplamları hesapla
+function calculateGrandTotal() {
+    var maliyetGrandTotal = 0;
+    var satisGrandTotal = 0;
+
+    // Tüm maliyet toplam değerlerini topla
+    $('.maliyet-toplam-fiyat').each(function() {
+        maliyetGrandTotal += parseFloat($(this).val()) || 0;
+    });
+
+    // Tüm satış toplam değerlerini topla
+    $('.satis-toplam-fiyat').each(function() {
+        satisGrandTotal += parseFloat($(this).val()) || 0;
+    });
+
+    // İki ondalık basamağa yuvarla ve alanlara yaz
+    $('#ara_toplam').val(maliyetGrandTotal.toFixed(2));
+    $('#ara_toplam_satis').val(satisGrandTotal.toFixed(2));
+
+    // Vade yüzdesine göre hesaplanan fiyatı güncelle
+    calculateHesaplananFiyat();
+}
+// Satış birim fiyat değiştiğinde maliyet birim fiyatını güncelle
+$(document).on('input', '.satis-birim-fiyat-input', function() {
+    var row = $(this).closest('tr');
+    var satisBirimFiyat = parseFloat($(this).val()) || 0;
+
+    // Maliyet birim fiyatını güncelle (eğer değiştirilmemişse)
+    if (row.find('.maliyet-birim-fiyat-input').data('manually-changed') !== true) {
+        row.find('.maliyet-birim-fiyat-input').val(satisBirimFiyat.toFixed(2));
+    }
+
+    calculateRowTotal(row);
+});
+
+// Maliyet birim fiyatı manuel değiştirildiğinde bir bayrak ekle
+$(document).on('focus', '.maliyet-birim-fiyat-input', function() {
+    $(this).data('original-value', $(this).val());
+});
+
+$(document).on('blur', '.maliyet-birim-fiyat-input', function() {
+    if ($(this).val() !== $(this).data('original-value')) {
+        $(this).data('manually-changed', true);
+    }
+});
+// Update totals when amounts change
+$(document).on('input', '.miktar-input, .maliyet-birim-fiyat-input, .satis-birim-fiyat-input', function() {
+    calculateRowTotal($(this).closest('tr'));
+});
+
+        // Maliyet hesaplanırken vade yüzdesini maliyet toplamına uygula
+function calculateHesaplananFiyat() {
+    var araToplam = parseFloat($('#ara_toplam').val()) || 0;
+    var araToplamsatis = parseFloat($('#ara_toplam_satis').val()) || 0;
+    var vadeYuzde = parseFloat($('#vade_yuzde').val()) || 0;
+
+    // Maliyet fiyatı için
+    var hesaplananFiyat = araToplam + (araToplam * vadeYuzde / 100);
+    $('#hesaplanan_fiyat').val(hesaplananFiyat.toFixed(2));
+
+    // Satış fiyatı için (eğer gerçekleşen satış fiyatı değiştirilmemişse)
+    var hesaplananSatisFiyat = araToplamsatis + (araToplamsatis * vadeYuzde / 100);
+
+    // Eğer gerçekleşen satış fiyatı 0 veya gücellenmemişse, hesaplanan satış fiyatını kullan
+    if (parseFloat($('#gerceklesen_satis_fiyati').val()) === 0) {
+        $('#gerceklesen_satis_fiyati').val(hesaplananSatisFiyat.toFixed(2));
+    }
+}
+
+        // Track field changes and update calculations
+        $('#brut_kg').on('input', function() {
+            lastChanged = 'brut';
+            calculateWeightValues();
+        });
+
+        $('#fire_kg').on('input', function() {
+            lastChanged = 'fire';
+            calculateWeightValues();
+        });
+
+        $('#net_kg').on('input', function() {
+            lastChanged = 'net';
+            calculateWeightValues();
+        });
+
+        // Update totals when amounts change
+        $(document).on('input', '.miktar-input, .birim-fiyat-input', function() {
+            calculateRowTotal($(this).closest('tr'));
+        });
+
+        // Update calculated price when vade percentage changes
+        $('#vade_yuzde').on('input', calculateHesaplananFiyat);
+
+        // Update the row total when tur changes (especially for Hurda)
+        $(document).on('change', '.tur-select', function() {
+            calculateRowTotal($(this).closest('tr'));
+        });
+
+        // Time input validation and formatting
+        $('.time-input').on('input', function() {
+            var value = $(this).val();
+            // Remove non-digit and non-colon characters
+            value = value.replace(/[^\d:]/g, '');
+
+            // Format as HH:MM:SS
+            var parts = value.split(':');
+
+            // Handle hours
+            var hours = parts[0] || '00';
+            if (hours.length > 2) hours = hours.substring(0, 2);
+            hours = hours.padStart(2, '0');
+
+            // Handle minutes
+            var minutes = parts[1] || '00';
+            if (minutes.length > 2) minutes = minutes.substring(0, 2);
+            if (parseInt(minutes) > 59) minutes = '59';
+            minutes = minutes.padStart(2, '0');
+
+            // Handle seconds
+            var seconds = parts[2] || '00';
+            if (seconds.length > 2) seconds = seconds.substring(0, 2);
+            if (parseInt(seconds) > 59) seconds = '59';
+            seconds = seconds.padStart(2, '0');
+
+            // Update the value
+            $(this).val(hours + ':' + minutes + ':' + seconds);
+        });
+
+        // Convert time format (HH:MM:SS) to decimal hours for calculations and storage
+        function timeToDecimal(timeStr) {
+            var parts = timeStr.split(':');
+            var hours = parseInt(parts[0], 10);
+            var minutes = parseInt(parts[1], 10);
+            var seconds = parseInt(parts[2], 10);
+
+            return hours + (minutes / 60) + (seconds / 3600);
+        }
+
+        // Convert decimal hours to time format (HH:MM:SS)
+        function decimalToTime(decimal) {
+            var hours = Math.floor(decimal);
+            var minutes = Math.floor((decimal - hours) * 60);
+            var seconds = Math.round((((decimal - hours) * 60) - minutes) * 60);
+
+            return hours.toString().padStart(2, '0') + ':' +
+                   minutes.toString().padStart(2, '0') + ':' +
+                   seconds.toString().padStart(2, '0');
+        }
+
+        // Add new row button click
+$('.btn-add-row').click(function() {
+    var newRow = `
+        <tr>
+            <td>
+                <select class="form-select tur-select" name="tur">
+                    <option value="">Seçiniz</option>
+                    <option value="Hammadde">Hammadde</option>
+                    <option value="Hizmet">Hizmet</option>
+                    <option value="İşçilik">İşçilik</option>
+                    <option value="Nakliye">Nakliye</option>
+                    <option value="Hurda">Hurda</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="malzeme">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control miktar-input" name="miktar" value="0">
+            </td>
+            <td>
+                <select class="form-select birim-select" name="birim">
+                    <option value="KG">KG</option>
+                    <option value="ADET">ADET</option>
+                    <option value="METRE">METRE</option>
+                    <option value="LITRE">LITRE</option>
+                    <option value="SAAT">SAAT</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control satis-birim-fiyat-input" name="satis_birim_fiyat" value="0">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control maliyet-birim-fiyat-input" name="maliyet_birim_fiyat" value="0">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control maliyet-toplam-fiyat" name="maliyet_toplam_fiyat" value="0" readonly style="background-color: #e9f5ff;">
+            </td>
+            <td>
+                <input type="number" step="0.01" class="form-control satis-toplam-fiyat" name="satis_toplam_fiyat" value="0" readonly style="background-color: #e9f5ff;">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="not_detay">
+            </td>
+            <td class="text-center">
+                <i class="fas fa-trash-alt delete-row"></i>
+            </td>
+        </tr>
+    `;
+    $('#malzemeTable tbody').append(newRow);
+});
+
+        // Delete row in form
+        $(document).on('click', '.delete-row', function() {
+            // Don't delete if it's the only row
+            if ($('#malzemeTable tbody tr').length > 1) {
+                $(this).closest('tr').remove();
+                calculateGrandTotal();
+            } else {
+                alert('En az bir satır bulunmalıdır.');
+            }
+        });
+
+        // View cost details
+        $(document).on('click', '.view-details', function() {
+            var saleId = $(this).data('id');
+            $('#costDetailsContent').html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor...</span></div></div>');
+
+            // Load details via AJAX
+            $.ajax({
+                url: '/satis-maliyet/details/' + saleId,
+                type: 'GET',
+                success: function(response) {
+                    $('#costDetailsContent').html(response);
+                },
+                error: function(xhr, status, error) {
+                    $('#costDetailsContent').html('<div class="alert alert-danger">Detaylar yüklenirken bir hata oluştu: ' + error + '</div>');
+                }
+            });
+        });
+
+        // Delete saved cost record
+        $(document).on('click', '.delete-cost', function() {
+            var saleId = $(this).data('id');
+            if (confirm('Bu maliyet kaydını silmek istediğinize emin misiniz?')) {
+                $.ajax({
+                    url: '/satis-maliyet/delete/' + saleId,
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            // Reload the page to refresh the table
+                            location.reload();
+                        } else {
+                            alert('Hata: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Bir hata oluştu: ' + error);
+                    }
+                });
+            }
+        });
+
+        // Form validation before submit
+$('#satisMaliyetForm').submit(function(e) {
+    if ($('#is_emri_no').val().trim() === '') {
+        e.preventDefault();
+        alert('İş Emri No alanı zorunludur.');
+        $('#is_emri_no').focus();
+        return false;
+    }
+
+    // Kayıt Tipi seçimi kontrolü
+    if (!$('input[name="kayit_tipi"]:checked').val()) {
+        e.preventDefault();
+        alert('Lütfen bir kayıt tipi seçiniz (Teklif veya Sipariş).');
+        return false;
+    }
+
+    // Check if at least one row has values
+    var hasFilledRow = false;
+    $('#malzemeTable tbody tr').each(function() {
+        var tur = $(this).find('.tur-select').val();
+        var malzeme = $(this).find('input[name="malzeme"]').val();
+        var miktar = parseFloat($(this).find('.miktar-input').val()) || 0;
+
+        if (tur && malzeme && miktar > 0) {
+            hasFilledRow = true;
+            return false; // break the loop
+        }
+    });
+
+    if (!hasFilledRow) {
+        e.preventDefault();
+        alert('En az bir satırda malzeme veya işçilik bilgisi girilmelidir.');
+        return false;
+    }
+
+    return true;
+});
+
+        // Initialize calculations
+        lastChanged = 'brut'; // Set initial calculation direction
+        calculateWeightValues();
+        $('#malzemeTable tbody tr').each(function() {
+            calculateRowTotal(this);
+        });
+        calculateHesaplananFiyat();
+    });
+</script>
+{% endblock %}

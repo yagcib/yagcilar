@@ -1,0 +1,433 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Ürün Barkodu</h5>
+            <button id="printSelectedBtn" class="btn btn-primary">
+                <i class="fas fa-print me-2"></i> Seçilenleri Yazdır
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Filtreleme Bölümü - Üste Taşındı -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Operatör</span>
+                        <select id="filterOperator" class="form-select">
+                            <option value="">Tümü</option>
+                            {% for personel in personeller|sort(attribute='personel_adi') %}
+                            <option value="{{ personel.personel_kodu }}" data-name="{{ personel.personel_adi }}">{{ personel.personel_kodu }} - {{ personel.personel_adi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">İş Merkezi</span>
+                        <select id="filterIsMerkezi" class="form-select">
+                            <option value="">Tümü</option>
+                            {% for makine in makineler|sort(attribute='makine_adi') %}
+                            <option value="{{ makine.makine_adi }}" data-code="{{ makine.makine_kodu }}">{{ makine.makine_kodu }} - {{ makine.makine_adi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text">Grup No</span>
+                        <input type="text" id="filterGrupNo" class="form-control" placeholder="Filtrele...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text">Cari Kod</span>
+                        <input type="text" id="filterCariKod" class="form-control" placeholder="Filtrele...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text">Parça Adı</span>
+                        <input type="text" id="filterParcaAdi" class="form-control" placeholder="Filtrele...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button id="clearFiltersBtn" class="btn btn-secondary w-100">
+                        <i class="fas fa-times me-2"></i> Filtreleri Temizle
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="40">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAllItems">
+                                </div>
+                            </th>
+                            <th>Grup No</th>
+                            <th>Cari Kod</th>
+                            <th>Parça Adı</th>
+                            <th>Parça Kodu</th>
+                            <th width="150">Parça Miktar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="urunTable">
+                        {% for urun in urun_data %}
+                        <tr data-item='{{ urun|tojson }}'>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input item-select" type="checkbox" value="{{ loop.index }}">
+                                </div>
+                            </td>
+                            <td>{{ urun.grup_no }}</td>
+                            <td>{{ urun.cari_kod }}</td>
+                            <td>{{ urun.parca_adi }}</td>
+                            <td>{{ urun.parca_kodu }}</td>
+                            <td>
+                                <input type="number" min="0" class="form-control form-control-sm parca-miktar"
+                                       value="{{ urun.parca_miktar }}" data-original="{{ urun.parca_miktar }}">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not urun_data %}
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i> Gösterilecek kayıt bulunamadı.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Yazdırma Modalı -->
+<div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Etiket Yazdırma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p>Seçilen parçalara ait etiketler yazdırılıyor...</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yazdırılacak Etiketler için Görünmez İframe -->
+<iframe id="printFrame" style="display:none;"></iframe>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+$(document).ready(function() {
+    console.log("jQuery ve sayfa yüklendi");
+
+    // Filtreleme işlevi
+    function filterTable() {
+        var grupNoFilter = $("#filterGrupNo").val().toLowerCase();
+        var cariKodFilter = $("#filterCariKod").val().toLowerCase();
+        var parcaAdiFilter = $("#filterParcaAdi").val().toLowerCase();
+        var operatorFilter = $("#filterOperator").val();
+        var isMerkeziFilter = $("#filterIsMerkezi").val();
+
+        $("#urunTable tr").each(function() {
+            var $row = $(this);
+            var grupNo = $row.find("td:eq(1)").text().toLowerCase();
+            var cariKod = $row.find("td:eq(2)").text().toLowerCase();
+            var parcaAdi = $row.find("td:eq(3)").text().toLowerCase();
+
+            // Ürün verilerini JSON'dan al
+            var itemData = JSON.parse($row.attr("data-item"));
+
+            // Operatör ve İş Merkezi seçimleri filtrelemeyi etkilemiyor,
+            // bunları sadece yazdırma için alıyoruz
+            var showRow =
+                grupNo.includes(grupNoFilter) &&
+                cariKod.includes(cariKodFilter) &&
+                parcaAdi.includes(parcaAdiFilter);
+
+            $row.toggle(showRow);
+        });
+    }
+
+    // Filtre olayları
+    $("#filterGrupNo, #filterCariKod, #filterParcaAdi").on("keyup", filterTable);
+
+    // Filtreleri temizle
+    $("#clearFiltersBtn").click(function() {
+        $("#filterGrupNo, #filterCariKod, #filterParcaAdi").val("");
+        $("#filterOperator, #filterIsMerkezi").val("");
+        filterTable();
+    });
+
+    // Tümünü seç/kaldır
+    $("#selectAllItems").change(function() {
+        var isChecked = $(this).prop("checked");
+        $("#urunTable tr:visible .item-select").prop("checked", isChecked);
+    });
+
+    // Yazdır butonu
+    $("#printSelectedBtn").click(function() {
+        var selectedItems = [];
+        var $checkedBoxes = $("#urunTable tr:visible .item-select:checked");
+
+        if ($checkedBoxes.length === 0) {
+            alert("Lütfen yazdırmak için en az bir ürün seçin.");
+            return;
+        }
+
+        // Seçilen operatör ve iş merkezi bilgilerini al
+        var selectedOperatorValue = $("#filterOperator").val();
+        var selectedOperatorText = $("#filterOperator option:selected").text();
+        var selectedOperatorCode = selectedOperatorValue;
+        var selectedOperatorName = selectedOperatorValue ? selectedOperatorText.split(' - ')[1] : "";
+
+        var selectedIsMerkeziValue = $("#filterIsMerkezi").val();
+        var selectedIsMerkeziText = $("#filterIsMerkezi option:selected").text();
+        var selectedIsMerkeziCode = $("#filterIsMerkezi option:selected").data("code");
+
+        $checkedBoxes.each(function() {
+            var $row = $(this).closest("tr");
+            var itemData = JSON.parse($row.attr("data-item"));
+
+            // Güncellenen parça miktarını al ve tam sayıya çevir
+            itemData.parca_miktar = parseInt($row.find(".parca-miktar").val());
+
+            // Şu anki tarih ve saati ekle
+            var now = new Date();
+            itemData.tarih = now.toLocaleDateString('tr-TR') + ' ' +
+                             now.getHours().toString().padStart(2, '0') + ':' +
+                             now.getMinutes().toString().padStart(2, '0') + ':' +
+                             now.getSeconds().toString().padStart(2, '0');
+
+            // Seçilen operatör ve iş merkezi değerlerini kullan
+            itemData.is_merkezi = selectedIsMerkeziValue || "TRUMPF 3030 L20 5KW";
+            itemData.is_merkezi_kodu = selectedIsMerkeziCode || "";
+            itemData.operator = selectedOperatorCode || "2526";
+            itemData.operator_adi = selectedOperatorName || "";
+
+            // StokKodu için parça kodunu kullan, eğer yoksa eski yöntemi kullan
+            itemData.stok_kodu = itemData.parca_kodu || (itemData.grup_no + ".00" + itemData.cari_kod.substring(0, 3));
+
+            selectedItems.push(itemData);
+        });
+
+        // Yazdırma işlemi için etiketleri oluştur
+        printLabels(selectedItems);
+    });
+
+    function printLabels(items) {
+        var printModal = new bootstrap.Modal(document.getElementById('printModal'));
+        printModal.show();
+
+        var printContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Ürün Etiketleri</title>
+                <style>
+                    @page {
+                        size: 100mm 70mm; /* Etiket boyutu */
+                        margin: 0;
+                    }
+
+                    * {
+                        box-sizing: border-box;
+                        margin: 0;
+                        padding: 0;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    body {
+                        width: 100mm;
+                        height: 70mm;
+                    }
+
+                    .label-page {
+                        width: 100mm;
+                        height: 70mm;
+                        position: relative;
+                        padding: 5mm;
+                        page-break-after: always;
+                    }
+
+                    .logo-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 2mm; /* Üst boşluğu azalttım */
+                    }
+
+                    .logo {
+                        height: 15mm; /* Logo boyutunu biraz küçülttüm */
+                    }
+
+                    .cari-kod {
+                        font-size: 14pt;
+                        font-weight: bold;
+                        text-align: right;
+                    }
+
+                    .details {
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    .detail-row {
+                        display: flex;
+                        margin-bottom: 0.8mm; /* Satır aralıklarını azalttım */
+                    }
+
+                    .detail-label {
+                        width: 35mm;
+                        font-weight: bold;
+                        font-size: 9pt; /* Font boyutunu biraz küçülttüm */
+                    }
+
+                    .detail-value {
+                        flex: 1;
+                        font-size: 9pt; /* Font boyutunu biraz küçülttüm */
+                    }
+
+                    .qrcode-container {
+                        position: absolute;
+                        bottom: 16mm; /* QR kodunu biraz daha yukarı aldım */
+                        right: 5mm;
+                        width: 18mm; /* QR kodunu biraz küçülttüm */
+                        height: 18mm;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    .website {
+                        position: absolute;
+                        bottom: 4mm;
+                        left: 5mm;
+                        font-size: 8pt;
+                        font-weight: bold;
+                        text-decoration: underline;
+                    }
+
+                    .logo-footer {
+                        position: absolute;
+                        bottom: 4mm;
+                        right: 5mm;
+                        height: 10mm; /* Logo boyutunu biraz küçülttüm */
+                    }
+                </style>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+                <script>
+                    window.onload = function() {
+                        // QR kodlarını oluştur
+                        ${items.map((item, index) => `
+                            // QR kodu oluştur - Bu kodu Yağcılar web sitesine yönlendir
+                            new QRCode(document.getElementById("qrcode-${index}"), {
+                                text: "https://ydcmetal.com.tr/",
+                                width: 65,
+                                height: 65,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.H
+                            });
+                        `).join('')}
+
+                        // Yazdırma işlemini başlat
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 1000);
+                    };
+                <\/script>
+            </head>
+            <body>
+                ${items.map((item, index) => `
+                    <div class="label-page">
+                        <div class="logo-header">
+                            <img src="/static/images/ydc.png" class="logo" alt="YDC Logo">
+                            <div class="cari-kod">CK ${item.cari_kod}</div>
+                        </div>
+
+                        <div class="details">
+                            <div class="detail-row">
+                                <div class="detail-label">Stok Kodu</div>
+                                <div class="detail-value">${item.stok_kodu}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Ürün</div>
+                                <div class="detail-value">${item.parca_adi || "SY3__6MM_ST52_4AD"}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Tarih</div>
+                                <div class="detail-value">${item.tarih}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">İş Merkezi</div>
+                                <div class="detail-value">${item.is_merkezi_kodu ? item.is_merkezi_kodu : ''}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Operatör</div>
+                                <div class="detail-value">${item.operator}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Miktar</div>
+                                <div class="detail-value">${item.parca_miktar}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Üretilen Tesis</div>
+                                <div class="detail-value">Y.D.Ç. METAL - 001</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Sevkedilen Tesis</div>
+                                <div class="detail-value">Y.D.Ç. METAL - 001</div>
+                            </div>
+                        </div>
+
+                        <div class="qrcode-container">
+                            <div id="qrcode-${index}" style="width:100%; height:100%;"></div>
+                        </div>
+
+                        <div class="website">www.yagcilar.com.tr</div>
+                        <img src="/static/images/yagcilar-hol.png" class="logo-footer" alt="Yağcılar Holding Logo">
+                    </div>
+                `).join('')}
+            </body>
+            </html>
+        `;
+
+        var printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Popup penceresi açılamadı! Lütfen tarayıcı ayarlarınızdan popup izinlerini kontrol edin.");
+            printModal.hide();
+            return;
+        }
+
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        printWindow.onafterprint = function () {
+            printModal.hide();
+        };
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menü Düzenle - Yağcılar Holding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f3f6f4;
+            width: 280px;
+            transition: all 0.3s;
+        }
+
+        .sidebar.collapsed {
+            margin-left: -280px;
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+            padding: .75rem 1.5rem;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #262262;
+            background-color: rgba(38, 34, 98, 0.1);
+            border-left-color: #262262;
+        }
+
+        .sidebar .nav-link.active {
+            color: #262262;
+            background-color: rgba(38, 34, 98, 0.1);
+            border-left-color: #262262;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
+            background-color: #262262 !important;
+        }
+
+        .navbar-brand {
+            padding: .75rem 1.5rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+            color: white !important;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .navbar-brand img {
+            margin-right: 12px;
+        }
+
+        .content {
+            margin-left: 280px;
+            padding: 70px 20px 20px;
+            transition: all 0.3s;
+        }
+
+        .content.expanded {
+            margin-left: 0;
+        }
+
+        .dropdown-menu {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .1);
+            border: none;
+            border-radius: 8px;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .submenu {
+            padding-left: 20px;
+        }
+
+        #sidebarToggle {
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #fff !important;
+        }
+
+        .sidebar-buttons {
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .sidebar-btn {
+            display: block;
+            background-color: #262262;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: left;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .sidebar-btn:hover {
+            background-color: #1e1a4f;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-btn i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-purple {
+            background-color: #262262;
+            border-color: #262262;
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background-color: #1e1a4f;
+            border-color: #1e1a4f;
+            color: white;
+        }
+
+        .admin-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .icon-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+
+        .icon-option {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .icon-option:hover {
+            background-color: #e9ecef;
+        }
+
+        .icon-option.selected {
+            background-color: #262262;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-dark fixed-top">
+        <div class="container-fluid">
+            <button id="sidebarToggle" class="btn">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="navbar-container">
+                <a class="navbar-brand mx-auto" href="#">
+                    <i class="fas fa-industry me-2"></i>
+                    Yağcılar Holding
+                    <span class="admin-badge">ADMİN</span>
+                </a>
+            </div>
+
+            <div class="user-menu">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ session.get('fullname', session.get('username', '')) }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}"><i class="fas fa-key me-2"></i> Şifre Değiştir</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Çıkış</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-buttons">
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-btn">
+                <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+            </a>
+        </div>
+
+        <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#userSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-users"></i> Kullanıcı Yönetimi
+                        <i class="fas fa-caret-down float-end"></i>
+                    </a>
+                    <div class="collapse" id="userSubmenu">
+                        <ul class="nav flex-column submenu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin_users') }}">
+                                    <i class="fas fa-list"></i> Kullanıcı Listesi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('admin_users_add') }}">
+                                    <i class="fas fa-user-plus"></i> Kullanıcı Ekle
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_roles') }}">
+                        <i class="fas fa-shield-alt"></i> Rol Yönetimi
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin_menus') }}">
+                        <i class="fas fa-bars"></i> Menü Yönetimi
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-home"></i> Normal Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content" id="content">
+        <div class="container-fluid">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-edit me-1"></i> Menü Düzenle: {{ menu.name }}
+                    </div>
+                    <a href="{{ url_for('admin_menus') }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Menü Listesine Dön
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('admin_menus_edit', menu_id=menu.id) }}">
+                      <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="menu_name" class="form-label">Menü Adı <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="menu_name" name="menu_name" value="{{ menu.name }}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="menu_url" class="form-label">Menü URL <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="menu_url" name="menu_url" value="{{ menu.url }}" required>
+                                    <small class="form-text text-muted">Örnek: /xml/upload veya /admin/users</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="parent_id" class="form-label">Üst Menü</label>
+                                    <select class="form-select" id="parent_id" name="parent_id">
+                                        <option value="">Ana Menü</option>
+                                        {% for parent in parent_menus %}
+                                            <option value="{{ parent.id }}" {% if menu.parent_id == parent.id %}selected{% endif %}>{{ parent.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Eğer alt menü oluşturuyorsanız bir üst menü seçin.</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="menu_order" class="form-label">Sıra Numarası</label>
+                                    <input type="number" class="form-control" id="menu_order" name="menu_order" value="{{ menu.order }}" min="1">
+                                    <small class="form-text text-muted">Menülerin görüntülenme sırası.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="icon" class="form-label">İkon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i id="selected-icon" class="fas {{ menu.icon }}"></i></span>
+                                        <input type="text" class="form-control" id="icon" name="icon" value="{{ menu.icon }}" readonly>
+                                        <button type="button" class="btn btn-secondary" id="icon-picker-btn">
+                                            <i class="fas fa-search"></i> İkon Seç
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">Font Awesome 6 ikon sınıfı.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if menu.active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">Menü Aktif</label>
+                                    </div>
+                                    <small class="form-text text-muted">Pasif menüler kullanıcılar tarafından görüntülenmez.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Icon Picker Modal -->
+                        <div class="modal fade" id="iconPickerModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">İkon Seçin</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="text" class="form-control mb-3" id="icon-search" placeholder="İkon ara...">
+                                        <div class="icon-picker" id="icon-list">
+                                            <!-- Icons will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <a href="{{ url_for('admin_menus') }}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-1"></i> İptal
+                            </a>
+                            <button type="submit" class="btn btn-purple">
+                                <i class="fas fa-save me-1"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Common Font Awesome icons
+        const icons = [
+            'fa-home', 'fa-user', 'fa-users', 'fa-cog', 'fa-wrench', 'fa-file', 'fa-chart-bar',
+            'fa-tachometer-alt', 'fa-shield-alt', 'fa-lock', 'fa-key', 'fa-bell', 'fa-envelope',
+            'fa-calendar', 'fa-search', 'fa-list', 'fa-plus', 'fa-minus', 'fa-edit', 'fa-trash',
+            'fa-download', 'fa-upload', 'fa-link', 'fa-external-link-alt', 'fa-bars', 'fa-th',
+            'fa-th-list', 'fa-check', 'fa-times', 'fa-exclamation-triangle', 'fa-info-circle',
+            'fa-question-circle', 'fa-history', 'fa-clock', 'fa-bookmark', 'fa-star', 'fa-heart',
+            'fa-eye', 'fa-eye-slash', 'fa-tag', 'fa-tags', 'fa-save', 'fa-print', 'fa-camera',
+            'fa-video', 'fa-map', 'fa-map-marker-alt', 'fa-phone', 'fa-mobile-alt', 'fa-tablet-alt',
+            'fa-laptop', 'fa-desktop', 'fa-server', 'fa-database', 'fa-cloud', 'fa-cloud-upload-alt',
+            'fa-cloud-download-alt', 'fa-wifi', 'fa-signal', 'fa-power-off', 'fa-sign-in-alt',
+            'fa-sign-out-alt', 'fa-user-plus', 'fa-user-minus', 'fa-user-edit', 'fa-user-cog',
+            'fa-user-shield', 'fa-user-check', 'fa-user-clock', 'fa-user-lock', 'fa-comment',
+            'fa-comments', 'fa-paper-plane', 'fa-share', 'fa-share-alt', 'fa-reply', 'fa-retweet',
+            'fa-thumbs-up', 'fa-thumbs-down', 'fa-handshake', 'fa-smile', 'fa-frown', 'fa-meh',
+            'fa-laugh', 'fa-angry', 'fa-clipboard', 'fa-clipboard-list', 'fa-clipboard-check',
+            'fa-copy', 'fa-cut', 'fa-paste', 'fa-folder', 'fa-folder-open', 'fa-archive',
+            'fa-certificate', 'fa-graduation-cap', 'fa-trophy', 'fa-award', 'fa-flag', 'fa-ban',
+            'fa-directions', 'fa-thumbtack', 'fa-fire', 'fa-magic', 'fa-wand-magic', 'fa-cube', 'fa-cubes',
+            'fa-industry', 'fa-file-code', 'fa-code', 'fa-terminal', 'fa-bug'
+        ];
+
+        // Initialize icon picker
+        $(document).ready(function() {
+            // Populate icon list
+            const iconList = $('#icon-list');
+            icons.forEach(icon => {
+                iconList.append(`
+                    <div class="icon-option ${$('#icon').val() === icon ? 'selected' : ''}" data-icon="${icon}">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                `);
+            });
+
+            // Icon picker button click
+            $('#icon-picker-btn').click(function() {
+                $('#iconPickerModal').modal('show');
+            });
+
+            // Icon search functionality
+            $('#icon-search').on('input', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('.icon-option').each(function() {
+                    const iconName = $(this).data('icon').toLowerCase();
+                    if (iconName.includes(searchText)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Icon selection
+            $('.icon-option').click(function() {
+                const iconClass = $(this).data('icon');
+                $('#icon').val(iconClass);
+                $('#selected-icon').attr('class', 'fas ' + iconClass);
+                $('.icon-option').removeClass('selected');
+                $(this).addClass('selected');
+                $('#iconPickerModal').modal('hide');
+            });
+
+            // Sidebar toggle functionality
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
+</html>

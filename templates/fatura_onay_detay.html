@@ -1,0 +1,610 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Fatura Onay Detay{% endblock %}
+
+{% block head %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .file-list {
+        margin-top: 20px;
+    }
+    .file-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .file-icon {
+        font-size: 24px;
+        margin-right: 15px;
+    }
+    .file-info {
+        flex-grow: 1;
+    }
+    .file-name {
+        font-weight: 500;
+    }
+    .file-meta {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    .file-actions {
+        display: flex;
+    }
+    .file-actions .btn {
+        margin-left: 5px;
+    }
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .btn-icon {
+        margin-right: 5px;
+    }
+    .uploaded-files {
+        margin-top: 20px;
+    }
+    .badge-status {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+    .badge-waiting {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .badge-approved {
+        background-color: #28a745;
+        color: #fff;
+    }
+    #fileUpload {
+        padding: 10px;
+        border: 1px dashed #ced4da;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 15px;
+    }
+    .file-preview {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    .preview-heading {
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+    .preview-list {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .preview-item {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 5px 10px;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    .preview-item i {
+        margin-right: 5px;
+    }
+    .preview-item .remove-file {
+        margin-left: auto;
+        color: #dc3545;
+        cursor: pointer;
+    }
+    /* Select2 custom styling */
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        padding: 6px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 24px;
+        padding-left: 0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #999;
+    }
+    /* Loading indicator */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.2em;
+    }
+    .loading-indicator {
+        display: inline-block;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+    .select2-dropdown {
+        z-index: 9999;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    {% if is_edit_mode %}
+                    Fatura Düzenle: {{ fatura.fatura_no }}
+                    {% if fatura.odeme_yapildi %}
+                    <span class="badge badge-status badge-approved">Ödendi</span>
+                    {% else %}
+                    <span class="badge badge-status badge-waiting">Ödeme Bekliyor</span>
+                    {% endif %}
+                    {% else %}
+                    Yeni Fatura Ekle
+                    {% endif %}
+                </h5>
+                <a href="{{ url_for('fatura_onay') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left btn-icon"></i> Listeye Dön
+                </a>
+            </div>
+            <div class="card-body">
+                {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Bu fatura ödenmiş olarak işaretlendiği için değişiklik yapamazsınız.
+                </div>
+                {% endif %}
+
+                <form id="faturaForm" method="post" enctype="multipart/form-data"
+                      action="{% if is_edit_mode %}{{ url_for('fatura_onay_edit', fatura_id=fatura.fatura_id) }}{% else %}{{ url_for('fatura_onay_ekle') }}{% endif %}">
+
+                    <!-- Fatura Bilgileri -->
+                    <div class="form-section">
+                        <h6 class="mb-3">Fatura Bilgileri</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="fatura_no" class="form-label">Fatura No <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="fatura_no" name="fatura_no"
+                                           value="{% if is_edit_mode %}{{ fatura.fatura_no }}{% endif %}" required
+                                           {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}readonly{% endif %}>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="firma" class="form-label">Firma <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="firma" name="firma" required
+                                            {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}disabled{% endif %}>
+                                        <option value="">Seçiniz</option>
+                                        <option value="YDÇ" {% if is_edit_mode and fatura.firma == 'YDÇ' %}selected{% endif %}>YDÇ</option>
+                                        <option value="Yağcılar" {% if is_edit_mode and fatura.firma == 'Yağcılar' %}selected{% endif %}>Yağcılar</option>
+                                        <option value="Star Yağcılar" {% if is_edit_mode and fatura.firma == 'Star Yağcılar' %}selected{% endif %}>Star Yağcılar</option>
+                                        <option value="Beymaş" {% if is_edit_mode and fatura.firma == 'Beymaş' %}selected{% endif %}>Beymaş</option>
+                                        <option value="Alya" {% if is_edit_mode and fatura.firma == 'Alya' %}selected{% endif %}>Alya</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cari_ismi" class="form-label">Cari İsmi</label>
+                                    <select class="form-control" id="cari_ismi" name="cari_ismi"
+                                            {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}disabled{% endif %}>
+                                        {% if is_edit_mode and fatura.cari_ismi %}
+                                        <option value="{{ fatura.cari_ismi }}" selected>{{ fatura.cari_ismi }}</option>
+                                        {% endif %}
+                                    </select>
+                                    <div class="form-text text-muted">Cari ismi seçiniz veya yeni bir değer giriniz</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="vade" class="form-label">Vade (Gün)</label>
+                                    <input type="number" class="form-control" id="vade" name="vade" min="0"
+                                           value="{% if is_edit_mode %}{{ fatura.vade }}{% else %}0{% endif %}"
+                                           {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}readonly{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="not" class="form-label">Not (Hangi cari/proje için alındığı)</label>
+                                    <textarea class="form-control" id="not" name="not" rows="3"
+                                            {% if is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1) %}readonly{% endif %}>{% if is_edit_mode %}{{ fatura.notlar }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dosya Yükleme -->
+                    {% if not (is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1)) %}
+                    <div class="form-section">
+                        <h6 class="mb-3">Dosya Yükleme</h6>
+                        <div class="mb-3">
+                            <div id="fileUpload">
+                                <input class="form-control" type="file" id="dosyalar" name="dosyalar" multiple>
+                                <small class="form-text text-muted">
+                                    İzin verilen dosya formatları: PNG, JPG, PDF, Excel (XLSX, XLS). Maksimum dosya boyutu: 10MB.
+                                </small>
+                            </div>
+
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <div class="preview-heading">Yüklenecek Dosyalar</div>
+                                <div class="preview-list" id="previewList"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a href="{{ url_for('fatura_onay') }}" class="btn btn-secondary">
+                            <i class="fas fa-times btn-icon"></i> İptal
+                        </a>
+
+                        {% if not (is_edit_mode and fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1)) %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save btn-icon"></i> Kaydet
+                        </button>
+                        {% endif %}
+
+                        {% if is_edit_mode and not fatura.odeme_yapildi and (is_admin or user_logoyetki == 1) %}
+                        <button type="button" class="btn btn-success btn-approve" data-id="{{ fatura.fatura_id }}" data-fatura-no="{{ fatura.fatura_no }}">
+                            <i class="fas fa-check btn-icon"></i> Ödeme Yap
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+
+                <!-- Uploaded Files Section -->
+                {% if is_edit_mode and dosyalar %}
+                <div class="uploaded-files">
+                    <h6 class="mb-3">Yüklenen Dosyalar</h6>
+
+                    {% for dosya in dosyalar %}
+                    <div class="file-item" id="file-{{ dosya.dosya_id }}">
+                        <div class="file-icon">
+                            {% if dosya.dosya_uzantisi in ['.png', '.jpg', '.jpeg'] %}
+                            <i class="fas fa-file-image text-primary"></i>
+                            {% elif dosya.dosya_uzantisi == '.pdf' %}
+                            <i class="fas fa-file-pdf text-danger"></i>
+                            {% elif dosya.dosya_uzantisi in ['.xlsx', '.xls'] %}
+                            <i class="fas fa-file-excel text-success"></i>
+                            {% else %}
+                            <i class="fas fa-file text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">{{ dosya.dosya_adi }}</div>
+                            <div class="file-meta">Yükleme tarihi: {{ dosya.yukleme_tarihi }}</div>
+                        </div>
+                        <div class="file-actions">
+                            <a href="{{ url_for('fatura_onay_dosya_indir', dosya_id=dosya.dosya_id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-download"></i> İndir
+                            </a>
+
+                            {% if not (fatura.odeme_yapildi and not (is_admin or user_logoyetki == 1)) %}
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-file" data-id="{{ dosya.dosya_id }}" data-file-name="{{ dosya.dosya_adi }}">
+                                <i class="fas fa-trash"></i> Sil
+                            </button>
+                            {% endif %}
+                        </div>
+                      </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Payment Information Section -->
+                {% if is_edit_mode and fatura.odeme_yapildi %}
+                <div class="form-section">
+                    <h6 class="mb-3">Ödeme Bilgileri</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Ödeme Durumu</label>
+                                <div>
+                                    <span class="badge badge-status badge-approved">Ödendi</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Ödeme Tarihi</label>
+                                <div>{{ fatura.odeme_tarihi }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Onaylayan</label>
+                                <div>{{ fatura.onaylayan_kullanici }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cari İsmi</label>
+                                <div>{{ fatura.cari_ismi }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete File Confirmation Modal -->
+<div class="modal fade" id="deleteFileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dosya Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu dosyayı silmek istediğinizden emin misiniz?</p>
+                <p><strong id="deleteFileName"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteFile">Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Confirmation Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ödeme Onay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bu fatura için ödeme yapıldığını onaylıyor musunuz?</p>
+                <p><strong id="approveFaturaNo"></strong></p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Bu işlem geri alınamaz!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-success" id="confirmApprove">Onayla</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Add Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for cari_ismi dropdown with AJAX support
+    $('#cari_ismi').select2({
+        placeholder: 'Cari ismi seçin veya yazın...',
+        allowClear: true,
+        tags: true, // Allow custom entries
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Sonuç bulunamadı.";
+            },
+            searching: function() {
+                return "Aranıyor...";
+            }
+        },
+        ajax: {
+            url: '/get-cari-list',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    term: params.term || '', // Search term
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data, params) {
+                params.page = params.page || 1;
+
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: false // No pagination for simplicity
+                    }
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0, // Show all results if no search term
+        // Add this to improve custom entry behavior
+        createTag: function(params) {
+            var term = $.trim(params.term);
+
+            if (term === '') {
+                return null;
+            }
+
+            return {
+                id: term,
+                text: term,
+                newTag: true
+            };
+        }
+    });
+
+    // If we're in edit mode, initialize with the current value
+    {% if is_edit_mode and fatura.cari_ismi %}
+    var currentCari = "{{ fatura.cari_ismi }}";
+    // Create a new option and select it
+    var newOption = new Option(currentCari, currentCari, true, true);
+    $('#cari_ismi').append(newOption).trigger('change');
+    {% endif %}
+
+    // Firma değiştiğinde yapılacak işlemler
+    $('#firma').on('change', function() {
+        // Reset cari select when firma changes
+        $('#cari_ismi').val(null).trigger('change');
+    });
+
+    // File input change event
+    $('#dosyalar').on('change', function() {
+        const files = this.files;
+
+        if (files.length > 0) {
+            $('#filePreview').show();
+            $('#previewList').empty();
+
+            // Create preview for each file
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileExt = file.name.split('.').pop().toLowerCase();
+
+                // Check file extension
+                const allowedExts = ['png', 'jpg', 'jpeg', 'pdf', 'xlsx', 'xls'];
+                if (!allowedExts.includes(fileExt)) {
+                    alert(`'${file.name}' dosyası izin verilen formatta değil. Sadece PNG, JPG, PDF ve Excel dosyaları yüklenebilir.`);
+                    continue;
+                }
+
+                // Check file size (10MB max)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`'${file.name}' dosyası çok büyük. Maksimum dosya boyutu 10MB.`);
+                    continue;
+                }
+
+                // Create preview item
+                let icon = 'fa-file';
+                if (['png', 'jpg', 'jpeg'].includes(fileExt)) {
+                    icon = 'fa-file-image';
+                } else if (fileExt === 'pdf') {
+                    icon = 'fa-file-pdf';
+                } else if (['xlsx', 'xls'].includes(fileExt)) {
+                    icon = 'fa-file-excel';
+                }
+
+                const previewItem = $(`
+                    <div class="preview-item">
+                        <i class="fas ${icon}"></i>
+                        ${file.name}
+                        <i class="fas fa-times remove-file"></i>
+                    </div>
+                `);
+
+                // Remove file when X is clicked
+                previewItem.find('.remove-file').on('click', function() {
+                    previewItem.remove();
+
+                    // Check if there are any preview items left
+                    if ($('#previewList').children().length === 0) {
+                        $('#filePreview').hide();
+                    }
+                });
+
+                $('#previewList').append(previewItem);
+            }
+        } else {
+            $('#filePreview').hide();
+        }
+    });
+
+    // Delete file button click
+    $('.btn-delete-file').on('click', function() {
+        const fileId = $(this).data('id');
+        const fileName = $(this).data('file-name');
+
+        $('#deleteFileName').text(fileName);
+        $('#confirmDeleteFile').data('id', fileId);
+        $('#deleteFileModal').modal('show');
+    });
+
+    // Confirm delete file
+    $('#confirmDeleteFile').on('click', function() {
+        const fileId = $(this).data('id');
+
+        $.ajax({
+            url: `/fatura-onay/dosya/delete/${fileId}`,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    $('#deleteFileModal').modal('hide');
+                    // Remove file item from DOM
+                    $(`#file-${fileId}`).fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                    // Show success message
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+            }
+        });
+    });
+
+    // Approve button click
+    $('.btn-approve').on('click', function() {
+        const faturaId = $(this).data('id');
+        const faturaNo = $(this).data('fatura-no');
+
+        $('#approveFaturaNo').text(faturaNo);
+        $('#confirmApprove').data('id', faturaId);
+        $('#approveModal').modal('show');
+    });
+
+    // Confirm approve
+    $('#confirmApprove').on('click', function() {
+        const faturaId = $(this).data('id');
+
+        $.ajax({
+            url: `/fatura-onay/approve/${faturaId}`,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    $('#approveModal').modal('hide');
+                    // Show success message
+                    alert(response.message);
+                    // Reload page
+                    window.location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+            }
+        });
+    });
+
+    // Form validation
+    $('#faturaForm').on('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Log selected cari value for debugging
+        console.log('Form submission - Selected cari:', $('#cari_ismi').val());
+
+        this.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

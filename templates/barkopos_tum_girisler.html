@@ -1,0 +1,385 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Barkopos Tüm Girişler{% endblock %}
+
+{% block head %}
+<style>
+    .tab-content {
+        padding: 20px 0;
+    }
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+        color: #282965;
+        border-bottom: 3px solid #282965;
+    }
+    .data-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .btn-export {
+        background-color: #28a745;
+        color: white;
+        border-radius: 4px;
+        padding: 8px 16px;
+        margin-bottom: 15px;
+    }
+    .btn-export:hover {
+        background-color: #218838;
+        color: white;
+    }
+    .status-aktarildi {
+        background-color: rgba(40, 167, 69, 0.1); /* Light green */
+    }
+    .status-bekliyor {
+        background-color: rgba(255, 193, 7, 0.1); /* Light yellow */
+    }
+    .table-responsive {
+        margin-top: 15px;
+    }
+    .loader {
+        display: none;
+        border: 4px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 4px solid #282965;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .search-box {
+        width: 300px;
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Barkopos Tüm Girişler</h1>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="giris-tab" data-bs-toggle="tab" data-bs-target="#giris" type="button" role="tab" aria-controls="giris" aria-selected="true">
+                <i class="fas fa-file-invoice me-2"></i> Giriş İrsaliyesi
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="zrapor-tab" data-bs-toggle="tab" data-bs-target="#zrapor" type="button" role="tab" aria-controls="zrapor" aria-selected="false">
+                <i class="fas fa-receipt me-2"></i> Z Rapor
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Giriş İrsaliyesi Tab -->
+        <div class="tab-pane fade show active" id="giris" role="tabpanel" aria-labelledby="giris-tab">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="action-bar">
+                        <div>
+                            <button class="btn btn-export" id="exportGirisBtn">
+                                <i class="fas fa-file-excel me-2"></i> Excel'e Aktar
+                            </button>
+                        </div>
+                        <div class="d-flex">
+                            <input type="text" class="form-control search-box" id="girisSearch" placeholder="Ara...">
+                            <div class="d-flex align-items-center">
+                                <div class="loader" id="girisLoader"></div>
+                                <span id="girisRecordCount" class="text-muted">0 kayıt</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover data-table" id="girisTable">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Evrak ID</th>
+                                    <th>Cari Adı</th>
+                                    <th>Toplam Miktar</th>
+                                    <th>Toplam Maliyet</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="girisTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center">Veri yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Z Rapor Tab -->
+        <div class="tab-pane fade" id="zrapor" role="tabpanel" aria-labelledby="zrapor-tab">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="action-bar">
+                        <div>
+                            <button class="btn btn-export" id="exportZRaporBtn">
+                                <i class="fas fa-file-excel me-2"></i> Excel'e Aktar
+                            </button>
+                        </div>
+                        <div class="d-flex">
+                            <input type="text" class="form-control search-box" id="zraporSearch" placeholder="Ara...">
+                            <div class="d-flex align-items-center">
+                                <div class="loader" id="zraporLoader"></div>
+                                <span id="zraporRecordCount" class="text-muted">0 kayıt</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover data-table" id="zraporTable">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>Toplam Miktar</th>
+                                    <th>Toplam Fiyat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="zraporTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center">Veri yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Load data for both tabs
+        loadGirisData();
+        
+        // Load Z Rapor data when its tab is clicked
+        $('#zrapor-tab').on('click', function() {
+            loadZRaporData();
+        });
+        
+        // Search functionality for Giriş İrsaliyesi
+        $('#girisSearch').on('keyup', function() {
+            let value = $(this).val().toLowerCase();
+            $("#girisTableBody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+            updateGirisRecordCount();
+        });
+        
+        // Search functionality for Z Rapor
+        $('#zraporSearch').on('keyup', function() {
+            let value = $(this).val().toLowerCase();
+            $("#zraporTableBody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+            updateZRaporRecordCount();
+        });
+        
+        // Export Giriş İrsaliyesi to Excel
+        $('#exportGirisBtn').on('click', function() {
+            exportTableToExcel('girisTable', 'Barkopos_Giris_Irsaliyeleri');
+        });
+        
+        // Export Z Rapor to Excel
+        $('#exportZRaporBtn').on('click', function() {
+            exportTableToExcel('zraporTable', 'Barkopos_Z_Raporlari');
+        });
+    });
+    
+    // Function to load Giriş İrsaliyesi data
+    function loadGirisData() {
+        $('#girisLoader').show();
+        
+        $.ajax({
+            url: '/barkopos-tum-girisler/giris-data',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    renderGirisTable(response.data);
+                } else {
+                    showError('Giriş İrsaliyesi verileri alınırken bir hata oluştu: ' + response.message);
+                }
+                $('#girisLoader').hide();
+            },
+            error: function(xhr, status, error) {
+                showError('Sunucu hatası: ' + error);
+                $('#girisLoader').hide();
+            }
+        });
+    }
+    
+    // Function to load Z Rapor data
+    function loadZRaporData() {
+        $('#zraporLoader').show();
+        
+        $.ajax({
+            url: '/barkopos-tum-girisler/zrapor-data',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    renderZRaporTable(response.data);
+                } else {
+                    showError('Z Rapor verileri alınırken bir hata oluştu: ' + response.message);
+                }
+                $('#zraporLoader').hide();
+            },
+            error: function(xhr, status, error) {
+                showError('Sunucu hatası: ' + error);
+                $('#zraporLoader').hide();
+            }
+        });
+    }
+    
+    // Function to render Giriş İrsaliyesi table
+    function renderGirisTable(data) {
+        let tableBody = $('#girisTableBody');
+        tableBody.empty();
+        
+        if (data.length === 0) {
+            tableBody.append('<tr><td colspan="6" class="text-center">Veri bulunamadı</td></tr>');
+            $('#girisRecordCount').text('0 kayıt');
+            return;
+        }
+        
+        $.each(data, function(index, item) {
+            let statusClass = '';
+            if (item.durum === 'Logoya Aktarıldı') {
+                statusClass = 'status-aktarildi';
+            } else if (item.durum === 'Bekliyor') {
+                statusClass = 'status-bekliyor';
+            }
+            
+            let row = `<tr class="${statusClass}">
+                <td>${item.tarih}</td>
+                <td>${item.evrak_id}</td>
+                <td>${item.unvan}</td>
+                <td>${formatNumber(item.toplam_miktar)}</td>
+                <td>${formatCurrency(item.toplam_maliyet)}</td>
+                <td>${item.durum}</td>
+            </tr>`;
+            
+            tableBody.append(row);
+        });
+        
+        updateGirisRecordCount();
+    }
+    
+    // Function to render Z Rapor table
+    function renderZRaporTable(data) {
+        let tableBody = $('#zraporTableBody');
+        tableBody.empty();
+        
+        if (data.length === 0) {
+            tableBody.append('<tr><td colspan="4" class="text-center">Veri bulunamadı</td></tr>');
+            $('#zraporRecordCount').text('0 kayıt');
+            return;
+        }
+        
+        $.each(data, function(index, item) {
+            let statusClass = '';
+            if (item.durum === 'Logoya Aktarıldı') {
+                statusClass = 'status-aktarildi';
+            } else if (item.durum === 'Bekliyor') {
+                statusClass = 'status-bekliyor';
+            }
+            
+            let row = `<tr class="${statusClass}">
+                <td>${item.tarih}</td>
+                <td>${item.durum}</td>
+                <td>${formatNumber(item.toplam_miktar)}</td>
+                <td>${formatCurrency(item.toplam_fiyat)}</td>
+            </tr>`;
+            
+            tableBody.append(row);
+        });
+        
+        updateZRaporRecordCount();
+    }
+    
+    // Update record count display
+    function updateGirisRecordCount() {
+        let visibleRows = $("#girisTableBody tr:visible").length;
+        $('#girisRecordCount').text(visibleRows + ' kayıt');
+    }
+    
+    function updateZRaporRecordCount() {
+        let visibleRows = $("#zraporTableBody tr:visible").length;
+        $('#zraporRecordCount').text(visibleRows + ' kayıt');
+    }
+    
+    // Format number with commas
+    function formatNumber(num) {
+        if (num === null || num === undefined) return '';
+        return parseFloat(num).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    // Format currency
+    function formatCurrency(num) {
+        if (num === null || num === undefined) return '';
+        return parseFloat(num).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+    }
+    
+    // Export table to Excel
+    function exportTableToExcel(tableID, filename = '') {
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableID);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        
+        // Specify file name
+        filename = filename ? filename + '.xls' : 'excel_data.xls';
+        
+        // Create download link element
+        downloadLink = document.createElement("a");
+        
+        document.body.appendChild(downloadLink);
+        
+        if(navigator.msSaveOrOpenBlob){
+            var blob = new Blob(['\ufeff', tableHTML], {
+                type: dataType
+            });
+            navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            // Create a link to the file
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+        
+            // Setting the file name
+            downloadLink.download = filename;
+            
+            // Triggering the function
+            downloadLink.click();
+        }
+    }
+    
+    // Show error message
+    function showError(message) {
+        alert(message);
+    }
+</script>
+{% endblock %}

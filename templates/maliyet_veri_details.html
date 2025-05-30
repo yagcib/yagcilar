@@ -1,0 +1,756 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Maliyet Detayları - Yagcilar Manufacturing{% endblock %}
+
+{% block head %}
+<style>
+    .card {
+        margin-bottom: 20px;
+    }
+    .cost-form {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        margin-top: 15px;
+    }
+    .table-sales tr:hover {
+        background-color: #f2f2f2;
+    }
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .badge-warning {
+        background-color: #ffc107;
+        color: black;
+    }
+    .comparison-row {
+        background-color: #e9ecef;
+        font-weight: bold;
+    }
+    .badge-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .profitability-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .profitability-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .profitability-neutral {
+        color: #6c757d;
+        font-weight: bold;
+    }
+    .vade-card {
+        background-color: #f0f7fa;
+        border-radius: 0.25rem;
+        margin-top: 15px;
+    }
+    .currency-badge {
+        background-color: #6baed6;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+    .calculation-info {
+        background-color: #f8f9fa;
+        border-left: 4px solid #6baed6;
+        padding: 10px;
+        margin-top: 15px;
+    }
+    .table-title {
+        background-color: #004085;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 4px 4px 0 0;
+        margin-bottom: 0;
+    }
+    .data-table-container {
+        margin-bottom: 30px;
+    }
+    .input-with-badge .input-group-text {
+        background-color: #6baed6;
+        color: white;
+        border-color: #6baed6;
+    }
+    .highlight-editable {
+        background-color: #f8f9fa;
+    }
+    .highlight-editable:focus {
+        background-color: #fff8e8;
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+    .edit-mode-notice {
+        background-color: #fffbe6;
+        border-left: 4px solid #ffc107;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .edit-mode-notice i {
+        font-size: 1.5rem;
+        margin-right: 10px;
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{{ url_for('maliyet_veri') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Geri Dön
+            </a>
+
+            <div class="btn-group float-end">
+                <button type="button" class="btn btn-primary" id="printButton">
+                    <i class="fas fa-print"></i> Yazdır
+                </button>
+                <button type="button" class="btn btn-success" id="exportExcelButton">
+                    <i class="fas fa-file-excel"></i> Excel'e Aktar
+                </button>
+            </div>
+        </div>
+    </div>
+
+   <!-- maliyet_veri_details.html içerisindeki İş Emri Bilgileri kartı -->
+<div class="card">
+    <!-- İş Emri Bilgileri tablosuna proje durumunu ekleyin -->
+<div class="card-header bg-primary text-white">
+    <h5 class="mb-0">
+        <i class="fas fa-info-circle"></i> İş Emri Bilgileri: {{ main_data.is_emri_no }}
+        {% if main_data.is_proje %}
+        <span class="badge bg-warning text-dark ms-2">Proje</span>
+        {% endif %}
+    </h5>
+</div>
+    <div class="card-body">
+        <!-- Ana bilgi bölümüne de proje bilgisini ekleyin -->
+<div class="row">
+    <div class="col-md-6">
+        <table class="table table-sm table-bordered">
+            <tr>
+                <th style="width: 150px;">İş Emri No:</th>
+                <td>{{ main_data.is_emri_no }}</td>
+            </tr>
+            <tr>
+                <th>Proje:</th>
+                <td>
+                    {% if main_data.is_proje %}
+                    <span class="badge bg-success">Evet</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Hayır</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Cari:</th>
+                <td>{{ main_data.cari }}</td>
+            </tr>
+                        <tr>
+                            <th>Sipariş Tarihi:</th>
+                            <td>{{ main_data.siparis_tarihi }}</td>
+                        </tr>
+                        <tr>
+                            <th>Teslim Tarihi:</th>
+                            <td>{{ main_data.teslim_tarihi }}</td>
+                        </tr>
+                        <tr>
+                            <th>Açıklama:</th>
+                            <td>{{ main_data.aciklama }}</td>
+                        </tr>
+                        <tr>
+                            <th>Döviz:</th>
+                            <td><span class="currency-badge">{{ main_data.doviz }}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-sm table-bordered">
+                        <tr>
+                            <th style="width: 150px;">Brüt Kg:</th>
+                            <td>{{ "%.2f"|format(main_data.brut_kg) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fire Kg:</th>
+                            <td>{{ "%.2f"|format(main_data.fire_kg) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Net Kg:</th>
+                            <td>{{ "%.2f"|format(main_data.net_kg) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Süre:</th>
+                            <td>{{ main_data.sure }}</td>
+                        </tr>
+                        <tr>
+                            <th>Büküm Kg:</th>
+                            <td>{{ "%.2f"|format(main_data.bukum_kg) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Vuruş Sayısı:</th>
+                            <td>{{ main_data.vurus_sayisi }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="row mt-3">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">Finansal Özet</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th>Satış Tutarı (Net):</th>
+                                                <td class="text-end">{{ "%.2f"|format(main_data.satis_tutari) }} {{ main_data.doviz }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Vade Farkı ({{ "%.1f"|format(main_data.vade_yuzde) }}%):</th>
+                                                {% set vade_farki = main_data.satis_tutari * main_data.vade_yuzde / 100 %}
+                                                <td class="text-end">{{ "%.2f"|format(vade_farki) }} {{ main_data.doviz }}</td>
+                                            </tr>
+                                            <tr class="comparison-row">
+                                                <th>Hesaplanan Satış Fiyatı:</th>
+                                                <td class="text-end">{{ "%.2f"|format(main_data.hesaplanan_fiyat) }} {{ main_data.doviz }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Gerçekleşen Satış Fiyatı:</th>
+                                                <td class="text-end">{{ "%.2f"|format(main_data.gerceklesen_satis_fiyati) }} {{ main_data.doviz }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th>Maliyet Tutarı:</th>
+                                                <td class="text-end">
+                                                    {% if maliyet_girildi %}
+                                                        {{ "%.2f"|format(main_data.maliyet_tutari) }} {{ main_data.doviz }}
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">Girilmedi</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% if maliyet_girildi %}
+                                            <tr>
+                                                <th>Vade Gün:</th>
+                                                <td class="text-end">{{ main_data.vade_gun }} gün</td>
+                                            </tr>
+                                            <tr class="comparison-row">
+                                                <th>Kar:</th>
+                                                {% set profit = main_data.gerceklesen_satis_fiyati - main_data.maliyet_tutari %}
+                                                {% set profit_percent = (profit / main_data.gerceklesen_satis_fiyati * 100) if main_data.gerceklesen_satis_fiyati > 0 else 0 %}
+                                                <td class="text-end
+                                                    {% if profit > 0 %}profitability-positive
+                                                    {% elif profit < 0 %}profitability-negative
+                                                    {% else %}profitability-neutral{% endif %}">
+                                                    {{ "%.2f"|format(profit) }} {{ main_data.doviz }}
+                                                    ({{ "%.1f"|format(profit_percent) }}%)
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {% if main_data.satis_fiyati_aciklama %}
+                            <div class="calculation-info mt-2">
+                                <h6><i class="fas fa-info-circle"></i> Satış Fiyatı Açıklaması:</h6>
+                                <p>{{ main_data.satis_fiyati_aciklama }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMBINED DISPLAY: Sales Details and Cost Input -->
+    <div class="row">
+        <!-- Left side: Sales Details -->
+        <div class="col-md-6">
+            <div class="data-table-container">
+                <h5 class="table-title">
+                    <i class="fas fa-file-invoice-dollar"></i> Satış Detayları
+                </h5>
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped table-sales mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Tür</th>
+                                        <th>Malzeme</th>
+                                        <th>Miktar</th>
+                                        <th>Birim</th>
+                                        <th>Birim Fiyat ({{ main_data.doviz }})</th>
+                                        <th>Toplam Fiyat ({{ main_data.doviz }})</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in sales_details %}
+                                    <tr>
+                                        <td>{{ item.tur }}</td>
+                                        <td>{{ item.malzeme }}</td>
+                                        <td>{{ "%.2f"|format(item.miktar) }}</td>
+                                        <td>{{ item.birim }}</td>
+                                        <td>{{ "%.2f"|format(item.birim_fiyat) }}</td>
+                                        <td {% if item.tur == 'Hurda' or item.toplam_fiyat < 0 %}class="text-danger"{% endif %}>
+                                            {{ "%.2f"|format(item.toplam_fiyat) }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="comparison-row">
+                                        <td colspan="5" class="text-end"><strong>Toplam:</strong></td>
+                                        <td><strong>{{ "%.2f"|format(main_data.satis_tutari) }} {{ main_data.doviz }}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right side: Cost Input -->
+        <div class="col-md-6">
+            <div class="data-table-container">
+                <h5 class="table-title">
+                    <i class="fas fa-calculator"></i> Maliyet Ekleme
+                </h5>
+                <div class="card">
+                    <div class="card-body">
+                        {% if maliyet_girildi %}
+                        <div class="edit-mode-notice">
+                            <i class="fas fa-pencil-alt"></i>
+                            <div>
+                                <strong>Maliyet Düzenleme Modu</strong>
+                                <p class="mb-0">Mevcut maliyet verilerini düzenleyebilir ve güncelleyebilirsiniz.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <form id="costForm" method="post" action="{{ url_for('maliyet_veri_save', sale_id=main_data.sale_id) }}">
+                            <div class="cost-form">
+                                <div class="mb-3">
+                                    <label for="maliyet_aciklama" class="form-label">Maliyet Açıklaması:</label>
+                                    <textarea class="form-control highlight-editable" id="maliyet_aciklama" name="maliyet_aciklama" rows="2">{{ main_data.maliyet_aciklama }}</textarea>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered table-striped" id="costDetailsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Tür</th>
+                                                <th>Malzeme</th>
+                                                <th>Miktar</th>
+                                                <th>Birim</th>
+                                                <th>Birim Maliyet ({{ main_data.doviz }})</th>
+                                                <th>Toplam Maliyet ({{ main_data.doviz }})</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in sales_details %}
+                                            <tr>
+                                                <td>
+                                                    <input type="hidden" name="tur" value="{{ item.tur }}">
+                                                    {{ item.tur }}
+                                                </td>
+                                                <td>
+                                                    <input type="hidden" name="malzeme" value="{{ item.malzeme }}">
+                                                    {{ item.malzeme }}
+                                                </td>
+                                                <td>
+                                                    <input type="hidden" name="miktar" value="{{ item.miktar }}">
+                                                    {{ "%.2f"|format(item.miktar) }}
+                                                </td>
+                                                <td>
+                                                    <input type="hidden" name="birim" value="{{ item.birim }}">
+                                                    {{ item.birim }}
+                                                </td>
+                                                <td>
+                                                    {% set matching_cost = none %}
+                                                    {% for cost_item in cost_details %}
+                                                        {% if cost_item.tur == item.tur and cost_item.malzeme == item.malzeme %}
+                                                            {% set matching_cost = cost_item %}
+                                                        {% endif %}
+                                                    {% endfor %}
+
+                                                    <input type="number" class="form-control form-control-sm birim-maliyet highlight-editable"
+                                                           name="birim_maliyet" step="0.01" min="0"
+                                                           value="{{ "%.2f"|format(matching_cost.birim_maliyet) if matching_cost else 0 }}"
+                                                           data-miktar="{{ item.miktar }}">
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm toplam-maliyet"
+                                                           name="toplam_maliyet" step="0.01" min="0" readonly
+                                                           value="{{ "%.2f"|format(matching_cost.toplam_maliyet) if matching_cost else 0 }}">
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            <tr class="comparison-row">
+                                                <td colspan="5" class="text-end"><strong>Toplam Maliyet:</strong></td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" id="maliyet_toplam"
+                                                           name="maliyet_toplam" step="0.01" min="0" readonly
+                                                           value="{{ "%.2f"|format(main_data.maliyet_tutari) if maliyet_girildi else 0 }}">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Vade ve Kar Marjı Bilgileri -->
+                                <div class="card vade-card mt-4">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="maliyet_fiyati_aciklama" class="form-label">Maliyet Fiyatı Açıklaması:</label>
+                                                    <textarea class="form-control highlight-editable" id="maliyet_fiyati_aciklama" name="maliyet_fiyati_aciklama" rows="3">{{ main_data.maliyet_fiyati_aciklama }}</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group mb-3">
+                                                            <label for="gerceklesen_maliyet_fiyati" class="form-label">Gerçekleşen Maliyet Fiyatı:</label>
+                                                            <input type="number" step="0.01" class="form-control highlight-editable" id="gerceklesen_maliyet_fiyati"
+                                                                   name="gerceklesen_maliyet_fiyati" value="{{ main_data.gerceklesen_maliyet_fiyati if maliyet_girildi else 0 }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group mb-3">
+                                                            <label for="vade_gun" class="form-label">Vade Gün:</label>
+                                                            <input type="number" class="form-control highlight-editable" id="vade_gun"
+                                                                   name="vade_gun" value="{{ main_data.vade_gun }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card bg-light">
+                                                    <div class="card-body py-2">
+                                                        <h6 class="mb-2">Karlılık Özeti</h6>
+                                                        <div class="row">
+                                                            <div class="col-6">Satış Tutarı:</div>
+                                                            <div class="col-6 text-end">{{ "%.2f"|format(main_data.gerceklesen_satis_fiyati) }} {{ main_data.doviz }}</div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-6">Maliyet Tutarı:</div>
+                                                            <div class="col-6 text-end" id="dynamic_maliyet">{{ "%.2f"|format(main_data.maliyet_tutari) if maliyet_girildi else "0.00" }} {{ main_data.doviz }}</div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-6"><strong>Kar:</strong></div>
+                                                            <div class="col-6 text-end" id="dynamic_kar">
+                                                                {% if maliyet_girildi %}
+                                                                    {% set profit = main_data.gerceklesen_satis_fiyati - main_data.maliyet_tutari %}
+                                                                    <span class="{% if profit > 0 %}profitability-positive{% elif profit < 0 %}profitability-negative{% else %}profitability-neutral{% endif %}">
+                                                                        {{ "%.2f"|format(profit) }} {{ main_data.doviz }}
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="profitability-neutral">0.00 {{ main_data.doviz }}</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-6"><strong>Kar Oranı:</strong></div>
+                                                            <div class="col-6 text-end" id="dynamic_kar_orani">
+                                                                {% if maliyet_girildi and main_data.gerceklesen_satis_fiyati > 0 %}
+                                                                    {% set profit = main_data.gerceklesen_satis_fiyati - main_data.maliyet_tutari %}
+                                                                    {% set profit_percent = (profit / main_data.gerceklesen_satis_fiyati * 100) %}
+                                                                    <span class="{% if profit_percent > 0 %}profitability-positive{% elif profit_percent < 0 %}profitability-negative{% else %}profitability-neutral{% endif %}">
+                                                                        {{ "%.1f"|format(profit_percent) }}%
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="profitability-neutral">0.0%</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-4">
+                                    <div class="col-12 text-center">
+                                        {% if maliyet_girildi %}
+                                        <button type="submit" class="btn btn-warning btn-lg">
+                                            <i class="fas fa-save"></i> Maliyet Güncelle
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-save"></i> Maliyet Kaydet
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- SheetJS library for Excel export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Calculate totals when unit cost changes
+        $('.birim-maliyet').on('input', function() {
+            const row = $(this).closest('tr');
+            const miktar = parseFloat($(this).data('miktar'));
+            const birimMaliyet = parseFloat($(this).val()) || 0;
+            const toplamMaliyet = miktar * birimMaliyet;
+
+            row.find('.toplam-maliyet').val(toplamMaliyet.toFixed(2));
+
+            // Recalculate total
+            let total = 0;
+            $('.toplam-maliyet').each(function() {
+                total += parseFloat($(this).val()) || 0;
+            });
+
+            $('#maliyet_toplam').val(total.toFixed(2));
+
+            // Automatically set the Gerçekleşen Maliyet Fiyatı to the total cost
+            $('#gerceklesen_maliyet_fiyati').val(total.toFixed(2));
+
+            // Update dynamic summary
+            updateDynamicSummary();
+        });
+
+        // Update dynamic summary when gerçekleşen maliyet fiyatı changes
+        $('#gerceklesen_maliyet_fiyati').on('input', function() {
+            updateDynamicSummary();
+        });
+
+        // Function to update dynamic summary
+        function updateDynamicSummary() {
+            const satisFiyati = {{ main_data.gerceklesen_satis_fiyati }};
+            const maliyetFiyati = parseFloat($('#gerceklesen_maliyet_fiyati').val()) ||
+                                  parseFloat($('#maliyet_toplam').val()) || 0;
+
+            // Calculate profit and profit percent
+            const kar = satisFiyati - maliyetFiyati;
+            const karOrani = satisFiyati > 0 ? (kar / satisFiyati * 100) : 0;
+
+            // Update the UI
+            $('#dynamic_maliyet').text(maliyetFiyati.toFixed(2) + ' {{ main_data.doviz }}');
+
+            const karElement = $('#dynamic_kar');
+            karElement.text(kar.toFixed(2) + ' {{ main_data.doviz }}');
+            karElement.removeClass('profitability-positive profitability-negative profitability-neutral');
+            if (kar > 0) karElement.addClass('profitability-positive');
+            else if (kar < 0) karElement.addClass('profitability-negative');
+            else karElement.addClass('profitability-neutral');
+
+            const karOraniElement = $('#dynamic_kar_orani');
+            karOraniElement.text(karOrani.toFixed(1) + '%');
+            karOraniElement.removeClass('profitability-positive profitability-negative profitability-neutral');
+            if (karOrani > 0) karOraniElement.addClass('profitability-positive');
+            else if (karOrani < 0) karOraniElement.addClass('profitability-negative');
+            else karOraniElement.addClass('profitability-neutral');
+        }
+
+        // Form submission via AJAX
+        $('#costForm').on('submit', function(e) {
+            e.preventDefault();
+
+            // Add gerceklesen_maliyet_fiyati if it's not present in the form
+            if ($('#maliyet_toplam').val() > 0 && $('#gerceklesen_maliyet_fiyati').val() <= 0) {
+                $('#gerceklesen_maliyet_fiyati').val($('#maliyet_toplam').val());
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        alert(response.message);
+
+                        // Reload the page to show updated data
+                        location.reload();
+                    } else {
+                        // Show error message
+                        alert('Hata: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            });
+        });
+
+        // Print functionality
+        $('#printButton').on('click', function() {
+            window.print();
+        });
+
+        /// Excel export functionality
+$('#exportExcelButton').on('click', function() {
+    // Create a new workbook
+    var wb = XLSX.utils.book_new();
+
+    // General information sheet
+    var generalData = [
+        ['Maliyet Raporu: {{ main_data.is_emri_no }}', '', '', '', '', ''],
+        ['', '', '', '', '', ''],
+        ['Sipariş Bilgileri', '', '', '', '', ''],
+        ['İş Emri No:', '{{ main_data.is_emri_no }}', '', 'Brüt Kg:', '{{ main_data.brut_kg }}', ''],
+        ['Proje:', '{% if main_data.is_proje %}Evet{% else %}Hayır{% endif %}', '', 'Fire Kg:', '{{ main_data.fire_kg }}', ''],
+        ['Cari:', '{{ main_data.cari }}', '', 'Net Kg:', '{{ main_data.net_kg }}', ''],
+    ['Sipariş Tarihi:', '{{ main_data.siparis_tarihi }}', '', 'Net Kg:', '{{ main_data.net_kg }}', ''],
+    ['Teslim Tarihi:', '{{ main_data.teslim_tarihi }}', '', 'Süre:', '{{ main_data.sure }}', ''],
+    ['Açıklama:', '{{ main_data.aciklama }}', '', 'Büküm Kg:', '{{ main_data.bukum_kg }}', ''],
+    ['Döviz:', '{{ main_data.doviz }}', '', 'Vuruş Sayısı:', '{{ main_data.vurus_sayisi }}', ''],
+                ['', '', '', '', '', ''],
+                ['Finansal Özet', '', '', '', '', ''],
+                ['Satış Tutarı:', '{{ main_data.satis_tutari }} {{ main_data.doviz }}', '', 'Maliyet Tutarı:', '{{ main_data.maliyet_tutari if maliyet_girildi else "Girilmedi" }} {{ main_data.doviz if maliyet_girildi else "" }}', ''],
+                ['Hesaplanan Fiyat:', '{{ main_data.hesaplanan_fiyat }} {{ main_data.doviz }}', '', 'Vade Gün:', '{{ main_data.vade_gun }}', ''],
+                ['Gerçekleşen Satış:', '{{ main_data.gerceklesen_satis_fiyati }} {{ main_data.doviz }}', '', 'Vade Yüzde:', '{{ main_data.vade_yuzde }}%', ''],
+                ['', '', '', '', '', ''],
+                {% if maliyet_girildi %}
+                ['Kar:', '{{ "%.2f"|format(main_data.gerceklesen_satis_fiyati - main_data.maliyet_tutari) }} {{ main_data.doviz }}', '', 'Kar Oranı:', '{{ "%.1f"|format((main_data.gerceklesen_satis_fiyati - main_data.maliyet_tutari) / main_data.gerceklesen_satis_fiyati * 100 if main_data.gerceklesen_satis_fiyati > 0 else 0) }}%', ''],
+                {% endif %}
+            ];
+
+            // Sales details sheet
+            var salesHeader = [['Tür', 'Malzeme', 'Miktar', 'Birim', 'Birim Fiyat', 'Toplam Fiyat']];
+            var salesData = [];
+
+            {% for item in sales_details %}
+            salesData.push(['{{ item.tur }}', '{{ item.malzeme }}', {{ item.miktar }}, '{{ item.birim }}', {{ item.birim_fiyat }}, {{ item.toplam_fiyat }}]);
+            {% endfor %}
+
+            salesData.push(['', '', '', '', 'TOPLAM:', {{ main_data.satis_tutari }}]);
+
+            // Cost details sheet (if available)
+            var costHeader = [['Tür', 'Malzeme', 'Miktar', 'Birim', 'Birim Maliyet', 'Toplam Maliyet']];
+            var costData = [];
+
+            {% if maliyet_girildi %}
+            {% for item in cost_details %}
+            costData.push(['{{ item.tur }}', '{{ item.malzeme }}', {{ item.miktar }}, '{{ item.birim }}', {{ item.birim_maliyet }}, {{ item.toplam_maliyet }}]);
+            {% endfor %}
+
+            costData.push(['', '', '', '', 'TOPLAM:', {{ main_data.maliyet_tutari }}]);
+            {% endif %}
+
+            // Add worksheets to workbook
+            var wsGeneral = XLSX.utils.aoa_to_sheet(generalData);
+            XLSX.utils.book_append_sheet(wb, wsGeneral, "Genel Bilgiler");
+
+            var wsSales = XLSX.utils.aoa_to_sheet(salesHeader.concat(salesData));
+            XLSX.utils.book_append_sheet(wb, wsSales, "Satış Detayları");
+
+            if (costData.length > 0) {
+                var wsCost = XLSX.utils.aoa_to_sheet(costHeader.concat(costData));
+                XLSX.utils.book_append_sheet(wb, wsCost, "Maliyet Detayları");
+            }
+
+            // Generate Excel file and trigger download
+            XLSX.writeFile(wb, "Maliyet_Raporu_{{ main_data.is_emri_no }}.xlsx");
+        });
+
+        // Initialize dynamic summary on page load
+        updateDynamicSummary();
+
+        // Trigger calculation on page load to ensure correct values
+        $('.birim-maliyet:first').trigger('input');
+
+        // Focus visual effect for editable fields
+        $('.highlight-editable').focus(function() {
+            $(this).addClass('is-focused');
+        }).blur(function() {
+            $(this).removeClass('is-focused');
+        });
+    });
+</script>
+
+<style>
+    /* Print styles */
+    @media print {
+        .btn, button, .no-print, .edit-mode-notice {
+            display: none !important;
+        }
+
+        .card {
+            border: 1px solid #ddd !important;
+            margin-bottom: 10px !important;
+            break-inside: avoid;
+        }
+
+        .card-header {
+            background-color: #f0f7ff !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .profitability-positive {
+            color: #28a745 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .profitability-negative {
+            color: #dc3545 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .table-dark {
+            background-color: #343a40 !important;
+            color: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .table-title {
+            background-color: #004085 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .container-fluid {
+            width: 100% !important;
+            padding: 0 !important;
+        }
+
+        input, textarea {
+            border: none !important;
+            background: transparent !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+        }
+    }
+</style>
+{% endblock %}

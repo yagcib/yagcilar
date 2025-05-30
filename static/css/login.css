@@ -1,0 +1,229 @@
+/* Modern Kurumsal Login Sayfası */
+body {
+    padding-top: 60px;
+    background: linear-gradient(135deg, #3a4ca0 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+}
+
+.login-container {
+    max-width: 450px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+.login-header {
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+}
+
+.logo-container {
+    margin-bottom: 20px;
+}
+
+.company-logo {
+    max-width: 180px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.login-header h1 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 5px;
+    position: relative;
+    display: inline-block;
+}
+
+.login-header h1:after {
+    content: '';
+    position: absolute;
+    width: 70px;
+    height: 4px;
+    background: #764ba2;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.login-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.form-label {
+    font-weight: 600;
+    display: block;
+    text-align: left;
+    margin-bottom: 10px;
+    color: #282965;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+.input-container {
+    position: relative;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 14px 15px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    width: 100%;
+    padding-right: 45px; /* Space for the icon */
+    background-color: #f9fafc;
+}
+
+.form-control:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.1);
+    background-color: #fff;
+}
+
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #764ba2;
+    font-size: 1.1rem;
+}
+
+/* Form spacing without action buttons */
+form {
+    margin-top: 25px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #764ba2 0%, #6c5ce7 100%);
+    border: none;
+    padding: 14px 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.2);
+}
+
+.btn-login {
+    font-size: 1rem;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
+}
+
+/* Alert styles */
+.alerts {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: none;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.alert-success {
+    background-color: #f0fff4;
+    color: #38a169;
+    border-left: 4px solid #38a169;
+}
+
+.alert-danger {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    border-left: 4px solid #e53e3e;
+}
+
+/* Forgot password link */
+.forgot-password-link {
+    color: #764ba2;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+.forgot-password-link:hover {
+    color: #6c5ce7;
+    text-decoration: underline;
+}
+
+/* Footer */
+.login-footer {
+    text-align: center;
+    margin-top: 35px;
+    color: #777;
+    font-size: 0.85rem;
+}
+
+.copyright {
+    font-size: 0.75rem;
+    margin-top: 5px;
+    color: #999;
+}
+
+/* Animation effect */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-container {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .login-container {
+        padding: 25px;
+        margin: 0 15px;
+    }
+    
+    .company-logo {
+        max-width: 150px;
+    }
+    
+    .login-header h1 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Custom shadow effect on focus */
+.form-control:focus {
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.1);
+}

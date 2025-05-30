@@ -1,0 +1,681 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Stok Listesi{% endblock %}
+
+{% block head %}
+<!-- Additional CSS for dataTables -->
+<style>
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+        margin-bottom: 20px;
+        border: none;
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0 !important;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-bottom: 10px;
+    }
+
+    .group-header {
+        background-color: #e9ecef;
+        font-weight: bold;
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .group-header:hover {
+        background-color: #dee2e6;
+    }
+
+    .group-content {
+        display: none;
+    }
+
+    .group-content.show {
+        display: table-row-group;
+    }
+
+    .summary-row {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    /* Filter card styling */
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .form-select, .form-control {
+        border-radius: 6px;
+    }
+
+    /* Make filter section collapsible */
+    .filter-toggle {
+        cursor: pointer;
+    }
+
+    .filter-body {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    /* Status indicator */
+    .status-indicator {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 8px 15px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .status-indicator i {
+        margin-right: 8px;
+        color: #262262;
+    }
+
+    /* Number badge for filtered items */
+    .filter-badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: #262262;
+        color: white;
+        margin-left: 5px;
+    }
+
+    /* Boostrap 5 fix for old BS4 form-select */
+    .form-select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        appearance: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="m-0 font-weight-bold">Filtreler</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2 mb-3">
+                <label for="filterAnaGrup">Ana Grup</label>
+                <select id="filterAnaGrup" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="filterAltGrup">Alt Grup</label>
+                <select id="filterAltGrup" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="filterKalinlik">Kalınlık</label>
+                <select id="filterKalinlik" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="filterYukseklik">Yükseklik</label>
+                <select id="filterYukseklik" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="filterEn">En</label>
+                <select id="filterEn" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label for="filterBoy">Boy</label>
+                <select id="filterBoy" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label for="filterKalite">Kalite</label>
+                <select id="filterKalite" class="form-select">
+                    <option value="">Tümü</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="filterStokAdi">Stok Adı</label>
+                <input type="text" id="filterStokAdi" class="form-control" placeholder="Stok adı ara...">
+            </div>
+            <div class="col-md-6 text-end align-self-end">
+                <button id="btnApplyFilters" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrele
+                </button>
+                <button id="btnResetFilters" class="btn btn-secondary ms-2">
+                    <i class="fas fa-undo"></i> Sıfırla
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="m-0 font-weight-bold">Stok Durumu</h5>
+        <div>
+            <button class="btn btn-primary" id="btnRefresh">
+                <i class="fas fa-sync-alt"></i> Yenile
+            </button>
+            <button class="btn btn-success" id="btnExcel">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button class="btn btn-info" id="btnPrint">
+                <i class="fas fa-print"></i> Yazdır
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="stokTable" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ANA GRUP</th>
+                        <th>ALT GRUP</th>
+                        <th>STOK ADI</th>
+                        <th>KALINLIK</th>
+                        <th>YÜKSEKLİK</th>
+                        <th>EN</th>
+                        <th>BOY</th>
+                        <th>KALİTE</th>
+                        <th>2.KALİTE</th>
+                        <th>DEPO (ADET)</th>
+                        <th>REZERVE (ADET)</th>
+                        <th>TOP.MİKTAR (ADET)</th>
+                        <th>TOP.MİKTAR (KG)</th>
+                        <th>NOT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Veriler AJAX ile yüklenecek -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>DEPO TOPLAM</th>
+                        <th>REZERVE TOPLAM</th>
+                        <th>MİKTAR TOPLAM</th>
+                        <th>KG TOPLAM</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // This script enhances the filtering functionality in stok_listesi.html
+// to implement Excel-like slicer behavior where each filter
+// dynamically updates based on other filter selections
+
+$(document).ready(function() {
+    // Variable to store all data
+    let allData = [];
+    // Variable to store currently filtered data
+    let filteredData = [];
+    // Variable to store the DataTable instance
+    let table;
+    // Object to store filter selections
+    let filterSelections = {
+        anaGrup: '',
+        altGrup: '',
+        kalinlik: '',
+        yukseklik: '',
+        en: '',
+        boy: '',
+        kalite: '',
+        stokAdi: ''
+    };
+
+    // Initial data load and select population
+    $.ajax({
+        url: '/stok-listesi/data',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            // Store all data
+            allData = data;
+            filteredData = data;
+
+            // Initialize the DataTable with all data
+            initializeDataTable(data);
+
+            // Populate filter dropdowns with all values initially
+            populateFilterDropdowns(data);
+
+            // Add event listeners to filter dropdowns for cascading updates
+            setupFilterEventListeners();
+        },
+        error: function(xhr, status, error) {
+            console.error("Error loading data:", error);
+            alert("Veri yüklenirken bir hata oluştu: " + error);
+        }
+    });
+
+    // Function to initialize the DataTable
+    function initializeDataTable(data) {
+        // Create DataTable with grouping
+        table = $('#stokTable').DataTable({
+            "data": data,
+            "columns": [
+                { "data": "ANA_GRUP" },
+                { "data": "ALT_GRUP" },
+                { "data": "STOK_ADI" },
+                { "data": "KALINLIK" },
+                { "data": "YUKSEKLIK" },
+                { "data": "EN" },
+                { "data": "BOY" },
+                { "data": "KALITE" },
+                { "data": "KALITE2" },
+                { "data": "DEPO_ADET", "render": $.fn.dataTable.render.number('.', ',', 0) },
+                { "data": "REZERVE_ADET", "render": $.fn.dataTable.render.number('.', ',', 0) },
+                { "data": "TOPLAM_MIKTAR_ADET", "render": $.fn.dataTable.render.number('.', ',', 0) },
+                { "data": "TOPLAM_MIKTAR_KG", "render": $.fn.dataTable.render.number('.', ',', 2) },
+                { "data": "NOT" }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json"
+            },
+            "order": [[0, "asc"]],
+            "pageLength": 100,  // Default to showing 100 records
+            "lengthMenu": [[25, 50, 100, 250, 500, 1000, -1], [25, 50, 100, 250, 500, 1000, "Tümü"]],
+            "rowGroup": {
+                "dataSrc": "ANA_GRUP",
+                "startRender": function(rows, group) {
+                    var depoTotal = rows
+                        .data()
+                        .pluck('DEPO_ADET')
+                        .reduce(function(a, b) { return a + b; }, 0);
+
+                    var rezerveTotal = rows
+                        .data()
+                        .pluck('REZERVE_ADET')
+                        .reduce(function(a, b) { return a + b; }, 0);
+
+                    var miktarTotal = rows
+                        .data()
+                        .pluck('TOPLAM_MIKTAR_ADET')
+                        .reduce(function(a, b) { return a + b; }, 0);
+
+                    var kgTotal = rows
+                        .data()
+                        .pluck('TOPLAM_MIKTAR_KG')
+                        .reduce(function(a, b) { return a + b; }, 0);
+
+                    return $('<tr/>')
+                        .append('<td colspan="9"><strong>' + group + '</strong></td>')
+                        .append('<td><strong>' + depoTotal.toLocaleString('tr-TR') + '</strong></td>')
+                        .append('<td><strong>' + rezerveTotal.toLocaleString('tr-TR') + '</strong></td>')
+                        .append('<td><strong>' + miktarTotal.toLocaleString('tr-TR') + '</strong></td>')
+                        .append('<td><strong>' + kgTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></td>')
+                        .append('<td></td>');
+                }
+            },
+            "footerCallback": function(row, data, start, end, display) {
+                var api = this.api();
+
+                // Total values for each column
+                var pageTotal = api
+                    .column(9, { page: 'current' })
+                    .data()
+                    .reduce(function(a, b) { return a + b; }, 0);
+
+                $(api.column(9).footer()).html('Toplam: ' + pageTotal.toLocaleString('tr-TR'));
+
+                // Rezerve adet column
+                pageTotal = api
+                    .column(10, { page: 'current' })
+                    .data()
+                    .reduce(function(a, b) { return a + b; }, 0);
+
+                $(api.column(10).footer()).html('Toplam: ' + pageTotal.toLocaleString('tr-TR'));
+
+                // Toplam miktar adet column
+                pageTotal = api
+                    .column(11, { page: 'current' })
+                    .data()
+                    .reduce(function(a, b) { return a + b; }, 0);
+
+                $(api.column(11).footer()).html('Toplam: ' + pageTotal.toLocaleString('tr-TR'));
+
+                // Toplam miktar kg column
+                pageTotal = api
+                    .column(12, { page: 'current' })
+                    .data()
+                    .reduce(function(a, b) { return a + b; }, 0);
+
+                $(api.column(12).footer()).html('Toplam: ' + pageTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            },
+            "dom": 'Blfrtip',
+            "buttons": [
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel"></i> Excel',
+                    title: 'Stok Listesi',
+                    className: 'btn btn-success d-none',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print"></i> Yazdır',
+                    title: 'Stok Listesi',
+                    className: 'btn btn-info d-none',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    customize: function(win) {
+                        $(win.document.body).css('font-size', '10pt');
+                        $(win.document.body).find('table')
+                            .addClass('compact')
+                            .css('font-size', 'inherit');
+                    }
+                }
+            ]
+        });
+
+        // Apply filters button event handler
+        $('#btnApplyFilters').on('click', function() {
+            applyFilters();
+        });
+
+        // Reset filters button event handler
+        $('#btnResetFilters').on('click', function() {
+            resetFilters();
+        });
+
+        // Stok Adı text filter keyup event
+        $('#filterStokAdi').on('keyup', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+
+        // Excel and Print button event handlers
+        $('#btnExcel').on('click', function() {
+            $('.buttons-excel').click();
+        });
+
+        $('#btnPrint').on('click', function() {
+            $('.buttons-print').click();
+        });
+
+        // Refresh button
+        $('#btnRefresh').on('click', function() {
+            $.ajax({
+                url: '/stok-listesi/data',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    allData = data;
+                    filteredData = data;
+                    table.clear().rows.add(data).draw();
+                    populateFilterDropdowns(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error refreshing data:", error);
+                    alert("Veri yenilenirken bir hata oluştu: " + error);
+                }
+            });
+        });
+    }
+
+    // Function to populate filter dropdowns with unique values
+    function populateFilterDropdowns(data) {
+        // Clear all dropdowns first
+        $('#filterAnaGrup').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterAltGrup').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterKalinlik').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterYukseklik').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterEn').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterBoy').empty().append($('<option>', { value: '', text: 'Tümü' }));
+        $('#filterKalite').empty().append($('<option>', { value: '', text: 'Tümü' }));
+
+        // Extract unique values based on current filtered data
+        var anaGrupValues = new Set();
+        var altGrupValues = new Set();
+        var kalinlikValues = new Set();
+        var yukseklikValues = new Set();
+        var enValues = new Set();
+        var boyValues = new Set();
+        var kaliteValues = new Set();
+
+        // Extract unique values
+        data.forEach(function(item) {
+            if (item.ANA_GRUP) anaGrupValues.add(item.ANA_GRUP);
+            if (item.ALT_GRUP) altGrupValues.add(item.ALT_GRUP);
+            if (item.KALINLIK) kalinlikValues.add(item.KALINLIK);
+            if (item.YUKSEKLIK) yukseklikValues.add(item.YUKSEKLIK);
+            if (item.EN) enValues.add(item.EN);
+            if (item.BOY) boyValues.add(item.BOY);
+            if (item.KALITE) kaliteValues.add(item.KALITE);
+        });
+
+        // Sort values
+        var sortValues = function(set) {
+            return Array.from(set).sort();
+        };
+
+        // Populate dropdowns with current values
+        populateDropdown('#filterAnaGrup', sortValues(anaGrupValues));
+        populateDropdown('#filterAltGrup', sortValues(altGrupValues));
+        populateDropdown('#filterKalinlik', sortValues(kalinlikValues));
+        populateDropdown('#filterYukseklik', sortValues(yukseklikValues));
+        populateDropdown('#filterEn', sortValues(enValues));
+        populateDropdown('#filterBoy', sortValues(boyValues));
+        populateDropdown('#filterKalite', sortValues(kaliteValues));
+
+        // Restore previous selections if they're still valid
+        if (filterSelections.anaGrup && Array.from(anaGrupValues).includes(filterSelections.anaGrup)) {
+            $('#filterAnaGrup').val(filterSelections.anaGrup);
+        }
+        if (filterSelections.altGrup && Array.from(altGrupValues).includes(filterSelections.altGrup)) {
+            $('#filterAltGrup').val(filterSelections.altGrup);
+        }
+        if (filterSelections.kalinlik && Array.from(kalinlikValues).includes(filterSelections.kalinlik)) {
+            $('#filterKalinlik').val(filterSelections.kalinlik);
+        }
+        if (filterSelections.yukseklik && Array.from(yukseklikValues).includes(filterSelections.yukseklik)) {
+            $('#filterYukseklik').val(filterSelections.yukseklik);
+        }
+        if (filterSelections.en && Array.from(enValues).includes(filterSelections.en)) {
+            $('#filterEn').val(filterSelections.en);
+        }
+        if (filterSelections.boy && Array.from(boyValues).includes(filterSelections.boy)) {
+            $('#filterBoy').val(filterSelections.boy);
+        }
+        if (filterSelections.kalite && Array.from(kaliteValues).includes(filterSelections.kalite)) {
+            $('#filterKalite').val(filterSelections.kalite);
+        }
+    }
+
+    // Helper function to populate a dropdown
+    function populateDropdown(selector, values) {
+        var dropdown = $(selector);
+        values.forEach(function(value) {
+            dropdown.append($('<option>', {
+                value: value,
+                text: value
+            }));
+        });
+    }
+
+    // Setup event listeners for interactive filtering
+    function setupFilterEventListeners() {
+        // Add change event to each dropdown to update other dropdowns
+        $('#filterAnaGrup').on('change', function() {
+            filterSelections.anaGrup = $(this).val();
+            updateFilters('ANA_GRUP');
+        });
+
+        $('#filterAltGrup').on('change', function() {
+            filterSelections.altGrup = $(this).val();
+            updateFilters('ALT_GRUP');
+        });
+
+        $('#filterKalinlik').on('change', function() {
+            filterSelections.kalinlik = $(this).val();
+            updateFilters('KALINLIK');
+        });
+
+        $('#filterYukseklik').on('change', function() {
+            filterSelections.yukseklik = $(this).val();
+            updateFilters('YUKSEKLIK');
+        });
+
+        $('#filterEn').on('change', function() {
+            filterSelections.en = $(this).val();
+            updateFilters('EN');
+        });
+
+        $('#filterBoy').on('change', function() {
+            filterSelections.boy = $(this).val();
+            updateFilters('BOY');
+        });
+
+        $('#filterKalite').on('change', function() {
+            filterSelections.kalite = $(this).val();
+            updateFilters('KALITE');
+        });
+
+        $('#filterStokAdi').on('input', function() {
+            filterSelections.stokAdi = $(this).val();
+            // Only update after 500ms of inactivity to avoid too many updates
+            clearTimeout(this.timeoutId);
+            this.timeoutId = setTimeout(function() {
+                updateFilters('STOK_ADI');
+            }, 500);
+        });
+    }
+
+    // Function to update filters based on selection in one filter
+    function updateFilters(changedFilter) {
+        // Filter the data based on current selections
+        filteredData = allData.filter(function(item) {
+            // Check each filter condition, except for the one that just changed
+            if (filterSelections.anaGrup && item.ANA_GRUP !== filterSelections.anaGrup) return false;
+            if (filterSelections.altGrup && item.ALT_GRUP !== filterSelections.altGrup) return false;
+            if (filterSelections.kalinlik && item.KALINLIK !== filterSelections.kalinlik) return false;
+            if (filterSelections.yukseklik && item.YUKSEKLIK !== filterSelections.yukseklik) return false;
+            if (filterSelections.en && item.EN !== filterSelections.en) return false;
+            if (filterSelections.boy && item.BOY !== filterSelections.boy) return false;
+            if (filterSelections.kalite && item.KALITE !== filterSelections.kalite) return false;
+            if (filterSelections.stokAdi && !item.STOK_ADI.toLowerCase().includes(filterSelections.stokAdi.toLowerCase())) return false;
+
+            return true;
+        });
+
+        // Update the data table with filtered data
+        table.clear().rows.add(filteredData).draw();
+
+        // Update the filter dropdowns with new available options
+        populateFilterDropdowns(filteredData);
+    }
+
+    // Apply filters to the DataTable
+    function applyFilters() {
+        // Get current filter values
+        filterSelections.anaGrup = $('#filterAnaGrup').val();
+        filterSelections.altGrup = $('#filterAltGrup').val();
+        filterSelections.kalinlik = $('#filterKalinlik').val();
+        filterSelections.yukseklik = $('#filterYukseklik').val();
+        filterSelections.en = $('#filterEn').val();
+        filterSelections.boy = $('#filterBoy').val();
+        filterSelections.kalite = $('#filterKalite').val();
+        filterSelections.stokAdi = $('#filterStokAdi').val();
+
+        // Update filters based on all selections
+        updateFilters();
+    }
+
+    // Reset all filters
+    function resetFilters() {
+        // Clear all filter selections
+        filterSelections = {
+            anaGrup: '',
+            altGrup: '',
+            kalinlik: '',
+            yukseklik: '',
+            en: '',
+            boy: '',
+            kalite: '',
+            stokAdi: ''
+        };
+
+        // Clear the form inputs
+        $('#filterAnaGrup').val('');
+        $('#filterAltGrup').val('');
+        $('#filterKalinlik').val('');
+        $('#filterYukseklik').val('');
+        $('#filterEn').val('');
+        $('#filterBoy').val('');
+        $('#filterKalite').val('');
+        $('#filterStokAdi').val('');
+
+        // Reset DataTable to show all data
+        filteredData = allData;
+        table.clear().rows.add(allData).draw();
+
+        // Repopulate filter dropdowns with all data
+        populateFilterDropdowns(allData);
+    }
+});
+</script>
+{% endblock %}

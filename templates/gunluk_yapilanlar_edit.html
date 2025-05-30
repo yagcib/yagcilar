@@ -1,0 +1,142 @@
+{% extends "base_layout.html" %}
+
+{% block head %}
+<style>
+    .form-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .action-buttons {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .action-buttons .btn {
+        min-width: 120px;
+        margin: 0 10px;
+    }
+    
+    .input-with-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .input-with-label label {
+        width: 120px;
+        text-align: right;
+        margin-right: 15px;
+        font-weight: 500;
+    }
+    
+    .input-with-label .form-control {
+        flex: 1;
+    }
+    
+    .input-with-label .input-group {
+        flex: 1;
+    }
+    
+    .input-group-text {
+        background-color: #f3f6f4;
+        border-color: #ced4da;
+        color: #495057;
+    }
+    
+    @media (max-width: 767.98px) {
+        .input-with-label {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .input-with-label label {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-edit me-2"></i> Günlük Yapılan Düzenle</h5>
+    </div>
+    <div class="card-body">
+        <form id="gunlukEditForm" method="POST" action="{{ url_for('gunluk_yapilanlar_edit', gunluk_id=gunluk_item.id) }}">
+            <div class="row">
+                <div class="col-md-8 mx-auto form-container">
+                    <div class="input-with-label">
+                        <label for="cari_proje">Cari / Proje:</label>
+                        <input type="text" id="cari_proje" name="cari_proje" class="form-control" value="{{ gunluk_item.cari_proje or '' }}">
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="konu">Konu:</label>
+                        <input type="text" id="konu" name="konu" class="form-control" required value="{{ gunluk_item.konu or '' }}">
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="detay">Detay:</label>
+                        <textarea id="detay" name="detay" class="form-control" rows="4">{{ gunluk_item.detay or '' }}</textarea>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="miktar">Miktar:</label>
+                        <div class="input-group">
+                            <input type="number" id="miktar" name="miktar" class="form-control" min="0" step="0.01" value="{{ gunluk_item.miktar or 0 }}">
+                            <span class="input-group-text">KG</span>
+                        </div>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="adet">Adet:</label>
+                        <div class="input-group">
+                            <input type="number" id="adet" name="adet" class="form-control" min="0" value="{{ gunluk_item.adet or 0 }}">
+                            <span class="input-group-text">ADET</span>
+                        </div>
+                    </div>
+
+                    <div class="input-with-label">
+                        <label for="tarih_readonly">Tarih:</label>
+                        <input type="text" id="tarih_readonly" class="form-control" readonly value="{{ gunluk_item.tarih }}" disabled>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> GÜNCELLE
+                        </button>
+                        <a href="{{ url_for('gunluk_yapilanlar') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> VAZGEÇ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.getElementById('gunlukEditForm');
+
+        form.addEventListener('submit', function(event) {
+            const konuInput = document.getElementById('konu');
+
+            if (!konuInput.value.trim()) {
+                event.preventDefault();
+                alert('Konu alanı zorunludur.');
+                konuInput.focus();
+            }
+        });
+    });
+</script>
+{% endblock %}

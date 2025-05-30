@@ -1,0 +1,386 @@
+<!-- Action Buttons -->
+<div class="row mb-3">
+    <div class="col-12 text-end">
+        <button type="button" class="btn btn-primary" id="printButton">
+            <i class="fas fa-print"></i> Yazdır
+        </button>
+        <button type="button" class="btn btn-success" id="exportExcelButton">
+            <i class="fas fa-file-excel"></i> Excel'e Aktar
+        </button>
+    </div>
+</div>
+
+<!-- Maliyet Ana Bilgileri -->
+<div class="card mb-3 print-content">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Sipariş Bilgileri</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <p><strong>Kayıt Tipi:</strong> {{ main.kayit_tipi or 'Belirtilmemiş' }}</p>
+            </div>
+            <div class="col-md-3">
+                <p><strong>Proje:</strong> {% if main.is_proje %}Evet{% else %}Hayır{% endif %}</p>
+            </div>
+            <div class="col-md-3">
+                <p><strong>İş Emri No:</strong> {{ main.is_emri_no }}</p>
+            </div>
+            <div class="col-md-3">
+                <p><strong>Sipariş Tarihi:</strong> {{ main.siparis_tarihi }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <p><strong>Teslim Tarihi:</strong> {{ main.teslim_tarihi }}</p>
+            </div>
+            <div class="col-md-3">
+                <p><strong>Cari:</strong> {{ main.cari or 'Belirtilmemiş' }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Açıklama:</strong> {{ main.aciklama or 'Belirtilmemiş' }}</p>
+            </div>
+        </div>
+        <div class="row mt-1">
+            <div class="col-md-3">
+                <p><strong>Döviz:</strong> {{ main.doviz or 'TL' }}</p>
+            </div>
+            <div class="col-md-9">
+                <p><strong>Oluşturan:</strong> {{ main.olusturan_kullanici }} - <strong>Tarih:</strong> {{ main.olusturma_tarihi }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Malzeme Bilgileri -->
+<div class="card mb-3 print-content">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Malzeme Bilgileri</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">
+                <p><strong>Brüt Kg:</strong> {{ main.brut_kg }}</p>
+            </div>
+            <div class="col-md-2">
+                <p><strong>Fire Kg:</strong> {{ main.fire_kg }}</p>
+            </div>
+            <div class="col-md-2">
+                <p><strong>Net Kg:</strong> {{ main.net_kg }}</p>
+            </div>
+            <div class="col-md-2">
+                <p><strong>Süre:</strong> {{ main.sure }}</p>
+            </div>
+            <div class="col-md-2">
+                <p><strong>Büküm Kg:</strong> {{ main.bukum_kg }}</p>
+            </div>
+            <div class="col-md-2">
+                <p><strong>Vuruş Sayısı:</strong> {{ main.vurus_sayisi }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Malzeme ve İşçilik Detayları -->
+<div class="card mb-3 print-content">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Malzeme ve İşçilik Fiyatları</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+    <table class="table table-bordered table-striped" id="malzemeTable">
+        <thead class="table-light">
+            <tr>
+                <th>Tür</th>
+                <th>Malzeme</th>
+                <th>Miktar</th>
+                <th>Birim</th>
+                <th>Satış Br.Fiyat</th>
+                <th>Maliyet Br.Fiyat</th>
+                <th>Maliyet Toplam</th>
+                <th>Satış Toplam</th>
+                <th>Not</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in details %}
+            <tr>
+                <td>{{ item.tur }}</td>
+                <td>{{ item.malzeme }}</td>
+                <td>{{ item.miktar }}</td>
+                <td>{{ item.birim }}</td>
+                <td>{{ item.satis_birim_fiyat }}</td>
+                <td>{{ item.maliyet_birim_fiyat }}</td>
+                <td {% if item.tur == 'Hurda' or item.maliyet_toplam_fiyat < 0 %}class="negative-value"{% endif %}>
+                    {{ item.maliyet_toplam_fiyat }}
+                </td>
+                <td {% if item.tur == 'Hurda' or item.satis_toplam_fiyat < 0 %}class="negative-value"{% endif %}>
+                    {{ item.satis_toplam_fiyat }}
+                </td>
+                <td>{{ item.not_detay }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="table-light">
+                <td colspan="6" class="text-end"><strong>Maliyet Ara Toplam:</strong></td>
+                <td><strong>{{ main.ara_toplam }}</strong></td>
+                <td colspan="2"></td>
+            </tr>
+            <tr class="table-light">
+                <td colspan="6" class="text-end"><strong>Satış Ara Toplam:</strong></td>
+                <td></td>
+                <td><strong>{{ main.ara_toplam_satis }}</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+    </div>
+</div>
+
+<!-- Vade ve Satış Fiyatı Bilgileri -->
+<div class="card print-content">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">Vade ve Satış Fiyatı Bilgileri</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <p><strong>Satış Fiyatı Açıklama:</strong> {{ main.satis_fiyati_aciklama or 'Belirtilmemiş' }}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Vade %:</strong> {{ main.vade_yuzde or '0' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Vade Gün:</strong> {{ main.vade_gun or '0' }}</p>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <p><strong>Hesaplanan Fiyat:</strong> {{ main.hesaplanan_fiyat or main.ara_toplam }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Gerçekleşen Satış Fiyatı:</strong> {{ main.gerceklesen_satis_fiyati or main.ara_toplam }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .negative-value {
+        color: #dc3545;
+    }
+
+    @media print {
+        /* Yeni eklenen CSS - Önceki görünürlük kısıtlamasını kaldırma */
+        body * {
+            visibility: visible;
+        }
+
+        /* Sadece yazdırılacak içeriği göstermek için */
+        body > *:not(.print-content) {
+            display: none;
+        }
+
+        /* Ana içerik düzenlemesi */
+        .print-content {
+            display: block !important;
+            width: 100% !important;
+            position: static;
+            left: auto;
+            top: auto;
+        }
+
+        /* Modal düzenlemeleri gereksizse kaldırılabilir */
+        .modal {
+            position: relative;
+            left: auto;
+            top: auto;
+            margin: 0;
+            padding: 0;
+            overflow: visible !important;
+        }
+
+        .modal-dialog {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+        }
+
+        .modal-content {
+            border: 0;
+            box-shadow: none;
+        }
+
+        /* Yazdırılmayacak öğeler */
+        .no-print, .no-print *,
+        #printButton, #exportExcelButton,
+        nav, header, footer {
+            display: none !important;
+        }
+
+        /* Sayfa düzenlemeleri */
+        .card {
+            margin-bottom: 5px !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .card-body {
+            padding: 2px !important;
+        }
+
+        .card-header {
+            padding: 2px 5px !important;
+            background-color: #f8f9fa !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .row {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+
+        p {
+            margin-bottom: 1px !important;
+            font-size: 9px !important;
+            line-height: 1.1 !important;
+        }
+
+        .table {
+            font-size: 8px !important;
+            margin-bottom: 2px !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+
+        .table th, .table td {
+            padding: 2px !important;
+        }
+
+        h6 {
+            font-size: 10px !important;
+            margin: 0 !important;
+            padding: 2px !important;
+        }
+
+        .table-light {
+            background-color: #f8f9fa !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .negative-value {
+            color: #dc3545 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        /* Column settings */
+        .col-md-2, .col-md-3, .col-md-6, .col-md-9, .col-md-12 {
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+        }
+
+        /* Table responsiveness */
+        .table-responsive {
+            overflow-x: visible !important;
+        }
+
+        /* Page settings */
+        @page {
+            size: landscape;
+            margin: 5mm !important;
+        }
+
+        /* Table column widths */
+        #malzemeTable th:nth-child(1), #malzemeTable td:nth-child(1) { width: 15% !important; }
+        #malzemeTable th:nth-child(2), #malzemeTable td:nth-child(2) { width: 25% !important; }
+        #malzemeTable th:nth-child(3), #malzemeTable td:nth-child(3) { width: 15% !important; }
+        #malzemeTable th:nth-child(4), #malzemeTable td:nth-child(4) { width: 10% !important; }
+        #malzemeTable th:nth-child(5), #malzemeTable td:nth-child(5) { width: 15% !important; }
+        #malzemeTable th:nth-child(6), #malzemeTable td:nth-child(6) { width: 20% !important; }
+    }
+</style>
+
+<script>
+    // Add the print functionality
+    document.getElementById('printButton').addEventListener('click', function() {
+        window.print();
+    });
+
+   // Add Excel export functionality
+document.getElementById('exportExcelButton').addEventListener('click', function() {
+    // Get data for export
+    var workbook = XLSX.utils.book_new();
+    var data = [];
+
+    // Add title
+    data.push(['Satış ve Maliyet Detayları']);
+    data.push([]);
+
+    // Add order info
+    data.push(['Sipariş Bilgileri']);
+    data.push(['Kayıt Tipi:', '{{ main.kayit_tipi or "Belirtilmemiş" }}']);
+    data.push(['Proje:', '{% if main.is_proje %}Evet{% else %}Hayır{% endif %}']);
+    data.push(['İş Emri No:', '{{ main.is_emri_no }}']);
+    data.push(['Sipariş Tarihi:', '{{ main.siparis_tarihi }}']);
+    data.push(['Teslim Tarihi:', '{{ main.teslim_tarihi }}']);
+    data.push(['Cari:', '{{ main.cari or "Belirtilmemiş" }}']);
+    data.push(['Açıklama:', '{{ main.aciklama or "Belirtilmemiş" }}']);
+    data.push(['Döviz:', '{{ main.doviz or "TL" }}']);
+    data.push(['Oluşturan:', '{{ main.olusturan_kullanici }} - {{ main.olusturma_tarihi }}']);
+    data.push([]);
+
+    // Add material info
+    data.push(['Malzeme Bilgileri']);
+    data.push(['Brüt Kg:', '{{ main.brut_kg }}']);
+    data.push(['Fire Kg:', '{{ main.fire_kg }}']);
+    data.push(['Net Kg:', '{{ main.net_kg }}']);
+    data.push(['Süre:', '{{ main.sure }}']);
+    data.push(['Büküm Kg:', '{{ main.bukum_kg }}']);
+    data.push(['Vuruş Sayısı:', '{{ main.vurus_sayisi }}']);
+    data.push([]);
+
+    // Add materials and labor pricing
+    data.push(['Malzeme ve İşçilik Fiyatları']);
+    data.push(['Tür', 'Malzeme', 'Miktar', 'Birim', 'Satış Br.Fiyat', 'Maliyet Br.Fiyat', 'Maliyet Toplam', 'Satış Toplam', 'Not']);
+
+    {% for item in details %}
+    data.push(['{{ item.tur }}', '{{ item.malzeme }}', '{{ item.miktar }}', '{{ item.birim }}', '{{ item.satis_birim_fiyat }}', '{{ item.maliyet_birim_fiyat }}', '{{ item.maliyet_toplam_fiyat }}', '{{ item.satis_toplam_fiyat }}', '{{ item.not_detay }}']);
+    {% endfor %}
+
+    data.push(['', '', '', '', '', 'Maliyet Ara Toplam:', '{{ main.ara_toplam }}', '', '']);
+    data.push(['', '', '', '', '', 'Satış Ara Toplam:', '', '{{ main.ara_toplam_satis }}', '']);
+    data.push([]);
+
+    // Add vade and price info
+    data.push(['Vade ve Satış Fiyatı Bilgileri']);
+    data.push(['Satış Fiyatı Açıklama:', '{{ main.satis_fiyati_aciklama or "Belirtilmemiş" }}']);
+    data.push(['Vade %:', '{{ main.vade_yuzde or "0" }}']);
+    data.push(['Vade Gün:', '{{ main.vade_gun or "0" }}']);
+    data.push(['Hesaplanan Fiyat:', '{{ main.hesaplanan_fiyat or main.ara_toplam }}']);
+    data.push(['Gerçekleşen Satış Fiyatı:', '{{ main.gerceklesen_satis_fiyati or main.ara_toplam }}']);
+
+    // Create worksheet and add to workbook
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, ws, "Maliyet Detayları");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "Maliyet_Detay_{{ main.is_emri_no }}.xlsx");
+});
+</script>
+
+<!-- Load SheetJS library -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>

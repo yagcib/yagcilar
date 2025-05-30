@@ -1,0 +1,422 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Tahsilat Analizi{% endblock %}
+
+{% block head %}
+<!-- DataTables CSS - Row Grouping -->
+<link href="https://cdn.datatables.net/rowgroup/1.2.0/css/dataTables.rowGroup.min.css" rel="stylesheet">
+
+<style>
+    .dataTables_wrapper .dt-buttons {
+        margin-bottom: 15px;
+    }
+    .text-right {
+        text-align: right;
+    }
+    .filter-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .filter-container label {
+        font-weight: 500;
+        color: #333;
+    }
+    .danger-amount {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .warning-amount {
+        color: #ffc107;
+        font-weight: 600;
+    }
+    .safe-amount {
+        color: #28a745;
+        font-weight: 600;
+    }
+    /* Negatif değerler için stil */
+    .negative-value {
+        color: #dc3545 !important;
+        font-weight: 600;
+    }
+    /* Gruplama başlığı için stil */
+    .group-header {
+        background-color: #e9ecef !important;
+        font-weight: 600;
+        font-size: 1.05rem;
+        padding: 8px 12px;
+    }
+    .dtrg-group {
+        background-color: #e9ecef !important;
+        font-weight: 600;
+    }
+    .dtrg-group td {
+        padding: 0.75rem 1rem !important;
+        font-size: 1.05rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Tahsilat Analizi</h5>
+                <span class="badge bg-primary">Satış Temsilcisi: {{ user_logo }}</span>
+            </div>
+            <div class="card-body">
+                <!-- Filtreleme alanları -->
+                <div class="filter-container">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="filterFirma" class="form-label">Firma</label>
+                            <input type="text" class="form-control filter-input" id="filterFirma" data-column="0" placeholder="Firma adı ara...">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="filterCariKod" class="form-label">Cari Hesap Kodu</label>
+                            <input type="text" class="form-control filter-input" id="filterCariKod" data-column="1" placeholder="Cari kod ara...">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="filterCariAd" class="form-label">Cari Hesap Adı</label>
+                            <input type="text" class="form-control filter-input" id="filterCariAd" data-column="2" placeholder="Cari ad ara...">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="filterSatTem" class="form-label">Satış Temsilcisi</label>
+                            <input type="text" class="form-control filter-input" id="filterSatTem" data-column="13" placeholder="Satış temsilcisi ara...">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="groupBySelect" class="form-label">Gruplama</label>
+                            <select class="form-select" id="groupBySelect">
+                                <option value="" selected>Gruplama Yok</option>
+                                <option value="0">Firma</option>
+                                <option value="1">Cari Kod</option>
+                                <option value="2">Cari Adı</option>
+                                <option value="5">Döviz</option>
+                                <option value="13">Satış Temsilcisi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <button id="clearFilters" class="btn btn-secondary me-2">
+                                <i class="fas fa-eraser me-1"></i> Filtreleri Temizle
+                            </button>
+
+                            <!-- LOGOYETKI = 1 olan kullanıcılar için Tüm veri butonu -->
+                            {% if user_logoyetki == 1 %}
+                            <button id="allData" class="btn btn-primary">
+                                <i class="fas fa-database me-1"></i> Tüm Veri
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tablo -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-striped" id="tahsilat-table">
+                        <thead>
+                            <tr>
+                                <th>Firma</th>
+                                <th>Cari Kod</th>
+                                <th>Cari Adı</th>
+                                <th>Ort. Vade</th>
+                                <th>Açık Borç Ort. Süre</th>
+                                <th>Döviz</th>
+                                <th>Cari Bakiye</th>
+                                <th>Vadesi Geçen Tutar</th>
+                                <th>0-7 Gün</th>
+                                <th>8-14 Gün</th>
+                                <th>15-29 Gün</th>
+                                <th>30-59 Gün</th>
+                                <th>60-89 Gün</th>
+                                <th>Satış Temsilcisi</th>
+                                   <th>NOT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tahsilat in tahsilat_data %}
+                            <tr>
+                                <td>{{ tahsilat.firma }}</td>
+                                <td>{{ tahsilat.cari_hesap_kodu }}</td>
+                                <td>{{ tahsilat.cari_hesap_adi }}</td>
+                                <td>{{ tahsilat.ort_vade }}</td>
+                                <td>{{ tahsilat.acik_borc_ortalama_sure }}</td>
+                                <td>{{ tahsilat.dvz }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.cari_bakiye|default(0)|float|round(2) }}</td>
+                                <td class="text-right vadesi-gecen-tutar numeric-value">{{ tahsilat.vadesi_gecen_tutar|default(0)|float|round(2) }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.gun_0_7|default(0)|float|round(2) }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.gun_8_14|default(0)|float|round(2) }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.gun_15_29|default(0)|float|round(2) }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.gun_30_59|default(0)|float|round(2) }}</td>
+                                <td class="text-right numeric-value">{{ tahsilat.gun_60_89|default(0)|float|round(2) }}</td>
+                                <td>{{ tahsilat.sat_tem }}</td>
+                                 <td>
+            <button type="button" class="btn btn-sm btn-primary not-btn"
+                   data-cari-kod="{{ tahsilat.cari_hesap_kodu }}"
+                   data-cari-ad="{{ tahsilat.cari_hesap_adi }}"
+                   data-sat-tem="{{ tahsilat.sat_tem }}">
+                <i class="fas fa-sticky-note me-1"></i> Not Ekle
+            </button>
+        </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if tahsilat_data|length == 0 %}
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i> Görüntülenecek tahsilat verisi bulunamadı.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal fade" id="notModal" tabindex="-1" aria-labelledby="notModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notModalLabel">Not Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="notIframe" src="" style="width: 100%; height: 500px; border: none;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+            <div class="card-footer text-muted">
+                <small><i class="fas fa-clock me-1"></i> Son güncelleme tarihi: {{ now.strftime('%d.%m.%Y %H:%M') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables RowGroup -->
+<script src="https://cdn.datatables.net/rowgroup/1.2.0/js/dataTables.rowGroup.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Negatif değerleri işaretle - sayfa ilk yüklendiğinde
+        function markNegativeValues() {
+            $('.numeric-value').each(function() {
+                var text = $(this).text().trim();
+                var value = parseFloat(text.replace(/[^0-9,-]/g, '').replace(',', '.'));
+                if (value < 0) {
+                    $(this).addClass('negative-value');
+                } else {
+                    $(this).removeClass('negative-value');
+                }
+            });
+        }
+
+        // İlk sayfa yüklendiğinde negatif değerleri işaretle
+        markNegativeValues();
+
+        // DataTable initialization
+        var table = $('#tahsilat-table').DataTable({
+            "pageLength": 25,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Turkish.json"
+            },
+            "order": [[7, "desc"]], // Sort by "Vadesi Geçen Tutar" column
+            "columnDefs": [
+                { "type": "num", "targets": [3, 4, 6, 7, 8, 9, 10, 11, 12] },
+                {
+                    "targets": [6, 7, 8, 9, 10, 11, 12],
+                    "render": function(data, type, row) {
+                        if (type === 'display' || type === 'filter') {
+                            // Para birimi formatlaması
+                            const value = parseFloat(data);
+                            const formattedValue = value.toLocaleString('tr-TR', {
+                                style: 'currency',
+                                currency: 'TRY',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+
+                            // Negatif değerler için sınıf ekle
+                            if (value < 0) {
+                                return '<span class="negative-value">' + formattedValue + '</span>';
+                            }
+                            return formattedValue;
+                        }
+                        return data;
+                    }
+                },
+                  {
+            "targets": 14,
+            "data": null,
+            "defaultContent": '<button type="button" class="btn btn-sm btn-primary not-btn"><i class="fas fa-sticky-note me-1"></i> Not Ekle</button>',
+            "orderable": false // Sıralama yapılmasını engelle
+        }
+
+            ],
+            "dom": 'Bfrtip',
+            "buttons": [
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel me-1"></i> Excel',
+                    className: 'btn btn-success btn-sm',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'pdf',
+                    text: '<i class="fas fa-file-pdf me-1"></i> PDF',
+                    className: 'btn btn-danger btn-sm',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    orientation: 'landscape'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fas fa-print me-1"></i> Yazdır',
+                    className: 'btn btn-info btn-sm',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ],
+            // Gruplama ayarları - başlangıçta kapalı
+            "rowGroup": {
+                "dataSrc": "",
+                "enabled": false,
+                "className": 'group-header'
+            },
+            "drawCallback": function(settings) {
+                // Vadesi geçen tutarlara göre renklendirme
+                $('#tahsilat-table tbody tr').each(function() {
+                    var vadesiGecenText = $(this).find('td.vadesi-gecen-tutar').text();
+                    var vadesiGecen = parseFloat(vadesiGecenText.replace(/[^0-9,-]/g, '').replace(',', '.'));
+
+                    if (vadesiGecen > 10000) {
+                        $(this).find('td.vadesi-gecen-tutar').addClass('danger-amount');
+                    } else if (vadesiGecen > 5000) {
+                        $(this).find('td.vadesi-gecen-tutar').addClass('warning-amount');
+                    } else if (vadesiGecen > 0) {
+                        $(this).find('td.vadesi-gecen-tutar').addClass('safe-amount');
+                    }
+                });
+
+                // Tablo her çizildiğinde negatif değerleri yeniden işaretle
+                markNegativeValues();
+            }
+        });
+
+        // Direkt filtreleme için olay dinleyicileri
+        $('.filter-input').on('keyup', function() {
+            var columnIndex = $(this).data('column');
+            table.column(columnIndex).search($(this).val()).draw();
+        });
+
+        // Filtreleri temizle butonu
+        $('#clearFilters').on('click', function() {
+            $('.filter-input').val('');
+            $('#groupBySelect').val('');
+
+            // Tüm sütunlardaki aramaları temizle
+            table.search('').columns().search('').draw();
+
+            // Gruplamayı devre dışı bırak
+            table.rowGroup().disable();
+            table.draw();
+        });
+
+        // Tüm veri butonu (LOGOYETKI = 1 için)
+        $('#allData').on('click', function() {
+            // AJAX isteği ile tüm verileri getirme
+            $.ajax({
+                url: '{{ url_for("tahsilat_tum_veri") }}',
+                method: 'GET',
+                dataType: 'json',
+                beforeSend: function() {
+                    // Yükleme göstergesi
+                    $('#allData').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Yükleniyor...');
+                },
+                success: function(data) {
+                    if (data.success) {
+                        // Tabloyu temizle ve yeni verileri ekle
+                        table.clear();
+                        table.rows.add(data.data).draw();
+
+                        // Başarı mesajı
+                        $('<div class="alert alert-success alert-dismissible fade show mt-3">' +
+                          '<i class="fas fa-check-circle me-1"></i> ' + data.message +
+                          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                          '</div>').insertAfter('.filter-container').delay(3000).fadeOut(500);
+                    } else {
+                        // Hata mesajı
+                        $('<div class="alert alert-danger alert-dismissible fade show mt-3">' +
+                          '<i class="fas fa-exclamation-circle me-1"></i> ' + data.message +
+                          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                          '</div>').insertAfter('.filter-container').delay(3000).fadeOut(500);
+                    }
+                },
+                error: function() {
+                    // Hata mesajı
+                    $('<div class="alert alert-danger alert-dismissible fade show mt-3">' +
+                      '<i class="fas fa-exclamation-circle me-1"></i> Veriler alınırken bir hata oluştu!' +
+                      '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                      '</div>').insertAfter('.filter-container').delay(3000).fadeOut(500);
+                },
+                complete: function() {
+                    // Butonu eski haline getir
+                    $('#allData').prop('disabled', false).html('<i class="fas fa-database me-1"></i> Tüm Veri');
+                }
+            });
+        });
+
+        // Gruplama işlemi
+        $('#groupBySelect').on('change', function() {
+            var columnIndex = $(this).val();
+
+            if (columnIndex !== "") {
+                // Gruplamayı etkinleştir
+                table.rowGroup().dataSrc(parseInt(columnIndex)).enable();
+                table.order([parseInt(columnIndex), 'asc']);
+                table.draw();
+            } else {
+                // Gruplamayı devre dışı bırak
+                table.rowGroup().disable();
+                table.order([7, "desc"]);
+                table.draw();
+            }
+        });
+// Not butonu için olay dinleyicisi
+$(document).on('click', '.not-btn', function() {
+    // Tıklanan satırın verisini al
+    var data = table.row($(this).parents('tr')).data();
+
+    // Gerekli verileri al
+    const cariKod = data[1]; // Cari kodu 1. indekste (0'dan başlıyor)
+    const cariAd = data[2];  // Cari adı 2. indekste
+    const satTem = data[13]; // Satış temsilcisi 13. indekste
+
+    // iframe src değerini ayarla
+    const iframeSrc = `/tahsilat-not?cari_kod=${encodeURIComponent(cariKod)}&cari_ad=${encodeURIComponent(cariAd)}&sat_tem=${encodeURIComponent(satTem)}`;
+    $('#notIframe').attr('src', iframeSrc);
+
+    // Modal başlığını güncelle
+    $('#notModalLabel').text(`Not: ${cariAd} (${cariKod})`);
+
+    // Modalı göster
+    $('#notModal').modal('show');
+});
+
+// Modal kapatıldığında iframe içeriğini temizle
+$('#notModal').on('hidden.bs.modal', function() {
+    $('#notIframe').attr('src', '');
+});
+    });
+</script>
+{% endblock %}
