@@ -1781,6 +1781,126 @@ def gunluk_yapilanlar_delete(gunluk_id):
         cursor.close()
         conn.close()
         return jsonify({'success': False, 'message': f'Kayıt silinirken bir hata oluştu: {str(e)}'})
+
+@app.route('/gunluk-yapilanlar/download-excel')
+@login_required
+@permission_required(menu_id=8, permission_type='view')
+def gunluk_yapilanlar_download_excel():
+    """Günlük yapılanları Excel olarak indir."""
+    import io
+    import pandas as pd
+    from flask import make_response
+
+    user_id = session['user_id']
+    username = session['username']  # Username'i al
+    is_admin = session.get('is_admin', False)
+
+    # Veritabanından verileri çek
+    conn = get_db_connection3()
+    cursor = conn.cursor()
+
+    try:
+        # Admin kullanıcılarına tüm kayıtları, normal kullanıcılara sadece kendi kayıtlarını göster
+        if is_admin:
+            cursor.execute("""
+                SELECT 
+                    Gun_Tarih,
+                    Gun_Cari_Proje,
+                    Gun_Konu,
+                    Gun_Detay,
+                    Gun_Miktar,
+                    Gun_Adet,
+                    Gun_Olusturan
+                FROM YH_GUNLUK_YAPILANLAR
+                ORDER BY Gun_Tarih DESC
+            """)
+        else:
+            cursor.execute("""
+                SELECT 
+                    Gun_Tarih,
+                    Gun_Cari_Proje,
+                    Gun_Konu,
+                    Gun_Detay,
+                    Gun_Miktar,
+                    Gun_Adet,
+                    Gun_Olusturan
+                FROM YH_GUNLUK_YAPILANLAR
+                WHERE Gun_Olusturan = ?
+                ORDER BY Gun_Tarih DESC
+            """, (username,))  # user_id yerine username kullan
+
+        # Verileri DataFrame'e dönüştür
+        if is_admin:
+            columns = ['Tarih', 'Cari/Proje', 'Konu', 'Detay', 'Miktar (KG)', 'Adet', 'Oluşturan']
+        else:
+            columns = ['Tarih', 'Cari/Proje', 'Konu', 'Detay', 'Miktar (KG)', 'Adet']
+
+        rows = cursor.fetchall()
+
+        data = []
+        for row in rows:
+            if is_admin:
+                data.append({
+                    'Tarih': row[0].strftime('%d.%m.%Y') if row[0] else '',
+                    'Cari/Proje': row[1] or '',
+                    'Konu': row[2] or '',
+                    'Detay': row[3] or '',
+                    'Miktar (KG)': float(row[4]) if row[4] else 0,
+                    'Adet': int(row[5]) if row[5] else 0,
+                    'Oluşturan': row[6] or ''
+                })
+            else:
+                data.append({
+                    'Tarih': row[0].strftime('%d.%m.%Y') if row[0] else '',
+                    'Cari/Proje': row[1] or '',
+                    'Konu': row[2] or '',
+                    'Detay': row[3] or '',
+                    'Miktar (KG)': float(row[4]) if row[4] else 0,
+                    'Adet': int(row[5]) if row[5] else 0
+                })
+
+        df = pd.DataFrame(data, columns=columns)
+
+        # Excel dosyası oluştur
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Günlük Yapılanlar', index=False)
+
+            # Formatları ayarla
+            workbook = writer.book
+            worksheet = writer.sheets['Günlük Yapılanlar']
+
+            # Kolon genişliklerini ayarla
+            worksheet.set_column('A:A', 12)  # Tarih
+            worksheet.set_column('B:B', 25)  # Cari/Proje
+            worksheet.set_column('C:C', 20)  # Konu
+            worksheet.set_column('D:D', 40)  # Detay
+            worksheet.set_column('E:E', 12)  # Miktar
+            worksheet.set_column('F:F', 10)  # Adet
+            if is_admin:
+                worksheet.set_column('G:G', 15)  # Oluşturan
+
+        output.seek(0)
+
+        # Response oluştur
+        response = make_response(output.read())
+        response.headers[
+            'Content-Disposition'] = f'attachment; filename=gunluk_yapilanlar_{datetime.now().strftime("%d_%m_%Y")}.xlsx'
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+        # İşlemi logla
+        log_user_action(user_id, 'GUNLUK_DOWNLOAD_EXCEL', f'Günlük yapılanlar Excel olarak indirildi')
+
+        return response
+
+    except Exception as e:
+        print(f"Excel indirme hatası: {e}")
+        flash(f'Excel dosyası oluşturulurken bir hata oluştu: {str(e)}', 'error')
+        return redirect(url_for('gunluk_yapilanlar'))
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/admin/menus/delete/<int:menu_id>', methods=['POST'])
 @admin_required
 def admin_menus_delete(menu_id):
@@ -4770,104 +4890,7 @@ def haftalik_yemek_sil(menu_id):
         return redirect(url_for('haftalik_yemek'))
 
 
-@app.route('/gunluk-yapilanlar/download-excel')
-@login_required
-@permission_required(menu_id=8, permission_type='view')
-def gunluk_yapilanlar_download_excel():
-    """Günlük yapılanları Excel olarak indir."""
-    import io
-    import pandas as pd
-    from flask import make_response
 
-    user_id = session['user_id']
-    is_admin = session.get('is_admin', False)
-
-    # Veritabanından verileri çek
-    conn = get_db_connection3()
-    cursor = conn.cursor()
-
-    try:
-        # Admin kullanıcılarına tüm kayıtları, normal kullanıcılara sadece kendi kayıtlarını göster
-        if is_admin:
-            cursor.execute("""
-                SELECT 
-                    Gun_Tarih,
-                    Gun_Cari_Proje,
-                    Gun_Konu,
-                    Gun_Detay,
-                    Gun_Miktar,
-                    Gun_Adet
-                FROM YH_GUNLUK_YAPILANLAR
-                ORDER BY Gun_Tarih DESC
-            """)
-        else:
-            cursor.execute("""
-                SELECT 
-                    Gun_Tarih,
-                    Gun_Cari_Proje,
-                    Gun_Konu,
-                    Gun_Detay,
-                    Gun_Miktar,
-                    Gun_Adet
-                FROM YH_GUNLUK_YAPILANLAR
-                WHERE Gun_Olusturan = ?
-                ORDER BY Gun_Tarih DESC
-            """, (user_id,))
-
-        # Verileri DataFrame'e dönüştür
-        columns = ['Tarih', 'Cari/Proje', 'Konu', 'Detay', 'Miktar (KG)', 'Adet']
-        rows = cursor.fetchall()
-
-        data = []
-        for row in rows:
-            data.append({
-                'Tarih': row[0].strftime('%d.%m.%Y') if row[0] else '',
-                'Cari/Proje': row[1] or '',
-                'Konu': row[2] or '',
-                'Detay': row[3] or '',
-                'Miktar (KG)': float(row[4]) if row[4] else 0,
-                'Adet': int(row[5]) if row[5] else 0
-            })
-
-        df = pd.DataFrame(data, columns=columns)
-
-        # Excel dosyası oluştur
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Günlük Yapılanlar', index=False)
-
-            # Formatları ayarla
-            workbook = writer.book
-            worksheet = writer.sheets['Günlük Yapılanlar']
-
-            # Kolon genişliklerini ayarla
-            worksheet.set_column('A:A', 12)  # Tarih
-            worksheet.set_column('B:B', 25)  # Cari/Proje
-            worksheet.set_column('C:C', 20)  # Konu
-            worksheet.set_column('D:D', 40)  # Detay
-            worksheet.set_column('E:E', 12)  # Miktar
-            worksheet.set_column('F:F', 10)  # Adet
-
-        output.seek(0)
-
-        # Response oluştur
-        response = make_response(output.read())
-        response.headers[
-            'Content-Disposition'] = f'attachment; filename=gunluk_yapilanlar_{datetime.now().strftime("%d_%m_%Y")}.xlsx'
-        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-        # İşlemi logla
-        log_user_action(user_id, 'GUNLUK_DOWNLOAD_EXCEL', f'Günlük yapılanlar Excel olarak indirildi')
-
-        return response
-
-    except Exception as e:
-        print(f"Excel indirme hatası: {e}")
-        flash(f'Excel dosyası oluşturulurken bir hata oluştu: {str(e)}', 'error')
-        return redirect(url_for('gunluk_yapilanlar'))
-    finally:
-        cursor.close()
-        conn.close()
 
 
 @app.route('/gunluk-satis-raporu')
