@@ -340,6 +340,7 @@ def logout():
     return redirect(url_for('login'))
 
 
+# 2. Şifre Sıfırlama E-postası (paste-2.txt'den)
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -365,9 +366,9 @@ def forgot_password():
             # Send email with reset link
             reset_link = request.host_url + url_for('reset_password', token=reset_token)
 
-            # Configure email settings for Outlook
-            sender_email = "micro@yagcilar-holding.com.tr"
-            sender_password = "JxYS92bVXrEQ"
+            # Gmail SMTP ayarları
+            sender_email = "yagcilarholding1@gmail.com"
+            sender_password = "bqnp sius nztz padc"
 
             # Create message
             message = MIMEMultipart()
@@ -393,10 +394,9 @@ def forgot_password():
             message.attach(MIMEText(body, "plain"))
 
             try:
-                # Connect to custom mail server without SSL
-                server = smtplib.SMTP("mail.yagcilar-holding.com.tr", 587)  # Using custom mail server
-                server.ehlo()  # Identify yourself to the server
-                # Not using TLS/SSL as requested
+                # Gmail SMTP bağlantısı
+                server = smtplib.SMTP("smtp.gmail.com", 587)
+                server.starttls()  # Gmail için TLS gerekli
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, email, message.as_string())
                 server.quit()
@@ -420,6 +420,7 @@ def forgot_password():
         return redirect(url_for('login'))
 
     return render_template('forgot_password.html')
+
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     # Check if token is valid
@@ -2851,6 +2852,7 @@ def satis_maliyet_edit(sale_id):
     return redirect(url_for('satis_maliyet'))
 
 
+# 3. Satış ve Maliyet Detayları E-postası (paste-3.txt'den)
 def send_sales_cost_email(sale_id, is_emri_no, main_data, details, user_id):
     """Satış ve maliyet detaylarını e-posta ile gönderir."""
     try:
@@ -2866,9 +2868,9 @@ def send_sales_cost_email(sale_id, is_emri_no, main_data, details, user_id):
         cursor.close()
         conn.close()
 
-        # E-posta ayarları
-        sender_email = "micro@yagcilar-holding.com.tr"
-        sender_password = "JxYS92bVXrEQ"
+        # Gmail SMTP ayarları
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
 
         # Birden fazla alıcı için liste oluştur
         recipients = ["dogukanturan@ydcmetal.com.tr", "veli@staryagcilar.com.tr"]
@@ -3016,9 +3018,9 @@ def send_sales_cost_email(sale_id, is_emri_no, main_data, details, user_id):
         # HTML içeriği ekle
         msg.attach(MIMEText(html, 'html'))
 
-        # SMTP sunucusuna bağlan - şirket içi mail sunucusu ayarlarını kullan
-        server = smtplib.SMTP("mail.yagcilar-holding.com.tr", 587)
-        server.ehlo()  # Sunucuya kendini tanıt
+        # Gmail SMTP sunucusuna bağlan
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()  # Gmail için TLS gerekli
         server.login(sender_email, sender_password)
 
         # E-postayı her iki alıcıya da gönder
@@ -3030,6 +3032,7 @@ def send_sales_cost_email(sale_id, is_emri_no, main_data, details, user_id):
     except Exception as e:
         print(f"E-posta gönderilirken hata oluştu: {e}")
         return False
+
 @app.route('/maliyet-veri')
 @login_required
 @permission_required(menu_id=12, permission_type='view')  # Adjust menu_id based on your menu structure
@@ -7072,7 +7075,7 @@ def ydc_gunluk_rapor_mail_monthly_sales_trend():
             'success': False,
             'error': str(e)
         })
-# Mail gönder API endpoint'i
+# 1. YDC Günlük Rapor Mail Gönderme (paste.txt'den)
 @app.route('/ydc-gunluk-rapor-mail/send-mail', methods=['POST'])
 @login_required
 @permission_required(menu_id=1019, permission_type='view')
@@ -7088,9 +7091,9 @@ def ydc_gunluk_rapor_mail_send_mail():
                 'error': 'Mail verisi alınamadı'
             })
 
-        # Mail ayarları
-        sender_email = "micro@yagcilar-holding.com.tr"
-        sender_password = "JxYS92bVXrEQ"
+        # Gmail SMTP ayarları
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
         recipients = []
 
         # Alıcı listesini hazırla
@@ -7144,9 +7147,9 @@ def ydc_gunluk_rapor_mail_send_mail():
         html_part = MIMEText(html_content, 'html', 'utf-8')
         msg.attach(html_part)
 
-        # Mail gönder
-        server = smtplib.SMTP('mail.yagcilar-holding.com.tr', 587)
-        server.ehlo()
+        # Gmail SMTP ile mail gönder
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()  # Gmail için TLS gerekli
         server.login(sender_email, sender_password)
 
         for recipient in recipients:
@@ -7164,6 +7167,8 @@ def ydc_gunluk_rapor_mail_send_mail():
             'success': False,
             'error': f'Mail gönderilirken hata oluştu: {str(e)}'
         })
+
+
 
 
 def get_report1_data_for_mail(filters):
@@ -9948,7 +9953,7 @@ def yagcilar_genel_satis_raporu_monthly_sales_trend():
         })
 
 
-# Mail gönder API endpoint'i
+# 4. Yağcılar Genel Satış Raporu Mail Gönderme (paste-4.txt'den)
 @app.route('/yagcilar-genel-satis-raporu/send-mail', methods=['POST'])
 @login_required
 @permission_required(menu_id=1025, permission_type='view')
@@ -9964,9 +9969,9 @@ def yagcilar_genel_satis_raporu_send_mail():
                 'error': 'Mail verisi alınamadı'
             })
 
-        # Mail ayarları
-        sender_email = "micro@yagcilar-holding.com.tr"
-        sender_password = "JxYS92bVXrEQ"
+        # Gmail SMTP ayarları
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
         recipients = []
 
         # Alıcı listesini hazırla
@@ -10020,9 +10025,9 @@ def yagcilar_genel_satis_raporu_send_mail():
         html_part = MIMEText(html_content, 'html', 'utf-8')
         msg.attach(html_part)
 
-        # Mail gönder
-        server = smtplib.SMTP('mail.yagcilar-holding.com.tr', 587)
-        server.ehlo()
+        # Gmail SMTP ile mail gönder
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()  # Gmail için TLS gerekli
         server.login(sender_email, sender_password)
 
         for recipient in recipients:
@@ -10040,6 +10045,7 @@ def yagcilar_genel_satis_raporu_send_mail():
             'success': False,
             'error': f'Mail gönderilirken hata oluştu: {str(e)}'
         })
+
 
 
 def get_yagcilar_report1_data_for_mail(filters):
@@ -11513,6 +11519,39 @@ def generate_yagcilar_mail_html(report_data, note, include_reports):
     """
 
     return html_content
+
+# Gmail SMTP Ayarları için Ortak Fonksiyon (İsteğe bağlı)
+def send_gmail_email(sender_email, sender_password, recipients, subject, html_content):
+    """Gmail SMTP ile e-posta gönderme için ortak fonksiyon"""
+    try:
+        # E-posta konteyneri oluştur
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = ', '.join(recipients) if isinstance(recipients, list) else recipients
+
+        # HTML içeriği ekle
+        html_part = MIMEText(html_content, 'html', 'utf-8')
+        msg.attach(html_part)
+
+        # Gmail SMTP ile mail gönder
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()  # Gmail için TLS gerekli
+        server.login(sender_email, sender_password)
+
+        if isinstance(recipients, list):
+            for recipient in recipients:
+                server.sendmail(sender_email, recipient, msg.as_string())
+        else:
+            server.sendmail(sender_email, recipients, msg.as_string())
+
+        server.quit()
+        return True
+
+    except Exception as e:
+        print(f"E-posta gönderilirken hata oluştu: {e}")
+        return False
+
 if __name__ == '__main__':
     # Create required directories if they don't exist
     os.makedirs('templates', exist_ok=True)
