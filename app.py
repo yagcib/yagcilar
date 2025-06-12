@@ -22,6 +22,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
+
+
+
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Generate a random secret key for session security
 
@@ -11576,6 +11582,163 @@ def send_gmail_email(sender_email, sender_password, recipients, subject, html_co
         print(f"E-posta gönderilirken hata oluştu: {e}")
         return False
 
+
+def send_daily_report_auto():
+    """Otomatik olarak günlük raporu gönderir"""
+    try:
+        with app.app_context():  # Flask app context gerekli
+            today = datetime.now().strftime('%Y-%m-%d')
+            current_month = datetime.now().strftime('%Y-%m')
+            current_year = datetime.now().year
+
+            # Varsayılan mail verileri
+            mail_data = {
+                'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
+                'recipients': [
+                    'huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'
+                ],
+                'cc_recipients': [
+                    'hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',  'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr', 'bayramyagci@ydcmetal.com.tr'
+                ],
+                'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
+                'include_reports': {
+                    'report1': True,
+                    'report2': True,
+                    'report3': True,
+                    'report4': True,
+                    'report5': False
+                },
+                'filters': {
+                    'report1': {
+                        'date': today,
+                        'cari': [],
+                        'muhasebe_grup': [],
+                        'satis_elemani': []
+                    },
+                    'report2': {
+                        'date': today,
+                        'cari': [],
+                        'malzeme_grup': [],
+                        'satis_elemani': []
+                    },
+                    'report3': {
+                        'month': current_month,
+                        'cari': [],
+                        'muhasebe_grup': [],
+                        'satis_elemani': []
+                    },
+                    'report4': {
+                        'year': str(current_year),
+                        'cari': [],
+                        'muhasebe_grup': [],
+                        'satis_elemani': []
+                    }
+                }
+            }
+
+            # Mail gönderme işlemini gerçekleştir
+            result = send_ydc_mail_internal(mail_data)
+
+            # Log kaydet
+            print(f"[{datetime.now()}] Otomatik mail gönderimi tamamlandı: {result}")
+
+            return result
+
+    except Exception as e:
+        error_msg = f"Otomatik mail gönderimi hatası: {str(e)}"
+        print(f"[{datetime.now()}] {error_msg}")
+        return {'success': False, 'error': error_msg}
+
+
+def send_ydc_mail_internal(mail_data):
+    try:
+        # Gmail SMTP ayarları
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
+        sender_name = "Yağcılar Holding"
+
+        recipients = mail_data.get('recipients', [])
+        cc_recipients = mail_data.get('cc_recipients', [])
+
+        if not recipients:
+            return {'success': False, 'error': 'Alıcı listesi boş'}
+
+        # E-posta konteyneri oluştur
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = mail_data.get('subject', 'YDC Günlük Rapor')
+        msg['From'] = f"{sender_name} <{sender_email}>"
+        msg['To'] = ', '.join(recipients)
+
+        if cc_recipients:
+            msg['Cc'] = ', '.join(cc_recipients)
+
+        # Rapor verilerini topla
+        report_data = {}
+        include_reports = mail_data.get('include_reports', {})
+        filters = mail_data.get('filters', {})
+
+        # Raporları topla (mevcut fonksiyonlarınızı kullanarak)
+        if include_reports.get('report1', True):
+            report_data['report1'] = get_report1_data_for_mail(filters.get('report1', {}))
+
+        if include_reports.get('report2', True):
+            report_data['report2'] = get_report2_data_for_mail(filters.get('report2', {}))
+
+        if include_reports.get('report3', True):
+            report_data['report3'] = get_report3_data_for_mail(filters.get('report3', {}))
+
+        if include_reports.get('report4', True):
+            report_data['report4'] = get_report4_data_for_mail(filters.get('report4', {}))
+
+        if include_reports.get('report5', False):
+            report_data['report5'] = get_report5_data_for_mail(
+                filters.get('report5', {'year': datetime.now().year, 'month': '0', 'top_count': 20}))
+
+        # HTML içeriğini oluştur (mevcut fonksiyonunuzu kullanarak)
+        html_content = generate_mail_html(report_data, mail_data.get('note', ''), include_reports)
+        html_part = MIMEText(html_content, 'html', 'utf-8')
+        msg.attach(html_part)
+
+        # Gmail SMTP ile mail gönder
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+
+        all_recipients = recipients + cc_recipients
+        for recipient in all_recipients:
+            server.sendmail(sender_email, recipient, msg.as_string())
+
+        server.quit()
+
+        return {
+            'success': True,
+            'message': f'Mail başarıyla {len(recipients)} alıcıya ve {len(cc_recipients)} CC alıcısına gönderildi'
+        }
+
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+def setup_auto_mail_scheduler():
+    """Otomatik mail göndermek için zamanlayıcı kurar"""
+    scheduler = BackgroundScheduler()
+
+    # Her gün saat 19.15 'da mail gönder
+    scheduler.add_job(
+        func=send_daily_report_auto,
+        trigger="cron",
+        hour=19,
+        minute=15,
+        id='daily_ydc_report_17',
+        replace_existing=True
+    )
+
+    scheduler.start()
+
+    # Uygulama kapanırken scheduler'ı durdur
+    atexit.register(lambda: scheduler.shutdown())
+
+    print("APScheduler başlatıldı - Otomatik mail gönderimi aktif")
+
 if __name__ == '__main__':
     # Create required directories if they don't exist
     os.makedirs('templates', exist_ok=True)
@@ -11586,6 +11749,7 @@ if __name__ == '__main__':
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
 
+    setup_auto_mail_scheduler()
     # Run the app with host set to allow external connections
     # and port set to 2025
     app.run(host='0.0.0.0', port=2025, debug=True)
