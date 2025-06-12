@@ -7075,7 +7075,9 @@ def ydc_gunluk_rapor_mail_monthly_sales_trend():
             'success': False,
             'error': str(e)
         })
-# 1. YDC Günlük Rapor Mail Gönderme (paste.txt'den)
+
+
+# YDC Günlük Rapor Mail Gönderme - Güncellenmiş Backend Kodu
 @app.route('/ydc-gunluk-rapor-mail/send-mail', methods=['POST'])
 @login_required
 @permission_required(menu_id=1019, permission_type='view')
@@ -7094,13 +7096,20 @@ def ydc_gunluk_rapor_mail_send_mail():
         # Gmail SMTP ayarları
         sender_email = "yagcilarholding1@gmail.com"
         sender_password = "bqnp sius nztz padc"
+        sender_name = "Yağcılar Holding"  # YENİ: Gönderen adı
+
         recipients = []
+        cc_recipients = []
 
         # Alıcı listesini hazırla
         if isinstance(mail_data.get('recipients'), list):
             recipients = [email.strip() for email in mail_data['recipients'] if email.strip()]
         else:
-            recipients = ["dogukanturan@ydcmetal.com.tr", "bayramyagci@yagcilar.com.tr"]
+            recipients = ["dogukanturan@ydcmetal.com.tr"]
+
+        # CC alıcı listesini hazırla - YENİ
+        if isinstance(mail_data.get('cc_recipients'), list):
+            cc_recipients = [email.strip() for email in mail_data['cc_recipients'] if email.strip()]
 
         if not recipients:
             return jsonify({
@@ -7111,8 +7120,15 @@ def ydc_gunluk_rapor_mail_send_mail():
         # E-posta konteyneri oluştur
         msg = MIMEMultipart('alternative')
         msg['Subject'] = mail_data.get('subject', 'YDC Günlük Rapor')
-        msg['From'] = sender_email
+
+        # GÜNCELLEME: Gönderen adını "Yağcılar Holding" olarak ayarla
+        msg['From'] = f"{sender_name}"
+
         msg['To'] = ', '.join(recipients)
+
+        # GÜNCELLEME: CC varsa ekle
+        if cc_recipients:
+            msg['Cc'] = ', '.join(cc_recipients)
 
         # Rapor verilerini topla
         report_data = {}
@@ -7152,14 +7168,25 @@ def ydc_gunluk_rapor_mail_send_mail():
         server.starttls()  # Gmail için TLS gerekli
         server.login(sender_email, sender_password)
 
-        for recipient in recipients:
+        # Tüm alıcı listesini birleştir (TO + CC)
+        all_recipients = recipients + cc_recipients
+
+        for recipient in all_recipients:
             server.sendmail(sender_email, recipient, msg.as_string())
 
         server.quit()
 
+        # Başarı mesajını güncelle
+        total_recipients = len(recipients)
+        total_cc = len(cc_recipients)
+
+        success_message = f'Mail başarıyla {total_recipients} alıcıya gönderildi'
+        if total_cc > 0:
+            success_message += f' ve {total_cc} CC alıcısına gönderildi'
+
         return jsonify({
             'success': True,
-            'message': f'Mail başarıyla {len(recipients)} alıcıya gönderildi'
+            'message': success_message
         })
 
     except Exception as e:
@@ -7167,9 +7194,6 @@ def ydc_gunluk_rapor_mail_send_mail():
             'success': False,
             'error': f'Mail gönderilirken hata oluştu: {str(e)}'
         })
-
-
-
 
 def get_report1_data_for_mail(filters):
     """Mail için Rapor 1 verilerini getirir"""

@@ -1005,7 +1005,7 @@
     </div>
 </div>
 
-<!-- Mail Gönder Modal -->
+<!-- Mail Gönder Modal - Güncellenmiş Versiyon -->
 <div class="modal fade" id="mailModal" tabindex="-1" aria-labelledby="mailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1023,7 +1023,12 @@
                     </div>
                     <div class="mb-3">
                         <label for="mailRecipients" class="form-label">Alıcılar (E-posta adresleri)</label>
-                        <textarea class="form-control" id="mailRecipients" rows="3" placeholder="E-posta adreslerini virgülle ayırarak girin (örn: mail1@example.com, mail2@example.com)" required>dogukanturan@ydcmetal.com.tr, bayramyagci@yagcilar.com.tr</textarea>
+                        <textarea class="form-control" id="mailRecipients" rows="2" placeholder="E-posta adreslerini virgülle ayırarak girin (örn: mail1@example.com, mail2@example.com)" required>huseyinyagci@ydcmetal.com.tr, yunus@beymasmetal.com.tr</textarea>
+                    </div>
+                    <!-- YENİ CC ALANI -->
+                    <div class="mb-3">
+                        <textarea class="form-control" id="mailCC" rows="2" placeholder="CC alıcılarını virgülle ayırarak girin (örn: cc1@example.com, cc2@example.com)">hasan@staryagcilar.com.tr, kadiryagci@staryagcilar.com.tr,  veli@staryagcilar.com.tr, turancam@ydcmetal.com.tr, bayramyagci@ydcmetal.com.tr</textarea>
+                        <label for="mailCC" class="form-label">CC (Kopya Alıcılar) - İsteğe bağlı</label>
                     </div>
                     <div class="mb-3">
                         <label for="mailNote" class="form-label">Not (İsteğe bağlı)</label>
@@ -1242,7 +1247,7 @@
         });
     }
 
-    // Send mail function
+    // Güncellenmiş sendMail fonksiyonu
     function sendMail() {
         // Validate form
         const subject = $('#mailSubject').val().trim();
@@ -1271,10 +1276,18 @@
         $('.mail-error').hide();
         $('#sendMailConfirmBtn').prop('disabled', true);
 
+        // CC alanını oku
+        const ccRecipients = $('#mailCC').val().trim();
+        let ccArray = [];
+        if (ccRecipients) {
+            ccArray = ccRecipients.split(',').map(email => email.trim()).filter(email => email);
+        }
+
         // Prepare mail data
         const mailData = {
             subject: subject,
             recipients: recipients.split(',').map(email => email.trim()),
+            cc_recipients: ccArray, // YENİ CC ALANI
             note: $('#mailNote').val().trim(),
             include_reports: {
                 report1: includeReport1,
