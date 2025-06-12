@@ -88,12 +88,18 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
     .filter-dropdown-toggle:focus {
         border-color: #86b7fe;
         outline: 0;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .filter-dropdown-toggle.filtered {
+        border-color: #0d6efd;
+        background-color: #f0f8ff;
     }
 
     .filter-dropdown-menu {
@@ -152,6 +158,20 @@
         margin-right: 0.5rem;
     }
 
+    .filter-dropdown-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .filter-dropdown-item.disabled input[type="checkbox"] {
+        cursor: not-allowed;
+    }
+
+    .filter-dropdown-item.disabled label {
+        cursor: not-allowed;
+        color: #6c757d;
+    }
+
     .filter-dropdown-actions {
         padding: 0.5rem 0.75rem;
         background-color: #f8f9fa;
@@ -191,6 +211,43 @@
         color: #b02a37;
     }
 
+    /* Loading indicator */
+    .filter-loading {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+    }
+
+    @keyframes spin {
+        0% { transform: translateY(-50%) rotate(0deg); }
+        100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    /* Active filter indicators */
+    .filter-active-indicator {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 12px;
+        height: 12px;
+        background-color: #dc3545;
+        border-radius: 50%;
+        font-size: 8px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
     /* Boostrap 5 fix for old BS4 form-select */
     .form-select {
         display: block;
@@ -209,6 +266,11 @@
         border-radius: 0.25rem;
         appearance: none;
     }
+
+    .form-control.filtered {
+        border-color: #0d6efd;
+        background-color: #f0f8ff;
+    }
 </style>
 {% endblock %}
 
@@ -216,7 +278,10 @@
 
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="m-0 font-weight-bold">Filtreler</h5>
+        <h5 class="m-0 font-weight-bold">
+            Filtreler
+            <small class="text-muted">(Otomatik filtreleme aktif)</small>
+        </h5>
     </div>
     <div class="card-body">
         <div class="row">
@@ -225,6 +290,7 @@
                 <div class="filter-dropdown" data-field="anaGrup">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -247,6 +313,7 @@
                 <div class="filter-dropdown" data-field="altGrup">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -269,6 +336,7 @@
                 <div class="filter-dropdown" data-field="kalinlik">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -291,6 +359,7 @@
                 <div class="filter-dropdown" data-field="yukseklik">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -313,6 +382,7 @@
                 <div class="filter-dropdown" data-field="en">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -335,6 +405,7 @@
                 <div class="filter-dropdown" data-field="boy">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -359,6 +430,7 @@
                 <div class="filter-dropdown" data-field="kalite">
                     <div class="filter-dropdown-toggle" tabindex="0">
                         Tümü
+                        <div class="filter-loading"></div>
                     </div>
                     <div class="filter-dropdown-menu">
                         <div class="filter-dropdown-header">
@@ -381,12 +453,10 @@
                 <input type="text" id="filterStokAdi" class="form-control" placeholder="Stok adı ara...">
             </div>
             <div class="col-md-6 text-end align-self-end">
-                <button id="btnApplyFilters" class="btn btn-primary">
-                    <i class="fas fa-filter"></i> Filtrele
+                <button id="btnResetFilters" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Tüm Filtreleri Sıfırla
                 </button>
-                <button id="btnResetFilters" class="btn btn-secondary ms-2">
-                    <i class="fas fa-undo"></i> Sıfırla
-                </button>
+                <small class="text-muted d-block mt-1">Filtreler otomatik olarak uygulanır</small>
             </div>
         </div>
     </div>
@@ -457,8 +527,8 @@
 
 {% block scripts %}
 <script>
-  // Enhanced script for checkbox-based filtering functionality
-// in stok_listesi.html to implement Excel-like slicer behavior
+// Enhanced script for real-time checkbox-based filtering functionality
+// Auto-filtering on any selection change
 
 $(document).ready(function() {
     // Variable to store all data
@@ -478,6 +548,9 @@ $(document).ready(function() {
         kalite: [],
         stokAdi: ''
     };
+
+    // Debounce timer for text input
+    let textFilterTimer = null;
 
     // Field mappings for easier access
     const fieldMappings = {
@@ -508,6 +581,9 @@ $(document).ready(function() {
 
             // Setup filter dropdown event handlers
             setupFilterDropdownHandlers();
+
+            // Setup real-time text filtering
+            setupTextFiltering();
         },
         error: function(xhr, status, error) {
             console.error("Error loading data:", error);
@@ -638,21 +714,9 @@ $(document).ready(function() {
             ]
         });
 
-        // Apply filters button event handler
-        $('#btnApplyFilters').on('click', function() {
-            applyFilters();
-        });
-
         // Reset filters button event handler
         $('#btnResetFilters').on('click', function() {
             resetFilters();
-        });
-
-        // Stok Adı text filter keyup event
-        $('#filterStokAdi').on('keyup', function(e) {
-            if (e.key === 'Enter') {
-                applyFilters();
-            }
         });
 
         // Excel and Print button event handlers
@@ -675,12 +739,32 @@ $(document).ready(function() {
                     filteredData = data;
                     table.clear().rows.add(data).draw();
                     populateAllFilterDropdowns(data);
+                    resetFilters();
                 },
                 error: function(xhr, status, error) {
                     console.error("Error refreshing data:", error);
                     alert("Veri yenilenirken bir hata oluştu: " + error);
                 }
             });
+        });
+    }
+
+    // Function to setup real-time text filtering
+    function setupTextFiltering() {
+        $('#filterStokAdi').on('input', function() {
+            const value = $(this).val();
+
+            // Clear previous timer
+            if (textFilterTimer) {
+                clearTimeout(textFilterTimer);
+            }
+
+            // Set new timer for debounced filtering
+            textFilterTimer = setTimeout(function() {
+                filterSelections.stokAdi = value;
+                applyFiltersRealTime('stokAdi');
+                updateTextFilterIndicator('#filterStokAdi', value);
+            }, 300); // 300ms delay
         });
     }
 
@@ -722,20 +806,25 @@ $(document).ready(function() {
             });
         });
 
-        // Checkbox change handler
+        // Checkbox change handler - Real-time filtering
         $(document).on('change', '.filter-dropdown-item input[type="checkbox"]', function() {
             var $dropdown = $(this).closest('.filter-dropdown');
             var field = $dropdown.data('field');
+
             updateDropdownDisplay($dropdown, field);
+
+            // Apply filters immediately with trigger field info
+            applyFiltersRealTime(field);
         });
 
         // Select All button
         $(document).on('click', '.select-all-btn', function() {
             var $dropdown = $(this).closest('.filter-dropdown');
-            var $checkboxes = $dropdown.find('.filter-dropdown-item input[type="checkbox"]:visible');
+            var $checkboxes = $dropdown.find('.filter-dropdown-item input[type="checkbox"]:visible:not(:disabled)');
             $checkboxes.prop('checked', true);
             var field = $dropdown.data('field');
             updateDropdownDisplay($dropdown, field);
+            applyFiltersRealTime(field);
         });
 
         // Deselect All button
@@ -745,6 +834,7 @@ $(document).ready(function() {
             $checkboxes.prop('checked', false);
             var field = $dropdown.data('field');
             updateDropdownDisplay($dropdown, field);
+            applyFiltersRealTime(field);
         });
 
         // Clear selection button
@@ -755,6 +845,7 @@ $(document).ready(function() {
             var field = $dropdown.data('field');
             updateDropdownDisplay($dropdown, field);
             $dropdown.find('.filter-dropdown-menu').removeClass('show');
+            applyFiltersRealTime(field);
         });
     }
 
@@ -782,8 +873,8 @@ $(document).ready(function() {
             var isChecked = filterSelections[field].includes(value);
             var $item = $(`
                 <div class="filter-dropdown-item">
-                    <input type="checkbox" id="${field}_${value}" value="${value}" ${isChecked ? 'checked' : ''}>
-                    <label for="${field}_${value}">${value}</label>
+                    <input type="checkbox" id="${field}_${value}_${Date.now()}" value="${value}" ${isChecked ? 'checked' : ''}>
+                    <label for="${field}_${value}_${Date.now()}">${value}</label>
                 </div>
             `);
             $itemsContainer.append($item);
@@ -806,21 +897,62 @@ $(document).ready(function() {
         // Update filter selections
         filterSelections[field] = selectedValues;
 
-        // Update display text
+        // Update display text and visual indicators
         if (selectedValues.length === 0) {
-            $toggle.html('Tümü');
+            $toggle.html('Tümü <div class="filter-loading"></div>');
+            $toggle.removeClass('filtered');
         } else if (selectedValues.length === 1) {
-            $toggle.html(selectedValues[0]);
+            $toggle.html(selectedValues[0] + ' <div class="filter-loading"></div>');
+            $toggle.addClass('filtered');
         } else {
-            $toggle.html(selectedValues.length + ' adet seçili <span class="selection-badge">' + selectedValues.length + '</span>');
+            $toggle.html(selectedValues.length + ' adet seçili <span class="selection-badge">' + selectedValues.length + '</span> <div class="filter-loading"></div>');
+            $toggle.addClass('filtered');
         }
+    }
+
+    // Function to update text filter indicator
+    function updateTextFilterIndicator(selector, value) {
+        var $input = $(selector);
+        if (value && value.trim()) {
+            $input.addClass('filtered');
+        } else {
+            $input.removeClass('filtered');
+        }
+    }
+
+    // Function to show loading indicator
+    function showLoadingIndicator($dropdown) {
+        $dropdown.find('.filter-loading').show();
+    }
+
+    // Function to hide loading indicator
+    function hideLoadingIndicator($dropdown) {
+        $dropdown.find('.filter-loading').hide();
+    }
+
+    // Function to apply filters in real-time
+    function applyFiltersRealTime(triggerField = null) {
+        // Show loading indicators on all filters
+        $('.filter-dropdown').each(function() {
+            showLoadingIndicator($(this));
+        });
+
+        // Small delay to show loading effect
+        setTimeout(function() {
+            applyFilters();
+
+            // Update other filter dropdowns based on current filtered data
+            updateDependentFilters(triggerField);
+
+            // Hide all loading indicators
+            $('.filter-dropdown').each(function() {
+                hideLoadingIndicator($(this));
+            });
+        }, 100);
     }
 
     // Function to apply filters
     function applyFilters() {
-        // Get stok adı filter
-        filterSelections.stokAdi = $('#filterStokAdi').val();
-
         // Filter the data
         filteredData = allData.filter(function(item) {
             // Check each filter condition
@@ -841,9 +973,72 @@ $(document).ready(function() {
 
         // Update the data table
         table.clear().rows.add(filteredData).draw();
+    }
 
-        // Update filter dropdowns with new available options
-        populateAllFilterDropdowns(filteredData);
+    // Function to update dependent filters based on current filtered data
+    function updateDependentFilters(triggerField) {
+        // For each filter field, update options based on current filteredData
+        Object.keys(fieldMappings).forEach(function(field) {
+            // Skip the field that triggered this update
+            if (field === triggerField) {
+                return;
+            }
+
+            var $dropdown = $('.filter-dropdown[data-field="' + field + '"]');
+            var $itemsContainer = $dropdown.find('.filter-dropdown-items');
+            var dataField = fieldMappings[field];
+
+            // Get current selections for this field
+            var currentSelections = filterSelections[field];
+
+            // Calculate available values based on current filtered data
+            // (excluding the current field's filter to show what's available)
+            var availableData = allData.filter(function(item) {
+                for (let otherField in fieldMappings) {
+                    if (otherField === field) continue; // Skip current field
+
+                    let otherDataField = fieldMappings[otherField];
+                    if (filterSelections[otherField].length > 0 && !filterSelections[otherField].includes(item[otherDataField])) {
+                        return false;
+                    }
+                }
+
+                // Check stok adı filter
+                if (filterSelections.stokAdi && !item.STOK_ADI.toLowerCase().includes(filterSelections.stokAdi.toLowerCase())) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Extract unique values from available data
+            var availableValues = [...new Set(availableData.map(item => item[dataField]).filter(val => val))].sort();
+
+            // Clear existing items
+            $itemsContainer.empty();
+
+            // Add checkbox items
+            availableValues.forEach(function(value) {
+                var isChecked = currentSelections.includes(value);
+                var isDisabled = !availableValues.includes(value);
+                var uniqueId = field + '_' + value.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Date.now();
+
+                var $item = $(`
+                    <div class="filter-dropdown-item ${isDisabled ? 'disabled' : ''}">
+                        <input type="checkbox" id="${uniqueId}" value="${value}" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''}>
+                        <label for="${uniqueId}">${value}</label>
+                    </div>
+                `);
+                $itemsContainer.append($item);
+            });
+
+            // Remove invalid selections (values that are no longer available)
+            var validSelections = currentSelections.filter(selection => availableValues.includes(selection));
+            if (validSelections.length !== currentSelections.length) {
+                filterSelections[field] = validSelections;
+                updateDropdownDisplay($dropdown, field);
+            }
+        });
     }
 
     // Function to reset all filters
@@ -861,7 +1056,7 @@ $(document).ready(function() {
         };
 
         // Clear stok adı input
-        $('#filterStokAdi').val('');
+        $('#filterStokAdi').val('').removeClass('filtered');
 
         // Reset DataTable to show all data
         filteredData = allData;
@@ -869,6 +1064,9 @@ $(document).ready(function() {
 
         // Repopulate filter dropdowns with all data
         populateAllFilterDropdowns(allData);
+
+        // Remove filtered class from all dropdowns
+        $('.filter-dropdown-toggle').removeClass('filtered');
 
         // Close all dropdowns
         $('.filter-dropdown-menu').removeClass('show');
