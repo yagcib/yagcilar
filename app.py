@@ -11884,8 +11884,8 @@ def add_daily_mail_job():
         scheduler.add_job(
             func=send_daily_mail_internal,
             trigger="cron",
-            hour=14,
-            minute=10,
+            hour=19,
+            minute=15,
             second=0,
             id=job_id,
             max_instances=1,
@@ -11955,11 +11955,9 @@ def send_daily_mail_internal():
         # Mail verileri
         mail_data = {
             'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
-            'recipients': ['huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'],
-            'cc_recipients': ['hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',
-                    'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
-                    'bayramyagci@ydcmetal.com.tr','dogukanturan@ydcmetal.com.tr'],
-            'note': 'Bu mail OTOMATİK olarak sistem tarafından gönderilmiştir. (Test aşamasındadır.)',
+            'recipients': ['dogukanturan@ydcmetal.com.tr','dogukanturan67@gmail.com'],
+            'cc_recipients': ['bayramyagci@yagcilar.com.tr'],
+            'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
             'include_reports': {
                 'report1': True,
                 'report2': True,
