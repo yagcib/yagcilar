@@ -11884,8 +11884,8 @@ def add_daily_mail_job():
         scheduler.add_job(
             func=send_daily_mail_internal,
             trigger="cron",
-            hour=10,
-            minute=48,
+            hour=19,
+            minute=15,
             second=0,
             id=job_id,
             max_instances=1,
