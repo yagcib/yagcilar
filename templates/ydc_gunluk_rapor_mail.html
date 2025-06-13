@@ -72,6 +72,11 @@
         background-color: #218838;
         color: white;
     }
+    .btn-mail:disabled {
+        background-color: #6c757d;
+        color: white;
+        cursor: not-allowed;
+    }
     .loading-spinner {
         text-align: center;
         padding: 30px;
@@ -1109,50 +1114,59 @@
 
 <!-- Custom JavaScript -->
 <script>
-    // Set default dates
-    $(document).ready(function() {
-        // Set today's date for date pickers
-        const today = new Date();
-        const dateString = today.toISOString().split('T')[0];
-        $("#report1Date, #report2Date").val(dateString);
+    // *** DÜZENLENMİŞ MAIL GÖNDERİM SİSTEMİ - JavaScript ***
+// Çifte mail gönderimini önlemek için global değişkenler
 
-        // Set current month for month picker
-        const monthString = today.toISOString().split('T')[0].substring(0, 7);
-        $("#report3Month").val(monthString);
+let isMailSending = false;
 
-        // Populate year dropdown for Report 4 and Report 5
-        const currentYear = today.getFullYear();
-        for (let year = currentYear - 5; year <= currentYear; year++) {
-            $("#report4Year, #report5Year").append(`<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`);
+$(document).ready(function() {
+    // Sayfa yüklendiğinde mail durumunu sıfırla
+    resetMailStatus();
+
+    // Mail gönder button click event - ÇİFTE TIKLAMAYA KARŞI KORUMA
+    $('#sendMailBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Eğer mail gönderiliyor ise butona tıklamayı engelle
+        if (isMailSending) {
+            console.log('Mail zaten gönderiliyor, işlem iptal edildi');
+            return false;
         }
 
-        // Initialize all tabs
-        initializeReport1();
-        initializeReport2();
-        initializeReport3();
-        initializeReport4();
-        initializeReport5();
-
-        // Initialize select pickers
-        $('.selectpicker').selectpicker();
-
-        // Load filter options
-        loadFilterOptions();
-
-        // Mail gönder button click event
-        $('#sendMailBtn').on('click', function() {
-            $('#mailModal').modal('show');
-            updateSubject(); // Otomatik olarak tarih ekleyen konu
-        });
-
-        // Mail gönder confirm button click event
-        $('#sendMailConfirmBtn').on('click', function() {
-            sendMail();
-        });
-
-        // Kolon renkleri için CSS güncelleme
-        updateStyles();
+        $('#mailModal').modal('show');
+        updateSubject(); // Otomatik olarak tarih ekleyen konu
     });
+
+    // Mail gönder confirm button click event - ÇİFTE TIKLAMAYA KARŞI KORUMA
+    $('#sendMailConfirmBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Eğer mail gönderiliyor ise butona tıklamayı engelle
+        if (isMailSending) {
+            console.log('Mail zaten gönderiliyor, işlem iptal edildi');
+            return false;
+        }
+
+        sendMail();
+    });
+
+    // Modal kapatıldığında durumu sıfırla
+    $('#mailModal').on('hidden.bs.modal', function () {
+        resetMailStatus();
+    });
+});
+
+    // Mail gönderme durumunu sıfırlama fonksiyonu
+function resetMailStatus() {
+    isMailSending = false;
+    $('#sendMailConfirmBtn').prop('disabled', false);
+    $('.mail-progress').hide();
+    $('.mail-success').hide();
+    $('.mail-error').hide();
+    console.log('Mail durumu sıfırlandı');
+}
 
     // Kolon renkleri için CSS güncelleme
     function updateStyles() {
@@ -1186,19 +1200,33 @@
     }
 
     // Otomatik konu güncelleme
-    function updateSubject() {
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year = today.getFullYear();
+function updateSubject() {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
 
-        // Tarih formatı: DD.MM.YYYY
-        const formattedDate = `${day}.${month}.${year}`;
+    // Tarih formatı: DD.MM.YYYY
+    const formattedDate = `${day}.${month}.${year}`;
 
-        // Konu alanını güncelle
-        document.getElementById('mailSubject').value = `${formattedDate} - YDÇ Metal Günlük Satış Raporu`;
-    }
+    // Konu alanını güncelle
+    document.getElementById('mailSubject').value = `${formattedDate} - YDÇ Metal Günlük Satış Raporu`;
+}
 
+// Mail durumunu kontrol etmek için yardımcı fonksiyon
+function checkMailStatus() {
+    return {
+        isMailSending: isMailSending,
+        timestamp: new Date().toISOString()
+    };
+}
+
+// Debug için - konsola mail durumunu yazdır
+function debugMailStatus() {
+    const status = checkMailStatus();
+    console.log('Mail Durumu:', status);
+    return status;
+}
     // Load filter options from server
     function loadFilterOptions() {
         $.ajax({
@@ -1247,117 +1275,160 @@
         });
     }
 
-    // Güncellenmiş sendMail fonksiyonu
-    function sendMail() {
-        // Validate form
-        const subject = $('#mailSubject').val().trim();
-        const recipients = $('#mailRecipients').val().trim();
-
-        if (!subject || !recipients) {
-            alert('Lütfen konu ve alıcı alanlarını doldurunuz.');
-            return;
-        }
-
-        // Check if at least one report is selected
-        const includeReport1 = $('#includeReport1').is(':checked');
-        const includeReport2 = $('#includeReport2').is(':checked');
-        const includeReport3 = $('#includeReport3').is(':checked');
-        const includeReport4 = $('#includeReport4').is(':checked');
-        const includeReport5 = $('#includeReport5').is(':checked');
-
-        if (!includeReport1 && !includeReport2 && !includeReport3 && !includeReport4 && !includeReport5) {
-            alert('Lütfen en az bir rapor seçiniz.');
-            return;
-        }
-
-        // Show progress
-        $('.mail-progress').show();
-        $('.mail-success').hide();
-        $('.mail-error').hide();
-        $('#sendMailConfirmBtn').prop('disabled', true);
-
-        // CC alanını oku
-        const ccRecipients = $('#mailCC').val().trim();
-        let ccArray = [];
-        if (ccRecipients) {
-            ccArray = ccRecipients.split(',').map(email => email.trim()).filter(email => email);
-        }
-
-        // Prepare mail data
-        const mailData = {
-            subject: subject,
-            recipients: recipients.split(',').map(email => email.trim()),
-            cc_recipients: ccArray, // YENİ CC ALANI
-            note: $('#mailNote').val().trim(),
-            include_reports: {
-                report1: includeReport1,
-                report2: includeReport2,
-                report3: includeReport3,
-                report4: includeReport4,
-                report5: includeReport5
-            },
-            filters: {
-                report1: {
-                    date: $('#report1Date').val(),
-                    cari: $('#report1Cari').val() || [],
-                    muhasebe_grup: $('#report1MuhasebeGrup').val() || [],
-                    satis_elemani: $('#report1SatisElemani').val() || []
-                },
-                report2: {
-                    date: $('#report2Date').val(),
-                    cari: $('#report2Cari').val() || [],
-                    malzeme_grup: $('#report2MalzemeGrup').val() || [],
-                    satis_elemani: $('#report2SatisElemani').val() || []
-                },
-                report3: {
-                    month: $('#report3Month').val(),
-                    cari: $('#report3Cari').val() || [],
-                    muhasebe_grup: $('#report3MuhasebeGrup').val() || [],
-                    satis_elemani: $('#report3SatisElemani').val() || []
-                },
-                report4: {
-                    year: $('#report4Year').val(),
-                    cari: $('#report4Cari').val() || [],
-                    muhasebe_grup: $('#report4MuhasebeGrup').val() || [],
-                    satis_elemani: $('#report4SatisElemani').val() || []
-                },
-                report5: {
-                    year: $('#report5Year').val(),
-                    month: $('#report5Month').val(),
-                    top_count: $('#report5TopCount').val()
-                }
-            }
-        };
-
-        // Send mail request
-        $.ajax({
-            url: "/ydc-gunluk-rapor-mail/send-mail",
-            type: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(mailData),
-            success: function(response) {
-                $('.mail-progress').hide();
-                $('#sendMailConfirmBtn').prop('disabled', false);
-
-                if (response.success) {
-                    $('.mail-success').show();
-                    setTimeout(function() {
-                        $('#mailModal').modal('hide');
-                        $('.mail-success').hide();
-                    }, 2000);
-                } else {
-                    $('.mail-error').show();
-                    $('#errorMessage').text(response.error || 'Mail gönderilirken bir hata oluştu.');
-                }
-            },
-            error: function(xhr, status, error) {
-                $('.mail-progress').hide();
-                $('.mail-error').show();
-                $('#sendMailConfirmBtn').prop('disabled', false);
-                $('#errorMessage').text('Sunucu ile iletişim hatası: ' + error);
-            }
-        });
+    // Güncellenmiş sendMail fonksiyonu - ÇİFTE GÖNDERİME KARŞI KORUMA
+function sendMail() {
+    // Double-click koruması - eğer zaten mail gönderiliyor ise çık
+    if (isMailSending) {
+        console.log('Mail gönderim zaten devam ediyor, işlem iptal edildi');
+        return;
     }
+
+    // Validate form
+    const subject = $('#mailSubject').val().trim();
+    const recipients = $('#mailRecipients').val().trim();
+
+    if (!subject || !recipients) {
+        alert('Lütfen konu ve alıcı alanlarını doldurunuz.');
+        return;
+    }
+
+    // Check if at least one report is selected
+    const includeReport1 = $('#includeReport1').is(':checked');
+    const includeReport2 = $('#includeReport2').is(':checked');
+    const includeReport3 = $('#includeReport3').is(':checked');
+    const includeReport4 = $('#includeReport4').is(':checked');
+    const includeReport5 = $('#includeReport5').is(':checked');
+
+    if (!includeReport1 && !includeReport2 && !includeReport3 && !includeReport4 && !includeReport5) {
+        alert('Lütfen en az bir rapor seçiniz.');
+        return;
+    }
+
+    // Mail gönderime başla - durumu kilitle
+    isMailSending = true;
+    console.log('Mail gönderim başlatıldı');
+
+    // Show progress immediately
+    $('.mail-progress').show();
+    $('.mail-success').hide();
+    $('.mail-error').hide();
+    $('#sendMailConfirmBtn').prop('disabled', true);
+
+    // CC alanını oku
+    const ccRecipients = $('#mailCC').val().trim();
+    let ccArray = [];
+    if (ccRecipients) {
+        ccArray = ccRecipients.split(',').map(email => email.trim()).filter(email => email);
+    }
+
+    // Prepare mail data
+    const mailData = {
+        subject: subject,
+        recipients: recipients.split(',').map(email => email.trim()),
+        cc_recipients: ccArray,
+        note: $('#mailNote').val().trim(),
+        include_reports: {
+            report1: includeReport1,
+            report2: includeReport2,
+            report3: includeReport3,
+            report4: includeReport4,
+            report5: includeReport5
+        },
+        filters: {
+            report1: {
+                date: $('#report1Date').val(),
+                cari: $('#report1Cari').val() || [],
+                muhasebe_grup: $('#report1MuhasebeGrup').val() || [],
+                satis_elemani: $('#report1SatisElemani').val() || []
+            },
+            report2: {
+                date: $('#report2Date').val(),
+                cari: $('#report2Cari').val() || [],
+                malzeme_grup: $('#report2MalzemeGrup').val() || [],
+                satis_elemani: $('#report2SatisElemani').val() || []
+            },
+            report3: {
+                month: $('#report3Month').val(),
+                cari: $('#report3Cari').val() || [],
+                muhasebe_grup: $('#report3MuhasebeGrup').val() || [],
+                satis_elemani: $('#report3SatisElemani').val() || []
+            },
+            report4: {
+                year: $('#report4Year').val(),
+                cari: $('#report4Cari').val() || [],
+                muhasebe_grup: $('#report4MuhasebeGrup').val() || [],
+                satis_elemani: $('#report4SatisElemani').val() || []
+            },
+            report5: {
+                year: $('#report5Year').val(),
+                month: $('#report5Month').val(),
+                top_count: $('#report5TopCount').val()
+            }
+        }
+    };
+
+    // Send mail request with timeout
+    $.ajax({
+        url: "/ydc-gunluk-rapor-mail/send-mail",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(mailData),
+        timeout: 120000, // 2 dakika timeout
+        success: function(response) {
+            console.log('AJAX başarılı, response:', response);
+
+            $('.mail-progress').hide();
+
+            if (response.success) {
+                $('.mail-success').show();
+                console.log('Mail başarıyla gönderildi');
+
+                // 3 saniye sonra modalı kapat
+                setTimeout(function() {
+                    $('#mailModal').modal('hide');
+                }, 3000);
+            } else {
+                $('.mail-error').show();
+                $('#errorMessage').text(response.error || 'Mail gönderilirken bir hata oluştu.');
+                console.error('Mail gönderme hatası:', response.error);
+
+                // 5 saniye sonra durumu sıfırla
+                setTimeout(function() {
+                    resetMailStatus();
+                }, 5000);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX hatası:', {xhr: xhr, status: status, error: error});
+
+            $('.mail-progress').hide();
+            $('.mail-error').show();
+
+            let errorMessage = 'Sunucu ile iletişim hatası';
+            if (status === 'timeout') {
+                errorMessage = 'İşlem zaman aşımına uğradı (2 dakika)';
+            } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMessage = xhr.responseJSON.error;
+            } else if (error) {
+                errorMessage += ': ' + error;
+            }
+
+            $('#errorMessage').text(errorMessage);
+
+            // 5 saniye sonra durumu sıfırla
+            setTimeout(function() {
+                resetMailStatus();
+            }, 5000);
+        },
+        complete: function() {
+            // Her durumda kilidi kaldır (2 saniye sonra güvenlik için)
+            setTimeout(function() {
+                isMailSending = false;
+                console.log('Mail gönderim kilidi kaldırıldı');
+            }, 2000);
+        }
+    });
+}
 
     // Initialize DataTables
     function initDataTable(tableId, columns, buttons = true, pageLength = 10) {
@@ -1727,22 +1798,6 @@
                         data: [],
                         backgroundColor: 'rgba(54, 162, 235, 0.5)',
                         borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'NET KG',
-                        data: [],
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'TUTAR (TL, ÷1000)',
-                        data: [],
-                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
                         borderWidth: 1,
                         tension: 0.4,
                         yAxisID: 'y1'
