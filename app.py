@@ -11884,8 +11884,8 @@ def add_daily_mail_job():
         scheduler.add_job(
             func=send_daily_mail_internal,
             trigger="cron",
-            hour=19,
-            minute=15,
+            hour=14,
+            minute=10,
             second=0,
             id=job_id,
             max_instances=1,
@@ -11955,7 +11955,7 @@ def send_daily_mail_internal():
         # Mail verileri
         mail_data = {
             'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
-            'recipients': ['dogukanturan@ydcmetal.com.tr'],
+            'recipients': ['dogukanturan@ydcmetal.com.tr','dogukanturan67@gmail.com'],
             'cc_recipients': ['bayramyagci@yagcilar.com.tr'],
             'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
             'include_reports': {
@@ -12211,8 +12211,18 @@ if __name__ == '__main__':
     os.makedirs('templates/admin/menus', exist_ok=True)
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
+    # Bu kontrol, kodun yalnızca ana işlemde çalıştığından emin olur, yeniden yükleyici işleminde değil
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        print(f"[INFO] Ana işlem algılandı (PID: {_process_id}). Zamanlayıcı başlatılıyor.")
+        scheduler = create_scheduler()
+        if scheduler:
+            add_daily_mail_job()
+            start_scheduler()
+            # Uygulama çıktığında zamanlayıcıyı düzgünce kapat
+            atexit.register(lambda: stop_scheduler())
+    else:
+        print(f"[INFO] Yeniden yükleyici işlem algılandı (PID: {_process_id}). Zamanlayıcı başlatma atlanıyor.")
 
-    setup_auto_mail_system()
     # Run the app with host set to allow external connections
     # and port set to 2025
     app.run(host='0.0.0.0', port=2025, debug=True)
