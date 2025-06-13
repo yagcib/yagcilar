@@ -11899,7 +11899,6 @@ def add_daily_mail_job():
         print(f"[ERROR] Failed to add daily mail job: {e}")
         return False
 
-
 def start_scheduler():
     """Scheduler'ı başlat"""
     scheduler = get_scheduler()
