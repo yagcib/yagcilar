@@ -11583,76 +11583,410 @@ def send_gmail_email(sender_email, sender_password, recipients, subject, html_co
         return False
 
 
-def send_daily_report_auto():
-    """Otomatik olarak günlük raporu gönderir"""
+import threading
+import time
+import sqlite3
+import os
+from datetime import datetime, timedelta
+from functools import wraps
+
+# *** ÇİFTE MAİL GÖNDERİMİNİ ÖNLEMEİÇİN GLOBAL DEĞİŞKENLER ***
+mail_sending_lock = threading.Lock()
+mail_sending_status = {
+    'is_sending': False,
+    'last_send_time': None,
+    'send_count_today': 0,
+    'last_send_date': None
+}
+
+# ============================================================================
+# GLOBAL DEĞİŞKENLER - SINGLETON PATTERN
+# ============================================================================
+
+_scheduler_instance = None
+_mail_lock = threading.RLock()  # Reentrant lock
+_daily_mail_sent = {}  # Memory cache for daily mails
+_process_id = str(uuid.uuid4())[:8]  # Unique process identifier
+
+
+# ============================================================================
+# ATOMIC DOSYA İŞLEMLERİ
+# ============================================================================
+
+def atomic_write_file(filepath, content):
+    """Atomic file writing - race condition'ları önler"""
+    temp_file = f"{filepath}.tmp.{_process_id}"
     try:
-        with app.app_context():  # Flask app context gerekli
-            today = datetime.now().strftime('%Y-%m-%d')
-            current_month = datetime.now().strftime('%Y-%m')
-            current_year = datetime.now().year
+        with open(temp_file, 'w') as f:
+            f.write(content)
 
-            # Varsayılan mail verileri
-            mail_data = {
-                'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
-                'recipients': [
-                    'huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'
-                ],
-                'cc_recipients': [
-                    'hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',  'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr', 'bayramyagci@ydcmetal.com.tr'
-                ],
-                'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
-                'include_reports': {
-                    'report1': True,
-                    'report2': True,
-                    'report3': True,
-                    'report4': True,
-                    'report5': False
-                },
-                'filters': {
-                    'report1': {
-                        'date': today,
-                        'cari': [],
-                        'muhasebe_grup': [],
-                        'satis_elemani': []
-                    },
-                    'report2': {
-                        'date': today,
-                        'cari': [],
-                        'malzeme_grup': [],
-                        'satis_elemani': []
-                    },
-                    'report3': {
-                        'month': current_month,
-                        'cari': [],
-                        'muhasebe_grup': [],
-                        'satis_elemani': []
-                    },
-                    'report4': {
-                        'year': str(current_year),
-                        'cari': [],
-                        'muhasebe_grup': [],
-                        'satis_elemani': []
-                    }
-                }
+        # Atomic move (POSIX systems)
+        if os.name == 'posix':
+            os.rename(temp_file, filepath)
+        else:
+            # Windows için
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            os.rename(temp_file, filepath)
+        return True
+    except Exception as e:
+        try:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        except:
+            pass
+        print(f"[ERROR] Atomic write failed: {e}")
+        return False
+
+
+def atomic_read_file(filepath):
+    """Atomic file reading"""
+    try:
+        with open(filepath, 'r') as f:
+            return f.read().strip()
+    except:
+        return None
+
+
+# ============================================================================
+# GÜNLÜK MAİL KONTROL SİSTEMİ
+# ============================================================================
+
+def get_daily_mail_status_file():
+    """Günlük mail durum dosyası"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    return f"daily_mail_status_{today}.json"
+
+
+def is_daily_mail_sent():
+    """Bugün mail gönderildi mi? - ULTRA SAFE"""
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    # 1. Memory cache kontrolü
+    if today in _daily_mail_sent and _daily_mail_sent[today]:
+        print(f"[INFO] Daily mail sent (memory cache): {today}")
+        return True
+
+    # 2. Dosya kontrolü
+    status_file = get_daily_mail_status_file()
+    if os.path.exists(status_file):
+        content = atomic_read_file(status_file)
+        if content:
+            try:
+                data = json.loads(content)
+                if data.get('sent') and data.get('date') == today:
+                    # Memory cache'i güncelle
+                    _daily_mail_sent[today] = True
+                    print(f"[INFO] Daily mail sent (file cache): {today}")
+                    return True
+            except:
+                pass
+
+    # 3. Legacy flag dosyası kontrolü
+    flag_file = f"mail_sent_{today}.flag"
+    if os.path.exists(flag_file):
+        _daily_mail_sent[today] = True
+        print(f"[INFO] Daily mail sent (legacy flag): {today}")
+        return True
+
+    return False
+
+
+def mark_daily_mail_sent():
+    """Günlük mail gönderildi olarak işaretle - ULTRA SAFE"""
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    # 1. Memory cache
+    _daily_mail_sent[today] = True
+
+    # 2. Status dosyası
+    status_file = get_daily_mail_status_file()
+    data = {
+        'sent': True,
+        'date': today,
+        'timestamp': datetime.now().isoformat(),
+        'process_id': _process_id
+    }
+
+    success = atomic_write_file(status_file, json.dumps(data, indent=2))
+    if success:
+        print(f"[SUCCESS] Daily mail marked as sent: {today}")
+    else:
+        print(f"[ERROR] Failed to mark daily mail as sent: {today}")
+
+    # 3. Legacy flag dosyası (backward compatibility)
+    flag_file = f"mail_sent_{today}.flag"
+    try:
+        with open(flag_file, 'w') as f:
+            f.write(f"{datetime.now().isoformat()}\n{_process_id}")
+    except:
+        pass
+
+    # 4. Eski dosyaları temizle
+    cleanup_old_files()
+
+
+def cleanup_old_files():
+    """7 günden eski dosyaları temizle"""
+    try:
+        cutoff_date = datetime.now() - timedelta(days=7)
+        cutoff_str = cutoff_date.strftime('%Y-%m-%d')
+
+        for filename in os.listdir('.'):
+            if filename.startswith('daily_mail_status_') and filename.endswith('.json'):
+                try:
+                    date_part = filename.replace('daily_mail_status_', '').replace('.json', '')
+                    if date_part < cutoff_str:
+                        os.remove(filename)
+                except:
+                    pass
+            elif filename.startswith('mail_sent_') and filename.endswith('.flag'):
+                try:
+                    date_part = filename.replace('mail_sent_', '').replace('.flag', '')
+                    if date_part < cutoff_str:
+                        os.remove(filename)
+                except:
+                    pass
+    except Exception as e:
+        print(f"[WARNING] Cleanup error: {e}")
+
+
+# ============================================================================
+# ULTRA-SAFE MAIL GÖNDERİM GUARD
+# ============================================================================
+
+def ultra_safe_mail_guard(func):
+    """Ultra güvenli mail gönderim guard - çifte gönderim kesinlikle engellenecek"""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with _mail_lock:
+            # 1. Günlük mail kontrolü
+            if is_daily_mail_sent():
+                print("[BLOCKED] Daily mail already sent - operation blocked")
+                return {'success': False, 'error': 'Daily mail already sent'}
+
+            # 2. Process-level lock
+            lock_file = f"mail_sending_lock_{_process_id}"
+            if os.path.exists(lock_file):
+                print("[BLOCKED] Process-level lock exists - operation blocked")
+                return {'success': False, 'error': 'Mail sending already in progress'}
+
+            # 3. Global lock
+            global_lock_file = "global_mail_sending.lock"
+            if os.path.exists(global_lock_file):
+                # Lock dosyasının yaşını kontrol et (5 dakikadan eski ise sil)
+                try:
+                    lock_age = time.time() - os.path.getmtime(global_lock_file)
+                    if lock_age > 300:  # 5 dakika
+                        os.remove(global_lock_file)
+                        print("[INFO] Stale global lock removed")
+                    else:
+                        print("[BLOCKED] Global lock exists - operation blocked")
+                        return {'success': False, 'error': 'Another process is sending mail'}
+                except:
+                    pass
+
+            # 4. Lock dosyalarını oluştur
+            try:
+                atomic_write_file(lock_file, f"{datetime.now().isoformat()}\n{_process_id}")
+                atomic_write_file(global_lock_file, f"{datetime.now().isoformat()}\n{_process_id}")
+            except Exception as e:
+                print(f"[ERROR] Failed to create locks: {e}")
+                return {'success': False, 'error': 'Failed to create locks'}
+
+            print(f"[INFO] Mail sending started (Process: {_process_id})")
+
+            try:
+                # Fonksiyonu çalıştır
+                result = func(*args, **kwargs)
+
+                # Başarılı ise işaretle
+                if result.get('success', False):
+                    mark_daily_mail_sent()
+                    print("[SUCCESS] Mail sent successfully")
+                else:
+                    print(f"[ERROR] Mail sending failed: {result.get('error', 'Unknown error')}")
+
+                return result
+
+            except Exception as e:
+                error_msg = f"Mail sending exception: {str(e)}"
+                print(f"[ERROR] {error_msg}")
+                return {'success': False, 'error': error_msg}
+
+            finally:
+                # Lock dosyalarını temizle
+                try:
+                    if os.path.exists(lock_file):
+                        os.remove(lock_file)
+                    if os.path.exists(global_lock_file):
+                        os.remove(global_lock_file)
+                    print("[INFO] Locks removed")
+                except Exception as e:
+                    print(f"[WARNING] Lock cleanup error: {e}")
+
+    return wrapper
+
+
+# ============================================================================
+# SCHEDULER SİSTEMİ - SINGLETON PATTERN
+# ============================================================================
+
+def get_scheduler():
+    """Singleton scheduler instance"""
+    global _scheduler_instance
+    return _scheduler_instance
+
+
+def create_scheduler():
+    """Yeni scheduler oluştur - sadece bir kez"""
+    global _scheduler_instance
+
+    with _mail_lock:
+        if _scheduler_instance is not None:
+            print("[WARNING] Scheduler already exists, stopping old one")
+            try:
+                if _scheduler_instance.running:
+                    _scheduler_instance.shutdown(wait=False)
+            except:
+                pass
+            _scheduler_instance = None
+
+        try:
+            _scheduler_instance = BackgroundScheduler()
+            print(f"[INFO] New scheduler created (Process: {_process_id})")
+            return _scheduler_instance
+        except Exception as e:
+            print(f"[ERROR] Scheduler creation failed: {e}")
+            return None
+
+
+def add_daily_mail_job():
+    """Günlük mail job'ını ekle - KESIN TEK JOB"""
+    scheduler = get_scheduler()
+    if not scheduler:
+        print("[ERROR] No scheduler available")
+        return False
+
+    # Mevcut tüm jobları sil
+    try:
+        all_jobs = scheduler.get_jobs()
+        for job in all_jobs:
+            scheduler.remove_job(job.id)
+            print(f"[INFO] Removed existing job: {job.id}")
+    except Exception as e:
+        print(f"[WARNING] Job cleanup error: {e}")
+
+    # Tek job ekle
+    job_id = f"daily_mail_{_process_id}"
+    try:
+        scheduler.add_job(
+            func=send_daily_mail_internal,
+            trigger="cron",
+            hour=14,
+            minute=10,
+            second=0,
+            id=job_id,
+            max_instances=1,
+            coalesce=True,
+            replace_existing=True,
+            misfire_grace_time=60
+        )
+        print(f"[SUCCESS] Daily mail job added: {job_id}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to add daily mail job: {e}")
+        return False
+
+
+def start_scheduler():
+    """Scheduler'ı başlat"""
+    scheduler = get_scheduler()
+    if not scheduler:
+        return False
+
+    try:
+        if not scheduler.running:
+            scheduler.start()
+            print("[SUCCESS] Scheduler started")
+
+        # Job sayısını kontrol et
+        jobs = scheduler.get_jobs()
+        print(f"[INFO] Active jobs: {len(jobs)}")
+        for job in jobs:
+            print(f"[INFO] Job: {job.id} - Next run: {job.next_run_time}")
+
+        return True
+    except Exception as e:
+        print(f"[ERROR] Scheduler start failed: {e}")
+        return False
+
+
+def stop_scheduler():
+    """Scheduler'ı durdur"""
+    global _scheduler_instance
+
+    if _scheduler_instance:
+        try:
+            if _scheduler_instance.running:
+                _scheduler_instance.shutdown(wait=False)
+                print("[INFO] Scheduler stopped")
+        except Exception as e:
+            print(f"[WARNING] Scheduler stop error: {e}")
+        finally:
+            _scheduler_instance = None
+
+
+# ============================================================================
+# MAİL GÖNDERİM FONKSİYONLARI
+# ============================================================================
+
+@ultra_safe_mail_guard
+def send_daily_mail_internal():
+    """Günlük mail gönderen ana fonksiyon - ULTRA SAFE"""
+    try:
+        print("[INFO] Starting daily mail generation...")
+
+        today = datetime.now().strftime('%Y-%m-%d')
+        current_month = datetime.now().strftime('%Y-%m')
+        current_year = datetime.now().year
+
+        # Mail verileri
+        mail_data = {
+            'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
+            'recipients': ['huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'],
+            'cc_recipients': ['hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',
+                    'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
+                    'bayramyagci@ydcmetal.com.tr','dogukanturan@ydcmetal.com.tr'],
+            'note': 'Bu mail OTOMATİK olarak sistem tarafından gönderilmiştir. (Test aşamasındadır.)',
+            'include_reports': {
+                'report1': True,
+                'report2': True,
+                'report3': True,
+                'report4': True,
+                'report5': False
+            },
+            'filters': {
+                'report1': {'date': today, 'cari': [], 'muhasebe_grup': [], 'satis_elemani': []},
+                'report2': {'date': today, 'cari': [], 'malzeme_grup': [], 'satis_elemani': []},
+                'report3': {'month': current_month, 'cari': [], 'muhasebe_grup': [], 'satis_elemani': []},
+                'report4': {'year': str(current_year), 'cari': [], 'muhasebe_grup': [], 'satis_elemani': []}
             }
+        }
 
-            # Mail gönderme işlemini gerçekleştir
-            result = send_ydc_mail_internal(mail_data)
-
-            # Log kaydet
-            print(f"[{datetime.now()}] Otomatik mail gönderimi tamamlandı: {result}")
-
-            return result
+        # Mail gönder
+        return send_mail_via_smtp(mail_data)
 
     except Exception as e:
-        error_msg = f"Otomatik mail gönderimi hatası: {str(e)}"
-        print(f"[{datetime.now()}] {error_msg}")
-        return {'success': False, 'error': error_msg}
+        print(f"[ERROR] Daily mail internal error: {e}")
+        return {'success': False, 'error': str(e)}
 
 
-def send_ydc_mail_internal(mail_data):
+def send_mail_via_smtp(mail_data):
+    """SMTP ile mail gönder"""
     try:
-        # Gmail SMTP ayarları
+        # Gmail ayarları
         sender_email = "yagcilarholding1@gmail.com"
         sender_password = "bqnp sius nztz padc"
         sender_name = "Yağcılar Holding"
@@ -11661,9 +11995,11 @@ def send_ydc_mail_internal(mail_data):
         cc_recipients = mail_data.get('cc_recipients', [])
 
         if not recipients:
-            return {'success': False, 'error': 'Alıcı listesi boş'}
+            return {'success': False, 'error': 'No recipients'}
 
-        # E-posta konteyneri oluştur
+        print(f"[INFO] Preparing mail - Recipients: {len(recipients)}, CC: {len(cc_recipients)}")
+
+        # E-posta oluştur
         msg = MIMEMultipart('alternative')
         msg['Subject'] = mail_data.get('subject', 'YDC Günlük Rapor')
         msg['From'] = f"{sender_name} <{sender_email}>"
@@ -11672,73 +12008,202 @@ def send_ydc_mail_internal(mail_data):
         if cc_recipients:
             msg['Cc'] = ', '.join(cc_recipients)
 
-        # Rapor verilerini topla
+        # HTML içerik oluştur (bu fonksiyonları mevcut kodunuzdan kullanın)
+        print("[INFO] Generating report data...")
         report_data = {}
         include_reports = mail_data.get('include_reports', {})
         filters = mail_data.get('filters', {})
 
-        # Raporları topla (mevcut fonksiyonlarınızı kullanarak)
+        # Raporları topla (mevcut fonksiyonlarınızı kullanın)
         if include_reports.get('report1', True):
             report_data['report1'] = get_report1_data_for_mail(filters.get('report1', {}))
-
         if include_reports.get('report2', True):
             report_data['report2'] = get_report2_data_for_mail(filters.get('report2', {}))
-
         if include_reports.get('report3', True):
             report_data['report3'] = get_report3_data_for_mail(filters.get('report3', {}))
-
         if include_reports.get('report4', True):
             report_data['report4'] = get_report4_data_for_mail(filters.get('report4', {}))
 
-        if include_reports.get('report5', False):
-            report_data['report5'] = get_report5_data_for_mail(
-                filters.get('report5', {'year': datetime.now().year, 'month': '0', 'top_count': 20}))
-
-        # HTML içeriğini oluştur (mevcut fonksiyonunuzu kullanarak)
+        print("[INFO] Generating HTML content...")
         html_content = generate_mail_html(report_data, mail_data.get('note', ''), include_reports)
         html_part = MIMEText(html_content, 'html', 'utf-8')
         msg.attach(html_part)
 
-        # Gmail SMTP ile mail gönder
+        # SMTP gönder
+        print("[INFO] Connecting to SMTP...")
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(sender_email, sender_password)
 
+        print("[INFO] Sending mail...")
         all_recipients = recipients + cc_recipients
-        for recipient in all_recipients:
-            server.sendmail(sender_email, recipient, msg.as_string())
-
+        server.sendmail(sender_email, all_recipients, msg.as_string())
         server.quit()
 
+        print(f"[SUCCESS] Mail sent to {len(recipients)} recipients and {len(cc_recipients)} CC")
         return {
             'success': True,
-            'message': f'Mail başarıyla {len(recipients)} alıcıya ve {len(cc_recipients)} CC alıcısına gönderildi'
+            'message': f'Mail sent successfully to {len(recipients)} recipients and {len(cc_recipients)} CC'
         }
 
     except Exception as e:
+        print(f"[ERROR] SMTP error: {e}")
         return {'success': False, 'error': str(e)}
 
-def setup_auto_mail_scheduler():
-    """Otomatik mail göndermek için zamanlayıcı kurar"""
-    scheduler = BackgroundScheduler()
 
-    # Her gün saat 19.15 'da mail gönder
-    scheduler.add_job(
-        func=send_daily_report_auto,
-        trigger="cron",
-        hour=19,
-        minute=15,
-        id='daily_ydc_report_17',
-        replace_existing=True
-    )
+# ============================================================================
+# MANUEL MAİL GÖNDERİM
+# ============================================================================
 
-    scheduler.start()
+def send_manual_mail(mail_data):
+    """Manuel mail gönderimi - günlük limit kontrolü ile"""
+    # Basit rate limiting - günde max 5 manuel mail
+    today = datetime.now().strftime('%Y-%m-%d')
+    manual_count_file = f"manual_mail_count_{today}.txt"
 
-    # Uygulama kapanırken scheduler'ı durdur
-    atexit.register(lambda: scheduler.shutdown())
+    try:
+        count = 0
+        if os.path.exists(manual_count_file):
+            content = atomic_read_file(manual_count_file)
+            if content and content.isdigit():
+                count = int(content)
 
-    print("APScheduler başlatıldı - Otomatik mail gönderimi aktif")
+        if count >= 5:
+            return {'success': False, 'error': 'Daily manual mail limit exceeded (5/day)'}
 
+        # Mail gönder
+        result = send_mail_via_smtp(mail_data)
+
+        # Başarılı ise sayacı artır
+        if result.get('success', False):
+            atomic_write_file(manual_count_file, str(count + 1))
+
+        return result
+
+    except Exception as e:
+        print(f"[ERROR] Manual mail error: {e}")
+        return {'success': False, 'error': str(e)}
+
+
+# ============================================================================
+# SETUP VE KONTROL FONKSİYONLARI
+# ============================================================================
+
+def setup_auto_mail_system():
+    """Otomatik mail sistemini kur - MAIN ENTRY POINT"""
+    print(f"[INFO] Setting up auto mail system (Process: {_process_id})")
+
+    try:
+        # Eski dosyaları temizle
+        cleanup_old_files()
+
+        # Scheduler oluştur
+        scheduler = create_scheduler()
+        if not scheduler:
+            return False
+
+        # Job ekle
+        if not add_daily_mail_job():
+            return False
+
+        # Başlat
+        if not start_scheduler():
+            return False
+
+        # Kapanış fonksiyonunu kaydet
+        atexit.register(stop_scheduler)
+
+        print("[SUCCESS] Auto mail system setup completed")
+        return True
+
+    except Exception as e:
+        print(f"[ERROR] Setup failed: {e}")
+        return False
+
+
+def get_system_status():
+    """Sistem durumunu getir"""
+    scheduler = get_scheduler()
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    return {
+        'process_id': _process_id,
+        'scheduler_running': scheduler is not None and scheduler.running if scheduler else False,
+        'active_jobs': len(scheduler.get_jobs()) if scheduler and scheduler.running else 0,
+        'daily_mail_sent': is_daily_mail_sent(),
+        'daily_mail_status_file_exists': os.path.exists(get_daily_mail_status_file()),
+        'global_lock_exists': os.path.exists("global_mail_sending.lock"),
+        'process_lock_exists': os.path.exists(f"mail_sending_lock_{_process_id}"),
+        'manual_mail_count': get_manual_mail_count(),
+        'next_scheduled_run': get_next_run_time()
+    }
+
+
+def get_manual_mail_count():
+    """Bugünkü manuel mail sayısı"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    count_file = f"manual_mail_count_{today}.txt"
+
+    if os.path.exists(count_file):
+        content = atomic_read_file(count_file)
+        if content and content.isdigit():
+            return int(content)
+    return 0
+
+
+def get_next_run_time():
+    """Sonraki mail zamanı"""
+    scheduler = get_scheduler()
+    if scheduler and scheduler.running:
+        jobs = scheduler.get_jobs()
+        if jobs:
+            return jobs[0].next_run_time.isoformat() if jobs[0].next_run_time else None
+    return None
+
+
+def force_reset_daily_mail():
+    """Günlük mail durumunu sıfırla - SADECE TEST İÇİN"""
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    # Memory cache'i temizle
+    if today in _daily_mail_sent:
+        del _daily_mail_sent[today]
+
+    # Dosyaları sil
+    status_file = get_daily_mail_status_file()
+    flag_file = f"mail_sent_{today}.flag"
+
+    for file in [status_file, flag_file]:
+        try:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"[INFO] Removed: {file}")
+        except Exception as e:
+            print(f"[WARNING] Failed to remove {file}: {e}")
+
+    print("[WARNING] Daily mail status reset - USE ONLY FOR TESTING!")
+
+
+def emergency_cleanup():
+    """Acil durum temizliği - her şeyi sıfırla"""
+    print("[WARNING] Emergency cleanup initiated...")
+
+    # Scheduler'ı durdur
+    stop_scheduler()
+
+    # Tüm lock dosyalarını sil
+    for filename in os.listdir('.'):
+        if any(pattern in filename for pattern in ['mail_sending_', 'global_mail_', 'manual_mail_count_']):
+            try:
+                os.remove(filename)
+                print(f"[INFO] Removed: {filename}")
+            except:
+                pass
+
+    # Memory cache'i temizle
+    _daily_mail_sent.clear()
+
+    print("[SUCCESS] Emergency cleanup completed")
 if __name__ == '__main__':
     # Create required directories if they don't exist
     os.makedirs('templates', exist_ok=True)
@@ -11748,8 +12213,18 @@ if __name__ == '__main__':
     os.makedirs('templates/admin/menus', exist_ok=True)
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
+    # Bu kontrol, kodun yalnızca ana işlemde çalıştığından emin olur, yeniden yükleyici işleminde değil
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        print(f"[INFO] Ana işlem algılandı (PID: {_process_id}). Zamanlayıcı başlatılıyor.")
+        scheduler = create_scheduler()
+        if scheduler:
+            add_daily_mail_job()
+            start_scheduler()
+            # Uygulama çıktığında zamanlayıcıyı düzgünce kapat
+            atexit.register(lambda: stop_scheduler())
+    else:
+        print(f"[INFO] Yeniden yükleyici işlem algılandı (PID: {_process_id}). Zamanlayıcı başlatma atlanıyor.")
 
-    setup_auto_mail_scheduler()
     # Run the app with host set to allow external connections
     # and port set to 2025
     app.run(host='0.0.0.0', port=2025, debug=True)
