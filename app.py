@@ -11750,7 +11750,6 @@ def cleanup_old_files():
     except Exception as e:
         print(f"[WARNING] Cleanup error: {e}")
 
-
 # ============================================================================
 # ULTRA-SAFE MAIL GÖNDERİM GUARD
 # ============================================================================
@@ -11954,8 +11953,10 @@ def send_daily_mail_internal():
         # Mail verileri
         mail_data = {
             'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
-            'recipients': ['dogukanturan@ydcmetal.com.tr','dogukanturan67@gmail.com'],
-            'cc_recipients': ['bayramyagci@yagcilar.com.tr'],
+            'recipients': ['huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'],
+            'cc_recipients': ['hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',
+                    'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
+                    'bayramyagci@ydcmetal.com.tr'],
             'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
             'include_reports': {
                 'report1': True,
