@@ -208,16 +208,16 @@
 {% block content %}
 <!-- Döviz Kurları Bilgi Kutusu -->
 <div class="currency-info">
-    <h6><i class="fas fa-dollar-sign"></i> Döviz Kurları</h6>
+    <h5><i class="fas fa-dollar-sign"></i> Döviz Kurları & {{ selected_date }}</h5>
+
     <div class="currency-rate">
         <span>USD:</span>
-        <span id="usd-rate">{{ "{:,.4f}".format(usd_kuru).replace(".", ",") }} ₺</span>
-    </div>
-    <div class="currency-rate">
-        <span>EUR:</span>
+        <span id="usd-rate">{{ "{:,.4f}".format(usd_kuru).replace(".", ",") }} ₺  </span>
+        <span>  EUR:</span>
         <span id="eur-rate">{{ "{:,.4f}".format(eur_kuru).replace(".", ",") }} ₺</span>
+
     </div>
-    <small class="text-light opacity-75">{{ selected_date }} tarihi</small>
+
 </div>
 
 <!-- Filtre Alanı -->
