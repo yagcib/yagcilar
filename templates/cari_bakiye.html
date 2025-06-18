@@ -126,7 +126,40 @@
         color: #dc3545;
         font-weight: bold;
     }
-    
+
+    /* Borç ve alacak arka plan renkleri */
+    .table .debt-amount,
+    #detailTable .debt-amount {
+        background-color: #fef9e7 !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .table .receivable-amount,
+    #detailTable .receivable-amount {
+        background-color: #f0f4f8 !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .table .total-debt,
+    #detailTable .total-debt {
+        background-color: #fff8e1 !important;
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 6px;
+    }
+
+    .table .total-receivable,
+    #detailTable .total-receivable {
+        background-color: #e8f4f8 !important;
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 6px;
+    }
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -134,45 +167,45 @@
         padding: 10px 30px;
         font-weight: 500;
     }
-    
+
     .btn-primary:hover {
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    
+
     .risk-indicator {
         padding: 5px 10px;
         border-radius: 15px;
         font-size: 0.8rem;
         font-weight: 500;
     }
-    
+
     .risk-low {
         background-color: #d4edda;
         color: #155724;
     }
-    
+
     .risk-medium {
         background-color: #fff3cd;
         color: #856404;
     }
-    
+
     .risk-high {
         background-color: #f8d7da;
         color: #721c24;
     }
-    
+
     .loading-spinner {
         display: none;
         text-align: center;
         padding: 40px;
     }
-    
+
     .autocomplete {
         position: relative;
     }
-    
+
     .autocomplete-items {
         position: absolute;
         border: 1px solid #d4d4d4;
@@ -186,18 +219,18 @@
         max-height: 200px;
         overflow-y: auto;
     }
-    
+
     .autocomplete-items div {
         padding: 10px;
         cursor: pointer;
         background-color: #fff;
         border-bottom: 1px solid #d4d4d4;
     }
-    
+
     .autocomplete-items div:hover {
         background-color: #e9e9e9;
     }
-    
+
     .autocomplete-active {
         background-color: #667eea !important;
         color: #ffffff;
@@ -244,6 +277,30 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label for="cari_grup" class="form-label">Cari Grup</label>
+                    <select class="form-select" id="cari_grup" name="cari_grup">
+                        <option value="all" {% if selected_cari_grup == 'all' %}selected{% endif %}>Tüm Gruplar</option>
+                        {% for grup in cari_grup_list %}
+                        <option value="{{ grup }}" {% if selected_cari_grup == grup %}selected{% endif %}>
+                            {{ grup }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="cari_tur" class="form-label">Cari Türü</label>
+                    <select class="form-select" id="cari_tur" name="cari_tur">
+                        <option value="all" {% if selected_cari_tur == 'all' %}selected{% endif %}>Tüm Türler</option>
+                        {% for tur in cari_tur_list %}
+                        <option value="{{ tur }}" {% if selected_cari_tur == tur %}selected{% endif %}>
+                            {{ tur }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
                 <div class="col-md-3">
                     <label for="cari" class="form-label">Cari Arama</label>
                     <div class="autocomplete">
@@ -259,7 +316,7 @@
                         <option value="alacakli" {% if selected_durum == 'alacakli' %}selected{% endif %}>Alacaklı</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-search"></i> Getir
                     </button>
@@ -327,7 +384,7 @@
             <div class="col-md-3">
                 <div class="summary-card text-center">
                     <div class="summary-value" id="net-position">
-                        {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
+                        {% set net = results|sum(attribute='TOPLAM_TL_BORC') - results|sum(attribute='TOPLAM_TL_ALACAK') %}
                         {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                     </div>
                     <div class="summary-label">Net Pozisyon</div>
@@ -376,6 +433,8 @@
                     <tr>
                         <th>Firma</th>
                         <th>VKN/TCKNO</th>
+                        <th>Cari Grup</th>
+                        <th>Cari Türü</th>
                         <th>Cari Ünvanı</th>
                         <th>USD Borç</th>
                         <th>EUR Borç</th>
@@ -393,18 +452,20 @@
                     <tr>
                         <td><strong>{{ row.FIRMA }}</strong></td>
                         <td>{{ row['VKN&TCKNO'] }}</td>
+                        <td>{{ row['CARİ GRUP'] }}</td>
+                        <td>{{ row['KOD YAPISI'] }}</td>
                         <td>{{ row.CARI_UNVANI }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
-                        <td class="text-end negative">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }} ₺</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end positive">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }} ₺</td>
+                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
+                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
+                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
+                        <td class="text-end total-debt">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }} ₺</td>
+                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end total-receivable">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }} ₺</td>
                         <td class="text-end">
-                            {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
-                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
+                            {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
+                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}" data-sort="{{ net }}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                             </span>
                         </td>
@@ -488,7 +549,7 @@
                         </p>
                         <p class="card-text">
                             <strong>Net Pozisyon:</strong><br>
-                            {% set net = firma_data|sum(attribute='TOPLAM_TL_ALACAK') - firma_data|sum(attribute='TOPLAM_TL_BORC') %}
+                            {% set net = firma_data|sum(attribute='TOPLAM_TL_BORC') - firma_data|sum(attribute='TOPLAM_TL_ALACAK') %}
                             <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                             </span>
@@ -545,7 +606,7 @@
                         <td>{{ row.CARI_UNVANI }}</td>
                         <td>{{ row.FIRMA }}</td>
                         <td class="text-end">
-                            {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
+                            {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
                             <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                             </span>
@@ -588,7 +649,7 @@ $(document).ready(function() {
     $('#detailTable').DataTable({
         responsive: true,
         pageLength: 250,
-        order: [[11, 'asc']], // Net Durum'a göre sırala (küçükten büyüğe)
+        order: [[13, 'asc']], // Net Durum'a göre sırala (küçükten büyüğe)
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
         },
@@ -599,10 +660,26 @@ $(document).ready(function() {
         columnDefs: [
             {
                 // Para formatını uygula (virgüllü gösterim)
-                targets: [3, 4, 5, 6, 7, 8, 9, 10, 11],
+                targets: [5, 6, 7, 8, 9, 10, 11, 12],
                 render: function(data, type, row) {
                     if (type === 'display' || type === 'filter') {
                         return data; // Zaten Jinja2 ile formatlanmış
+                    }
+                    return data;
+                }
+            },
+            {
+                // Net Durum sütunu için özel sıralama
+                targets: [13],
+                type: 'num',
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return data; // Formatlanmış veriyi göster
+                    }
+                    if (type === 'type' || type === 'sort') {
+                        // Sıralama için span içindeki data-sort değerini kullan
+                        var sortValue = $(data).attr('data-sort');
+                        return parseFloat(sortValue) || 0;
                     }
                     return data;
                 }
@@ -929,7 +1006,7 @@ $(document).ready(function() {
             labels: Object.keys(firmaDebts),
             datasets: [{
                 label: 'Net Pozisyon',
-                data: Object.keys(firmaDebts).map(firma => firmaReceivables[firma] - firmaDebts[firma]),
+                data: Object.keys(firmaDebts).map(firma => firmaDebts[firma] - firmaReceivables[firma]),
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 borderWidth: 3,
@@ -1007,7 +1084,7 @@ $(document).ready(function() {
                 label: 'Cari Risk',
                 data: results.map(row => ({
                     x: row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK,
-                    y: Math.abs(row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC)
+                    y: Math.abs(row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK)
                 })),
                 backgroundColor: 'rgba(102, 126, 234, 0.6)',
                 borderColor: '#667eea'

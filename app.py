@@ -12219,7 +12219,9 @@ def cari_bakiye():
         selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
         selected_firma = request.args.get('firma', 'all')
         selected_cari = request.args.get('cari', '')
-        selected_durum = request.args.get('durum', 'all')  # Yeni durum filtresi
+        selected_durum = request.args.get('durum', 'all')
+        selected_cari_grup = request.args.get('cari_grup', 'all')  # Yeni cari grup filtresi
+        selected_cari_tur = request.args.get('cari_tur', 'all')  # Yeni cari tür filtresi
 
         # Basit firma listesi sorgusu
         try:
@@ -12228,104 +12230,44 @@ def cari_bakiye():
         except:
             firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
 
-        # Ana SQL sorgusunu tarihe göre modifiye et - Basitleştirilmiş versiyon
+        # Cari Grup listesi al
+        cari_grup_list = []
+        try:
+            cursor.execute(
+                "SELECT DISTINCT [CARİ GRUP] FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] WHERE [CARİ GRUP] != '' AND [CARİ GRUP] IS NOT NULL ORDER BY [CARİ GRUP]")
+            cari_grup_list = [row[0] for row in cursor.fetchall()]
+        except:
+            cari_grup_list = []
+
+        # Cari Tür listesi al
+        cari_tur_list = []
+        try:
+            cursor.execute(
+                "SELECT DISTINCT [KOD YAPISI] FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] WHERE [KOD YAPISI] != '' AND [KOD YAPISI] IS NOT NULL ORDER BY [KOD YAPISI]")
+            cari_tur_list = [row[0] for row in cursor.fetchall()]
+        except:
+            cari_tur_list = []
+
+        # View'i kullanarak veri çekme (View güncellenmiş sütun yapısına göre)
         base_query = f"""
-        SELECT
-            KML.[FIRMA],
-            KML.[VKN&TCKNO],
-            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
-            SUM(KML.[USD_BORC]) [USD_BORC],
-            SUM(KML.[EURO_BORC]) [EURO_BORC], 
-            SUM(KML.[TL_BORC]) [TL_BORC],
-            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
-            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
-            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
-            SUM(KML.[TL_ALACAK]) [TL_ALACAK], 
-            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
-            KML.[USD_SATIS_KURU],
-            KML.[EUR_SATIS_KURU]
-        FROM
-        (SELECT
-            FIRMA='225-YDÇ'
-            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
-        FROM LG_225_CLCARD CL WITH (NOLOCK)
-        WHERE CL.ACTIVE=0 
-        )KML
-        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
-
-        UNION ALL
-
-        SELECT
-            KML.[FIRMA],
-            KML.[VKN&TCKNO],
-            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
-            SUM(KML.[USD_BORC]) [USD_BORC],
-            SUM(KML.[EURO_BORC]) [EURO_BORC],
-            SUM(KML.[TL_BORC]) [TL_BORC],
-            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
-            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
-            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
-            SUM(KML.[TL_ALACAK]) [TL_ALACAK],
-            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
-            KML.[USD_SATIS_KURU],
-            KML.[EUR_SATIS_KURU]
-        FROM
-        (SELECT
-            FIRMA='325-STAR'
-            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
-        FROM LG_325_CLCARD CL WITH (NOLOCK)
-        WHERE CL.ACTIVE=0 
-        )KML
-        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
-
-        UNION ALL
-
-        SELECT
-            KML.[FIRMA],
-            KML.[VKN&TCKNO],
-            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
-            SUM(KML.[USD_BORC]) [USD_BORC],
-            SUM(KML.[EURO_BORC]) [EURO_BORC],
-            SUM(KML.[TL_BORC]) [TL_BORC],
-            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
-            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
-            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
-            SUM(KML.[TL_ALACAK]) [TL_ALACAK],
-            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
-            KML.[USD_SATIS_KURU],
-            KML.[EUR_SATIS_KURU]
-        FROM
-        (SELECT
-            FIRMA='425-YAĞCILAR'
-            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
-            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
-            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
-        FROM LG_425_CLCARD CL WITH (NOLOCK)
-        WHERE CL.ACTIVE=0 
-        )KML
-        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
+        SELECT 
+            FIRMA,
+            [VKN&TCKNO],
+            [CARİ GRUP],
+            [KOD YAPISI],
+            CARI_UNVANI,
+            USD_BORC,
+            EURO_BORC,
+            TL_BORC,
+            TOPLAM_TL_BORC,
+            USD_ALACAK,
+            EURO_ALACAK,
+            TL_ALACAK,
+            TOPLAM_TL_ALACAK,
+            USD_SATIS_KURU,
+            EUR_SATIS_KURU
+        FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025]
+        WHERE 1=1
         """
 
         # Filtreleme için WHERE koşulları
@@ -12337,15 +12279,21 @@ def cari_bakiye():
         if selected_cari:
             where_conditions.append(f"CARI_UNVANI LIKE '%{selected_cari}%'")
 
+        if selected_cari_grup != 'all':
+            where_conditions.append(f"[CARİ GRUP] = '{selected_cari_grup}'")
+
+        if selected_cari_tur != 'all':
+            where_conditions.append(f"[KOD YAPISI] = '{selected_cari_tur}'")
+
         # Durum filtresi için koşul ekle (Borçlu veya Alacaklı)
         if selected_durum == 'borclu':
-            where_conditions.append("(TOPLAM_TL_ALACAK - TOPLAM_TL_BORC) < 0")
+            where_conditions.append("(TOPLAM_TL_BORC - TOPLAM_TL_ALACAK) > 0")
         elif selected_durum == 'alacakli':
-            where_conditions.append("(TOPLAM_TL_ALACAK - TOPLAM_TL_BORC) > 0")
+            where_conditions.append("(TOPLAM_TL_BORC - TOPLAM_TL_ALACAK) < 0")
 
         # Ana sorgu oluştur
         if where_conditions:
-            main_query = f"SELECT * FROM ({base_query}) AS filtered WHERE {' AND '.join(where_conditions)}"
+            main_query = f"{base_query} AND {' AND '.join(where_conditions)}"
         else:
             main_query = base_query
 
@@ -12355,7 +12303,7 @@ def cari_bakiye():
         for row in cursor.fetchall():
             results.append(dict(zip(columns, row)))
 
-        # Döviz kurları bilgisi al - Basitleştirilmiş
+        # Döviz kurları bilgisi al
         usd_kuru = 0
         eur_kuru = 0
 
@@ -12367,7 +12315,12 @@ def cari_bakiye():
         # Cari listesi al
         cari_list = []
         try:
-            cari_query = f"SELECT DISTINCT CARI_UNVANI FROM ({base_query}) AS cari_list WHERE CARI_UNVANI != '' ORDER BY CARI_UNVANI"
+            cari_query = f"""
+            SELECT DISTINCT CARI_UNVANI 
+            FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] 
+            WHERE CARI_UNVANI != '' AND CARI_UNVANI IS NOT NULL
+            ORDER BY CARI_UNVANI
+            """
             cursor.execute(cari_query)
             cari_list = [row[0] for row in cursor.fetchall()]
         except:
@@ -12379,10 +12332,14 @@ def cari_bakiye():
                                results=results,
                                firma_list=firma_list,
                                cari_list=cari_list,
+                               cari_grup_list=cari_grup_list,
+                               cari_tur_list=cari_tur_list,
                                selected_date=selected_date,
                                selected_firma=selected_firma,
                                selected_cari=selected_cari,
-                               selected_durum=selected_durum,  # Durum değişkenini aktarma
+                               selected_durum=selected_durum,
+                               selected_cari_grup=selected_cari_grup,
+                               selected_cari_tur=selected_cari_tur,
                                usd_kuru=usd_kuru,
                                eur_kuru=eur_kuru,
                                username=session.get('username'),
@@ -12405,23 +12362,44 @@ def cari_bakiye_api():
 
         selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
         selected_firma = request.args.get('firma', 'all')
-        selected_durum = request.args.get('durum', 'all')  # API'ye durum parametresi ekleme
+        selected_durum = request.args.get('durum', 'all')
+        selected_cari_grup = request.args.get('cari_grup', 'all')
+        selected_cari_tur = request.args.get('cari_tur', 'all')
 
-        # Basit özet sorgu
+        # View'den özet veriler al
         summary_query = f"""
         SELECT 
-            '225-YDÇ' as FIRMA,
-            0 as TOPLAM_BORC,
-            0 as TOPLAM_ALACAK,
-            0 as USD_BORC_TOPLAM,
-            0 as EURO_BORC_TOPLAM,
-            0 as TL_BORC_TOPLAM,
-            0 as USD_ALACAK_TOPLAM,
-            0 as EURO_ALACAK_TOPLAM,
-            0 as TL_ALACAK_TOPLAM,
-            0 as USD_KURU,
-            0 as EUR_KURU
+            FIRMA,
+            SUM(TOPLAM_TL_BORC) as TOPLAM_BORC,
+            SUM(TOPLAM_TL_ALACAK) as TOPLAM_ALACAK,
+            SUM(USD_BORC) as USD_BORC_TOPLAM,
+            SUM(EURO_BORC) as EURO_BORC_TOPLAM,
+            SUM(TL_BORC) as TL_BORC_TOPLAM,
+            SUM(USD_ALACAK) as USD_ALACAK_TOPLAM,
+            SUM(EURO_ALACAK) as EURO_ALACAK_TOPLAM,
+            SUM(TL_ALACAK) as TL_ALACAK_TOPLAM,
+            AVG(USD_SATIS_KURU) as USD_KURU,
+            AVG(EUR_SATIS_KURU) as EUR_KURU
+        FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025]
+        WHERE 1=1
         """
+
+        # Firma filtresi varsa ekle
+        where_conditions = []
+
+        if selected_firma != 'all':
+            where_conditions.append(f"FIRMA = '{selected_firma}'")
+
+        if selected_cari_grup != 'all':
+            where_conditions.append(f"[CARİ GRUP] = '{selected_cari_grup}'")
+
+        if selected_cari_tur != 'all':
+            where_conditions.append(f"[KOD YAPISI] = '{selected_cari_tur}'")
+
+        if where_conditions:
+            summary_query += f" AND {' AND '.join(where_conditions)}"
+
+        summary_query += " GROUP BY FIRMA"
 
         cursor.execute(summary_query)
         columns = [column[0] for column in cursor.description]
