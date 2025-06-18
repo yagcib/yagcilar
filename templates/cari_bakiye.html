@@ -1,0 +1,1072 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Cari Bakiye Raporu - Yagcilar Holding{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .filter-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .currency-info {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        min-width: 200px;
+    }
+    
+    .currency-rate {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .currency-rate:last-child {
+        margin-bottom: 0;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .summary-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .summary-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .tab-content {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: #666;
+        font-weight: 500;
+        padding: 12px 24px;
+        margin-right: 5px;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 30px;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .detail-table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        font-weight: 500;
+        padding: 15px 10px;
+    }
+    
+    .table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9ff;
+    }
+    
+    .positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 30px;
+        font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .risk-indicator {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .risk-low {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .risk-medium {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .risk-high {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .autocomplete {
+        position: relative;
+    }
+    
+    .autocomplete-items {
+        position: absolute;
+        border: 1px solid #d4d4d4;
+        border-bottom: none;
+        border-top: none;
+        z-index: 99;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .autocomplete-items div {
+        padding: 10px;
+        cursor: pointer;
+        background-color: #fff;
+        border-bottom: 1px solid #d4d4d4;
+    }
+    
+    .autocomplete-items div:hover {
+        background-color: #e9e9e9;
+    }
+    
+    .autocomplete-active {
+        background-color: #667eea !important;
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Döviz Kurları Bilgi Kutusu -->
+<div class="currency-info">
+    <h6><i class="fas fa-dollar-sign"></i> Döviz Kurları</h6>
+    <div class="currency-rate">
+        <span>USD:</span>
+        <span id="usd-rate">{{ "{:,.4f}".format(usd_kuru).replace(".", ",") }} ₺</span>
+    </div>
+    <div class="currency-rate">
+        <span>EUR:</span>
+        <span id="eur-rate">{{ "{:,.4f}".format(eur_kuru).replace(".", ",") }} ₺</span>
+    </div>
+    <small class="text-light opacity-75">{{ selected_date }} tarihi</small>
+</div>
+
+<!-- Filtre Alanı -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-4">
+            <i class="fas fa-filter"></i> Rapor Filtreleri
+        </h5>
+        <form id="filterForm" method="GET">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="date" class="form-label">Tarih</label>
+                    <input type="date" class="form-control" id="date" name="date"
+                           value="{{ selected_date }}" required>
+                </div>
+                <div class="col-md-2">
+                    <label for="firma" class="form-label">Firma</label>
+                    <select class="form-select" id="firma" name="firma">
+                        <option value="all" {% if selected_firma == 'all' %}selected{% endif %}>Tüm Firmalar</option>
+                        {% for firma in firma_list %}
+                        <option value="{{ firma }}" {% if selected_firma == firma %}selected{% endif %}>
+                            {{ firma }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="cari" class="form-label">Cari Arama</label>
+                    <div class="autocomplete">
+                        <input type="text" class="form-control" id="cari" name="cari"
+                               value="{{ selected_cari }}" placeholder="Cari adı ile arayın...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="durum" class="form-label">Durum</label>
+                    <select class="form-select" id="durum" name="durum">
+                        <option value="all" {% if selected_durum == 'all' %}selected{% endif %}>Tümü</option>
+                        <option value="borclu" {% if selected_durum == 'borclu' %}selected{% endif %}>Borçlu</option>
+                        <option value="alacakli" {% if selected_durum == 'alacakli' %}selected{% endif %}>Alacaklı</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Getir
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sekme Yapısı -->
+<ul class="nav nav-tabs mb-4" id="reportTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="genel-tab" data-bs-toggle="tab"
+                data-bs-target="#genel" type="button" role="tab">
+            <i class="fas fa-chart-pie"></i> Genel Durum
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="detay-tab" data-bs-toggle="tab"
+                data-bs-target="#detay" type="button" role="tab">
+            <i class="fas fa-table"></i> Cari Detaylı Bakiye
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="kur-tab" data-bs-toggle="tab"
+                data-bs-target="#kur" type="button" role="tab">
+            <i class="fas fa-chart-line"></i> Kur Analizi
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="karsilastirma-tab" data-bs-toggle="tab"
+                data-bs-target="#karsilastirma" type="button" role="tab">
+            <i class="fas fa-balance-scale"></i> Firma Karşılaştırma
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="risk-tab" data-bs-toggle="tab"
+                data-bs-target="#risk" type="button" role="tab">
+            <i class="fas fa-exclamation-triangle"></i> Risk Analizi
+        </button>
+    </li>
+</ul>
+
+<!-- Sekme İçerikleri -->
+<div class="tab-content" id="reportTabContent">
+    <!-- Genel Durum Sekmesi -->
+    <div class="tab-pane fade show active" id="genel" role="tabpanel">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="summary-value" id="total-debt">
+                        {{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺
+                    </div>
+                    <div class="summary-label">Toplam Borç</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="summary-value" id="total-receivable">
+                        {{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺
+                    </div>
+                    <div class="summary-label">Toplam Alacak</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="summary-value" id="net-position">
+                        {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
+                        {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
+                    </div>
+                    <div class="summary-label">Net Pozisyon</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
+                    <div class="summary-value" id="total-cari">
+                        {{ results|length }}
+                    </div>
+                    <div class="summary-label">Toplam Cari</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Firmalar Bazında Borç Dağılımı</h6>
+                    <canvas id="debtChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Döviz Türlerine Göre Dağılım</h6>
+                    <canvas id="currencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Borç-Alacak Karşılaştırması</h6>
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cari Detaylı Bakiye Sekmesi -->
+    <div class="tab-pane fade" id="detay" role="tabpanel">
+        <div class="table-responsive detail-table">
+            <table class="table table-hover" id="detailTable">
+                <thead>
+                    <tr>
+                        <th>Firma</th>
+                        <th>VKN/TCKNO</th>
+                        <th>Cari Ünvanı</th>
+                        <th>USD Borç</th>
+                        <th>EUR Borç</th>
+                        <th>TL Borç</th>
+                        <th>Toplam TL Borç</th>
+                        <th>USD Alacak</th>
+                        <th>EUR Alacak</th>
+                        <th>TL Alacak</th>
+                        <th>Toplam TL Alacak</th>
+                        <th>Net Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td><strong>{{ row.FIRMA }}</strong></td>
+                        <td>{{ row['VKN&TCKNO'] }}</td>
+                        <td>{{ row.CARI_UNVANI }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
+                        <td class="text-end negative">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }} ₺</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end positive">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }} ₺</td>
+                        <td class="text-end">
+                            {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
+                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
+                                {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Kur Analizi Sekmesi -->
+    <div class="tab-pane fade" id="kur" role="tabpanel">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Döviz Pozisyon Analizi</h6>
+                    <canvas id="currencyPositionChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Kur Riski Değerlendirmesi</h6>
+                    <canvas id="currencyRiskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Döviz Kur Bilgileri</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>USD Satış Kuru:</strong> {{ "{:,.4f}".format(usd_kuru).replace(".", ",") }} ₺</p>
+                                <p><strong>EUR Satış Kuru:</strong> {{ "{:,.4f}".format(eur_kuru).replace(".", ",") }} ₺</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Toplam USD Pozisyon:</strong>
+                                    {% set usd_net = results|sum(attribute='USD_ALACAK') - results|sum(attribute='USD_BORC') %}
+                                    <span class="{% if usd_net >= 0 %}positive{% else %}negative{% endif %}">
+                                        {{ "{:,.2f}".format(usd_net).replace(".", ",") }} USD
+                                    </span>
+                                </p>
+                                <p><strong>Toplam EUR Pozisyon:</strong>
+                                    {% set eur_net = results|sum(attribute='EURO_ALACAK') - results|sum(attribute='EURO_BORC') %}
+                                    <span class="{% if eur_net >= 0 %}positive{% else %}negative{% endif %}">
+                                        {{ "{:,.2f}".format(eur_net).replace(".", ",") }} EUR
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firma Karşılaştırma Sekmesi -->
+    <div class="tab-pane fade" id="karsilastirma" role="tabpanel">
+        <div class="chart-container">
+            <h6 class="text-center mb-3">Firma Bazında Toplam Pozisyon Karşılaştırması</h6>
+            <canvas id="firmaComparisonChart"></canvas>
+        </div>
+
+        <div class="row">
+            {% for firma in firma_list %}
+            {% set firma_data = results|selectattr("FIRMA", "equalto", firma)|list %}
+            {% if firma_data %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">{{ firma }}</h6>
+                        <p class="card-text">
+                            <strong>Toplam Borç:</strong><br>
+                            <span class="negative">{{ "{:,.2f}".format(firma_data|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</span>
+                        </p>
+                        <p class="card-text">
+                            <strong>Toplam Alacak:</strong><br>
+                            <span class="positive">{{ "{:,.2f}".format(firma_data|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺</span>
+                        </p>
+                        <p class="card-text">
+                            <strong>Net Pozisyon:</strong><br>
+                            {% set net = firma_data|sum(attribute='TOPLAM_TL_ALACAK') - firma_data|sum(attribute='TOPLAM_TL_BORC') %}
+                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
+                                {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Risk Analizi Sekmesi -->
+    <div class="tab-pane fade" id="risk" role="tabpanel">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Risk Analizi Açıklaması</h6>
+                    <p class="mb-0">Bu analiz, döviz pozisyonları ve cari bakiye dağılımları temelinde risk değerlendirmesi yapmaktadır.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Döviz Risk Dağılımı</h6>
+                    <canvas id="riskDistributionChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h6 class="text-center mb-3">Cari Risk Analizi</h6>
+                    <canvas id="cariRiskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Cari Ünvanı</th>
+                        <th>Firma</th>
+                        <th>Toplam Pozisyon</th>
+                        <th>Döviz Riski</th>
+                        <th>Risk Seviyesi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    {% if row.CARI_UNVANI %}
+                    <tr>
+                        <td>{{ row.CARI_UNVANI }}</td>
+                        <td>{{ row.FIRMA }}</td>
+                        <td class="text-end">
+                            {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
+                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
+                                {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            {% set fx_exposure = (row.USD_BORC + row.USD_ALACAK) * row.USD_SATIS_KURU + (row.EURO_BORC + row.EURO_ALACAK) * row.EUR_SATIS_KURU %}
+                            {{ "{:,.2f}".format(fx_exposure).replace(".", ",") }} ₺
+                        </td>
+                        <td>
+                            {% set total_exposure = row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK %}
+                            {% if total_exposure < 100000 %}
+                                <span class="risk-indicator risk-low">Düşük</span>
+                            {% elif total_exposure < 500000 %}
+                                <span class="risk-indicator risk-medium">Orta</span>
+                            {% else %}
+                                <span class="risk-indicator risk-high">Yüksek</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Yükleniyor...</span>
+    </div>
+    <p class="mt-2">Veriler yükleniyor...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // DataTable initialization
+    $('#detailTable').DataTable({
+        responsive: true,
+        pageLength: 250,
+        order: [[11, 'asc']], // Net Durum'a göre sırala (küçükten büyüğe)
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
+        },
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        columnDefs: [
+            {
+                // Para formatını uygula (virgüllü gösterim)
+                targets: [3, 4, 5, 6, 7, 8, 9, 10, 11],
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return data; // Zaten Jinja2 ile formatlanmış
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+
+    // Autocomplete for cari search
+    const cariList = {{ cari_list|tojson }};
+
+    function autocomplete(inp, arr) {
+        let currentFocus;
+
+        inp.addEventListener("input", function(e) {
+            let a, b, i, val = this.value;
+            closeAllLists();
+            if (!val) return false;
+            currentFocus = -1;
+
+            a = document.createElement("DIV");
+            a.setAttribute("class", "autocomplete-items");
+            this.parentNode.appendChild(a);
+
+            for (i = 0; i < arr.length; i++) {
+                if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                    b = document.createElement("DIV");
+                    b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+                    b.innerHTML += arr[i].substr(val.length);
+                    b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+
+                    b.addEventListener("click", function(e) {
+                        inp.value = this.getElementsByTagName("input")[0].value;
+                        closeAllLists();
+                    });
+                    a.appendChild(b);
+                }
+            }
+        });
+
+        inp.addEventListener("keydown", function(e) {
+            let x = document.querySelector(".autocomplete-items");
+            if (x) x = x.getElementsByTagName("div");
+            if (e.keyCode == 40) {
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode == 38) {
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode == 13) {
+                e.preventDefault();
+                if (currentFocus > -1) {
+                    if (x) x[currentFocus].click();
+                }
+            }
+        });
+
+        function addActive(x) {
+            if (!x) return false;
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (x.length - 1);
+            x[currentFocus].classList.add("autocomplete-active");
+        }
+
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+
+        function closeAllLists(elmnt) {
+            let x = document.getElementsByClassName("autocomplete-items");
+            for (let i = 0; i < x.length; i++) {
+                if (elmnt != x[i] && elmnt != inp) {
+                    x[i].parentNode.removeChild(x[i]);
+                }
+            }
+        }
+
+        document.addEventListener("click", function (e) {
+            closeAllLists(e.target);
+        });
+    }
+
+    autocomplete(document.getElementById("cari"), cariList);
+
+    // Para formatı fonksiyonu
+    function formatMoney(amount) {
+        return new Intl.NumberFormat('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+    }
+
+    // Chart data preparation
+    const results = {{ results|tojson }};
+
+    // Firma bazında borç dağılımı
+    const firmaDebts = {};
+    results.forEach(row => {
+        if (!firmaDebts[row.FIRMA]) {
+            firmaDebts[row.FIRMA] = 0;
+        }
+        firmaDebts[row.FIRMA] += row.TOPLAM_TL_BORC;
+    });
+
+    const debtChart = new Chart(document.getElementById('debtChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(firmaDebts),
+            datasets: [{
+                data: Object.values(firmaDebts),
+                backgroundColor: [
+                    '#667eea',
+                    '#764ba2',
+                    '#f093fb'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + formatMoney(context.raw) + ' ₺';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Döviz türlerine göre dağılım
+    let totalUSD = 0, totalEUR = 0, totalTL = 0;
+    results.forEach(row => {
+        totalUSD += (row.USD_BORC + row.USD_ALACAK) * row.USD_SATIS_KURU;
+        totalEUR += (row.EURO_BORC + row.EURO_ALACAK) * row.EUR_SATIS_KURU;
+        totalTL += row.TL_BORC + row.TL_ALACAK;
+    });
+
+    const currencyChart = new Chart(document.getElementById('currencyChart'), {
+        type: 'pie',
+        data: {
+            labels: ['USD (TL Karşılığı)', 'EUR (TL Karşılığı)', 'TL'],
+            datasets: [{
+                data: [totalUSD, totalEUR, totalTL],
+                backgroundColor: ['#4CAF50', '#2196F3', '#FF9800'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + formatMoney(context.raw) + ' ₺';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Borç-Alacak karşılaştırması
+    const firmaReceivables = {};
+    results.forEach(row => {
+        if (!firmaReceivables[row.FIRMA]) {
+            firmaReceivables[row.FIRMA] = 0;
+        }
+        firmaReceivables[row.FIRMA] += row.TOPLAM_TL_ALACAK;
+    });
+
+    const comparisonChart = new Chart(document.getElementById('comparisonChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(firmaDebts),
+            datasets: [{
+                label: 'Borç',
+                data: Object.values(firmaDebts),
+                backgroundColor: '#ff6b6b',
+                borderRadius: 5
+            }, {
+                label: 'Alacak',
+                data: Object.values(firmaReceivables),
+                backgroundColor: '#4ecdc4',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return new Intl.NumberFormat('tr-TR', {
+                                style: 'currency',
+                                currency: 'TRY'
+                            }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatMoney(context.raw) + ' ₺';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Döviz pozisyon analizi
+    let usdPosition = 0, eurPosition = 0;
+    results.forEach(row => {
+        usdPosition += (row.USD_ALACAK - row.USD_BORC);
+        eurPosition += (row.EURO_ALACAK - row.EURO_BORC);
+    });
+
+    const currencyPositionChart = new Chart(document.getElementById('currencyPositionChart'), {
+        type: 'bar',
+        data: {
+            labels: ['USD Pozisyon', 'EUR Pozisyon'],
+            datasets: [{
+                data: [usdPosition, eurPosition],
+                backgroundColor: [
+                    usdPosition >= 0 ? '#4CAF50' : '#f44336',
+                    eurPosition >= 0 ? '#4CAF50' : '#f44336'
+                ],
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatMoney(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return formatMoney(context.raw) + (context.dataIndex === 0 ? ' USD' : ' EUR');
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Kur riski değerlendirmesi
+    const currencyRiskChart = new Chart(document.getElementById('currencyRiskChart'), {
+        type: 'radar',
+        data: {
+            labels: ['USD Riski', 'EUR Riski', 'TL Yoğunluğu', 'Diversifikasyon', 'Likidite'],
+            datasets: [{
+                label: 'Risk Seviyesi',
+                data: [
+                    Math.abs(usdPosition) / 100000 * 100,
+                    Math.abs(eurPosition) / 100000 * 100,
+                    totalTL / (totalUSD + totalEUR + totalTL) * 100,
+                    Object.keys(firmaDebts).length * 20,
+                    80
+                ],
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                borderColor: '#667eea',
+                borderWidth: 2,
+                pointBackgroundColor: '#667eea'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + formatMoney(context.raw) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Firma karşılaştırma grafiği
+    const firmaComparisonChart = new Chart(document.getElementById('firmaComparisonChart'), {
+        type: 'line',
+        data: {
+            labels: Object.keys(firmaDebts),
+            datasets: [{
+                label: 'Net Pozisyon',
+                data: Object.keys(firmaDebts).map(firma => firmaReceivables[firma] - firmaDebts[firma]),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return new Intl.NumberFormat('tr-TR', {
+                                style: 'currency',
+                                currency: 'TRY'
+                            }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Net Pozisyon: ' + formatMoney(context.raw) + ' ₺';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Risk dağılım grafiği
+    const riskLevels = { 'Düşük': 0, 'Orta': 0, 'Yüksek': 0 };
+    results.forEach(row => {
+        const totalExposure = row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK;
+        if (totalExposure < 100000) {
+            riskLevels['Düşük']++;
+        } else if (totalExposure < 500000) {
+            riskLevels['Orta']++;
+        } else {
+            riskLevels['Yüksek']++;
+        }
+    });
+
+    const riskDistributionChart = new Chart(document.getElementById('riskDistributionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(riskLevels),
+            datasets: [{
+                data: Object.values(riskLevels),
+                backgroundColor: ['#4CAF50', '#FF9800', '#f44336'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Cari risk analizi
+    const cariRiskChart = new Chart(document.getElementById('cariRiskChart'), {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Cari Risk',
+                data: results.map(row => ({
+                    x: row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK,
+                    y: Math.abs(row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC)
+                })),
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: '#667eea'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Toplam Pozisyon (TL)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return formatMoney(value) + ' ₺';
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Risk Miktarı (TL)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return formatMoney(value) + ' ₺';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Pozisyon: ' + formatMoney(context.raw.x) + ' ₺, Risk: ' + formatMoney(context.raw.y) + ' ₺';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+
+// Loading spinner functions
+function showLoading() {
+    $('.loading-spinner').show();
+    $('#reportTabContent').hide();
+}
+
+function hideLoading() {
+    $('.loading-spinner').hide();
+    $('#reportTabContent').show();
+}
+
+// Filter form submission
+$('#filterForm').on('submit', function() {
+    showLoading();
+});
+</script>
+{% endblock %}

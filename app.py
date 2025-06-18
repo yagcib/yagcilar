@@ -2083,7 +2083,7 @@ def tahsilat():
                 [60-89 GUN GELECEK], 
                 [SAT_TEM]
             FROM [TIGERDB].[dbo].[BYT_TAHSILAT_ANALIZ_SATIS_ELEMANI_YDC_2025]
-            WHERE [CARİ GRUP] IS NULL AND [SAT_TEM] IN ('HAVUZ', ?)
+            WHERE ([CARİ GRUP] IS NULL) OR ([CARİ GRUP]= ('GENEL')) AND [SAT_TEM] IN ('HAVUZ', ?)
             ORDER BY [VADESI GEÇEN TUTAR] ASC
         """, (user_logo,))
 
@@ -2171,7 +2171,8 @@ def tahsilat_tum_veri():
                 [60-89 GUN GELECEK], 
                 [SAT_TEM]
             FROM [TIGERDB].[dbo].[BYT_TAHSILAT_ANALIZ_SATIS_ELEMANI_YDC_2025]
-            WHERE [CARİ GRUP] IS NULL
+            WHERE ([CARİ GRUP] IS NULL) OR ([CARİ GRUP]= ('GENEL')) 
+            
             ORDER BY [VADESI GEÇEN TUTAR] DESC
         """)
 
@@ -11956,7 +11957,7 @@ def send_daily_mail_internal():
             'recipients': ['huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'],
             'cc_recipients': ['hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',
                     'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
-                    'bayramyagci@ydcmetal.com.tr'],
+                    'bayramyagci@ydcmetal.com.tr','bayramyagci@yagcilar.com.tr'],
             'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
             'include_reports': {
                 'report1': True,
@@ -12202,6 +12203,241 @@ def emergency_cleanup():
     _daily_mail_sent.clear()
 
     print("[SUCCESS] Emergency cleanup completed")
+
+
+@app.route('/cari_bakiye')
+@permission_required(menu_id=1026, permission_type='view')
+def cari_bakiye():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = get_db_connection2()
+        cursor = conn.cursor()
+
+        # Varsayılan olarak bugünün tarihini al
+        selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+        selected_firma = request.args.get('firma', 'all')
+        selected_cari = request.args.get('cari', '')
+        selected_durum = request.args.get('durum', 'all')  # Yeni durum filtresi
+
+        # Basit firma listesi sorgusu
+        try:
+            cursor.execute("SELECT DISTINCT '225-YDÇ' AS FIRMA UNION SELECT '325-STAR' UNION SELECT '425-YAĞCILAR'")
+            firma_list = [row[0] for row in cursor.fetchall()]
+        except:
+            firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
+
+        # Ana SQL sorgusunu tarihe göre modifiye et - Basitleştirilmiş versiyon
+        base_query = f"""
+        SELECT
+            KML.[FIRMA],
+            KML.[VKN&TCKNO],
+            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
+            SUM(KML.[USD_BORC]) [USD_BORC],
+            SUM(KML.[EURO_BORC]) [EURO_BORC], 
+            SUM(KML.[TL_BORC]) [TL_BORC],
+            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
+            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
+            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
+            SUM(KML.[TL_ALACAK]) [TL_ALACAK], 
+            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
+            KML.[USD_SATIS_KURU],
+            KML.[EUR_SATIS_KURU]
+        FROM
+        (SELECT
+            FIRMA='225-YDÇ'
+            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_225_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
+        FROM LG_225_CLCARD CL WITH (NOLOCK)
+        WHERE CL.ACTIVE=0 
+        )KML
+        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
+
+        UNION ALL
+
+        SELECT
+            KML.[FIRMA],
+            KML.[VKN&TCKNO],
+            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
+            SUM(KML.[USD_BORC]) [USD_BORC],
+            SUM(KML.[EURO_BORC]) [EURO_BORC],
+            SUM(KML.[TL_BORC]) [TL_BORC],
+            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
+            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
+            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
+            SUM(KML.[TL_ALACAK]) [TL_ALACAK],
+            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
+            KML.[USD_SATIS_KURU],
+            KML.[EUR_SATIS_KURU]
+        FROM
+        (SELECT
+            FIRMA='325-STAR'
+            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_325_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
+        FROM LG_325_CLCARD CL WITH (NOLOCK)
+        WHERE CL.ACTIVE=0 
+        )KML
+        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
+
+        UNION ALL
+
+        SELECT
+            KML.[FIRMA],
+            KML.[VKN&TCKNO],
+            ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END)=KML.[VKN&TCKNO]),'') 'CARI_UNVANI',
+            SUM(KML.[USD_BORC]) [USD_BORC],
+            SUM(KML.[EURO_BORC]) [EURO_BORC],
+            SUM(KML.[TL_BORC]) [TL_BORC],
+            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) 'TOPLAM_TL_BORC',
+            SUM(KML.[USD_ALACAK]) [USD_ALACAK],
+            SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
+            SUM(KML.[TL_ALACAK]) [TL_ALACAK],
+            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) 'TOPLAM_TL_ALACAK',
+            KML.[USD_SATIS_KURU],
+            KML.[EUR_SATIS_KURU]
+        FROM
+        (SELECT
+            FIRMA='425-YAĞCILAR'
+            ,CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END 'VKN&TCKNO'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_BORC'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(1) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'USD_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(20) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'EURO_ALACAK'
+            ,ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END) FROM LG_425_01_CLFLINE CLF WITH (NOLOCK) WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN(0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'),0) 'TL_ALACAK'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'USD_SATIS_KURU'
+            ,ISNULL((SELECT RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE)='{selected_date}'),0) 'EUR_SATIS_KURU'
+        FROM LG_425_CLCARD CL WITH (NOLOCK)
+        WHERE CL.ACTIVE=0 
+        )KML
+        GROUP BY KML.[FIRMA], KML.[VKN&TCKNO], KML.[USD_SATIS_KURU], KML.[EUR_SATIS_KURU]
+        """
+
+        # Filtreleme için WHERE koşulları
+        where_conditions = []
+
+        if selected_firma != 'all':
+            where_conditions.append(f"FIRMA = '{selected_firma}'")
+
+        if selected_cari:
+            where_conditions.append(f"CARI_UNVANI LIKE '%{selected_cari}%'")
+
+        # Durum filtresi için koşul ekle (Borçlu veya Alacaklı)
+        if selected_durum == 'borclu':
+            where_conditions.append("(TOPLAM_TL_ALACAK - TOPLAM_TL_BORC) < 0")
+        elif selected_durum == 'alacakli':
+            where_conditions.append("(TOPLAM_TL_ALACAK - TOPLAM_TL_BORC) > 0")
+
+        # Ana sorgu oluştur
+        if where_conditions:
+            main_query = f"SELECT * FROM ({base_query}) AS filtered WHERE {' AND '.join(where_conditions)}"
+        else:
+            main_query = base_query
+
+        cursor.execute(main_query)
+        columns = [column[0] for column in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+
+        # Döviz kurları bilgisi al - Basitleştirilmiş
+        usd_kuru = 0
+        eur_kuru = 0
+
+        if results:
+            # İlk sonuçtan kurları al
+            usd_kuru = results[0].get('USD_SATIS_KURU', 0) or 0
+            eur_kuru = results[0].get('EUR_SATIS_KURU', 0) or 0
+
+        # Cari listesi al
+        cari_list = []
+        try:
+            cari_query = f"SELECT DISTINCT CARI_UNVANI FROM ({base_query}) AS cari_list WHERE CARI_UNVANI != '' ORDER BY CARI_UNVANI"
+            cursor.execute(cari_query)
+            cari_list = [row[0] for row in cursor.fetchall()]
+        except:
+            cari_list = []
+
+        conn.close()
+
+        return render_template('cari_bakiye.html',
+                               results=results,
+                               firma_list=firma_list,
+                               cari_list=cari_list,
+                               selected_date=selected_date,
+                               selected_firma=selected_firma,
+                               selected_cari=selected_cari,
+                               selected_durum=selected_durum,  # Durum değişkenini aktarma
+                               usd_kuru=usd_kuru,
+                               eur_kuru=eur_kuru,
+                               username=session.get('username'),
+                               fullname=session.get('fullname'))
+
+    except Exception as e:
+        flash(f'Hata: {str(e)}', 'danger')
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/cari_bakiye_api')
+def cari_bakiye_api():
+    """API endpoint for AJAX requests"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        conn = get_db_connection2()
+        cursor = conn.cursor()
+
+        selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+        selected_firma = request.args.get('firma', 'all')
+        selected_durum = request.args.get('durum', 'all')  # API'ye durum parametresi ekleme
+
+        # Basit özet sorgu
+        summary_query = f"""
+        SELECT 
+            '225-YDÇ' as FIRMA,
+            0 as TOPLAM_BORC,
+            0 as TOPLAM_ALACAK,
+            0 as USD_BORC_TOPLAM,
+            0 as EURO_BORC_TOPLAM,
+            0 as TL_BORC_TOPLAM,
+            0 as USD_ALACAK_TOPLAM,
+            0 as EURO_ALACAK_TOPLAM,
+            0 as TL_ALACAK_TOPLAM,
+            0 as USD_KURU,
+            0 as EUR_KURU
+        """
+
+        cursor.execute(summary_query)
+        columns = [column[0] for column in cursor.description]
+        summary_data = []
+        for row in cursor.fetchall():
+            summary_data.append(dict(zip(columns, row)))
+
+        conn.close()
+
+        return jsonify({
+            'summary': summary_data,
+            'success': True
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':
     # Create required directories if they don't exist
     os.makedirs('templates', exist_ok=True)

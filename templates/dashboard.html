@@ -655,7 +655,7 @@
                 </a>
             </div>
 
-            <!-- Muhasebe Kategorisi - Yeni Eklenen Kategori -->
+            <!-- Muhasebe Kategorisi -->
             <div class="category-header d-flex align-items-center" onclick="toggleCategory('muhasebe')">
                 <i class="fas fa-calculator me-2"></i>
                 <span>Muhasebe</span>
@@ -663,12 +663,24 @@
             </div>
             <div class="category-content" id="muhasebe-content">
                 <a href="/barkopos-tum-girisler" class="sidebar-btn sub-menu-item">
-        <i class="fas fa-file-invoice"></i> Barkopos Girişler
-    </a>
+                    <i class="fas fa-file-invoice"></i> Barkopos Girişler
+                </a>
                 <a href="/petrol-barkopos-guncelleme" class="sidebar-btn sub-menu-item">
                     <i class="fas fa-barcode"></i> Barkopos Aktarım ve Güncelleme
                 </a>
-                <!-- Buraya daha fazla muhasebe ile ilgili buton eklenebilir -->
+            </div>
+
+            <!-- Raporlar Kategorisi - YENİ EKLENDİ -->
+            <div class="category-header d-flex align-items-center" onclick="toggleCategory('raporlar')">
+                <i class="fas fa-chart-bar me-2"></i>
+                <span>Raporlar</span>
+                <i class="fas fa-chevron-down ms-auto" id="raporlar-icon"></i>
+            </div>
+            <div class="category-content" id="raporlar-content">
+                <a href="/cari_bakiye" class="sidebar-btn sub-menu-item">
+                    <i class="fas fa-balance-scale"></i> Cari Bakiye Raporu
+                </a>
+
             </div>
 
             <!-- Üretim Kategorisi -->
@@ -801,7 +813,7 @@
 
             // Diğer kategorileri kapat (opsiyonel - sadece bir kategorinin açık kalmasını istiyorsanız)
             // Bu kısmı yorum satırına alın eğer birden fazla kategori aynı anda açık olabilsin istiyorsanız
-            const allCategories = ['satis', 'muhasebe', 'uretim'];
+            const allCategories = ['satis', 'muhasebe', 'raporlar', 'uretim'];
             allCategories.forEach(cat => {
                 if (cat !== categoryName) {
                     const otherContent = document.getElementById(cat + '-content');
