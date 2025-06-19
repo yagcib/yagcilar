@@ -2064,7 +2064,7 @@ def tahsilat():
                 [60-89 GUN GELECEK], 
                 [SAT_TEM]
             FROM [TIGERDB].[dbo].[BYT_TAHSILAT_ANALIZ_SATIS_ELEMANI_YDC_2025]
-            WHERE ([CARİ GRUP] IS NULL) OR ([CARİ GRUP]= ('GENEL')) AND [SAT_TEM] IN ('HAVUZ', ?)
+            WHERE [CARİ GRUP] IS NULL AND [SAT_TEM] IN ('HAVUZ', ?)
             ORDER BY [VADESI GEÇEN TUTAR] ASC
         """, (user_logo,))
 
@@ -2152,7 +2152,7 @@ def tahsilat_tum_veri():
                 [60-89 GUN GELECEK], 
                 [SAT_TEM]
             FROM [TIGERDB].[dbo].[BYT_TAHSILAT_ANALIZ_SATIS_ELEMANI_YDC_2025]
-            WHERE ([CARİ GRUP] IS NULL) OR ([CARİ GRUP]= ('GENEL')) 
+            WHERE [CARİ GRUP] IS NULL
             
             ORDER BY [VADESI GEÇEN TUTAR] DESC
         """)
