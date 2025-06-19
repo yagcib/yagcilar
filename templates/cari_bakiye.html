@@ -11,7 +11,7 @@
         border-radius: 15px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
-    
+
     .currency-info {
         position: fixed;
         top: 80px;
@@ -24,18 +24,18 @@
         z-index: 1000;
         min-width: 200px;
     }
-    
+
     .currency-rate {
         display: flex;
         justify-content: space-between;
         margin-bottom: 8px;
         font-weight: 500;
     }
-    
+
     .currency-rate:last-child {
         margin-bottom: 0;
     }
-    
+
     .summary-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -45,29 +45,29 @@
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         transition: transform 0.3s ease;
     }
-    
+
     .summary-card:hover {
         transform: translateY(-5px);
     }
-    
+
     .summary-value {
         font-size: 2rem;
         font-weight: bold;
         margin-bottom: 5px;
     }
-    
+
     .summary-label {
         font-size: 0.9rem;
         opacity: 0.9;
     }
-    
+
     .tab-content {
         background: white;
         border-radius: 10px;
         padding: 20px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    
+
     .nav-tabs .nav-link {
         border: none;
         color: #666;
@@ -76,13 +76,13 @@
         margin-right: 5px;
         border-radius: 10px 10px 0 0;
     }
-    
+
     .nav-tabs .nav-link.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
     }
-    
+
     .chart-container {
         position: relative;
         height: 400px;
@@ -92,13 +92,13 @@
         padding: 20px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    
+
     .detail-table {
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    
+
     .table th {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -106,22 +106,22 @@
         font-weight: 500;
         padding: 15px 10px;
     }
-    
+
     .table td {
         padding: 12px 10px;
         border-bottom: 1px solid #eee;
         vertical-align: middle;
     }
-    
+
     .table tbody tr:hover {
         background-color: #f8f9ff;
     }
-    
+
     .positive {
         color: #28a745;
         font-weight: bold;
     }
-    
+
     .negative {
         color: #dc3545;
         font-weight: bold;
@@ -225,16 +225,132 @@
         cursor: pointer;
         background-color: #fff;
         border-bottom: 1px solid #d4d4d4;
+        color: #333; /* Cari isimleri için siyah renk */
     }
 
     .autocomplete-items div:hover {
         background-color: #e9e9e9;
+        color: #000; /* Hover durumunda da siyah renk */
     }
 
     .autocomplete-active {
         background-color: #667eea !important;
-        color: #ffffff;
+        color: #ffffff !important;
     }
+
+    /* Multi-select dropdown stilleri */
+    .multi-select {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .multi-select-button {
+        background-color: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .multi-select-button:hover {
+        border-color: #667eea;
+    }
+
+    .multi-select-button:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: 0;
+    }
+
+    .multi-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ced4da;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    .multi-select-option {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid #f8f9fa;
+        color: #212529;
+    }
+
+    .multi-select-option:hover {
+        background-color: #f8f9fa;
+    }
+
+    .multi-select-option input[type="checkbox"] {
+        margin: 0;
+    }
+
+    .multi-select-option label {
+        color: #212529 !important;
+        font-weight: 500;
+        margin: 0;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .multi-select-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+        font-size: 0.875rem;
+    }
+
+    .export-buttons {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .export-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .export-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .btn-copy { background-color: #6c757d; }
+    .btn-csv { background-color: #28a745; }
+    .btn-excel { background-color: #007bff; }
+    .btn-pdf { background-color: #dc3545; }
+    .btn-print { background-color: #17a2b8; }
 </style>
 {% endblock %}
 
@@ -254,7 +370,7 @@
 </div>
 
 <!-- Filtre Alanı -->
-<div class="card filter-card mb-4">
+<div class="card filter-card mb-4" style="position: relative;">
     <div class="card-body">
         <h5 class="card-title mb-4">
             <i class="fas fa-filter"></i> Rapor Filtreleri
@@ -267,62 +383,127 @@
                            value="{{ selected_date }}" required>
                 </div>
                 <div class="col-md-2">
-                    <label for="firma" class="form-label">Firma</label>
-                    <select class="form-select" id="firma" name="firma">
-                        <option value="all" {% if selected_firma == 'all' %}selected{% endif %}>Tüm Firmalar</option>
-                        {% for firma in firma_list %}
-                        <option value="{{ firma }}" {% if selected_firma == firma %}selected{% endif %}>
-                            {{ firma }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label">Firma</label>
+                    <div class="multi-select" id="firma-select">
+                        <button type="button" class="multi-select-button">
+                            <span class="multi-select-text">Tüm Firmalar</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="multi-select-dropdown">
+                            {% for firma in firma_list %}
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="firma-{{ loop.index }}" value="{{ firma }}" checked>
+                                <label for="firma-{{ loop.index }}">{{ firma }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-2">
-                    <label for="cari_grup" class="form-label">Cari Grup</label>
-                    <select class="form-select" id="cari_grup" name="cari_grup">
-                        <option value="all" {% if selected_cari_grup == 'all' %}selected{% endif %}>Tüm Gruplar</option>
-                        {% for grup in cari_grup_list %}
-                        <option value="{{ grup }}" {% if selected_cari_grup == grup %}selected{% endif %}>
-                            {{ grup }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label">Cari Grup</label>
+                    <div class="multi-select" id="cari-grup-select">
+                        <button type="button" class="multi-select-button">
+                            <span class="multi-select-text">Boş</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="multi-select-dropdown">
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="cari-grup-bos" value="" checked>
+                                <label for="cari-grup-bos">(Boş)</label>
+                            </div>
+                            {% for grup in cari_grup_list %}
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="cari-grup-{{ loop.index }}" value="{{ grup }}">
+                                <label for="cari-grup-{{ loop.index }}">{{ grup }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-2">
-                    <label for="cari_tur" class="form-label">Cari Türü</label>
-                    <select class="form-select" id="cari_tur" name="cari_tur">
-                        <option value="all" {% if selected_cari_tur == 'all' %}selected{% endif %}>Tüm Türler</option>
-                        {% for tur in cari_tur_list %}
-                        <option value="{{ tur }}" {% if selected_cari_tur == tur %}selected{% endif %}>
-                            {{ tur }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label">Cari Türü</label>
+                    <div class="multi-select" id="cari-tur-select">
+                        <button type="button" class="multi-select-button">
+                            <span class="multi-select-text">Tüm Türler</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="multi-select-dropdown">
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="cari-tur-bos" value="" checked>
+                                <label for="cari-tur-bos">(Boş)</label>
+                            </div>
+                            {% for tur in cari_tur_list %}
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="cari-tur-{{ loop.index }}" value="{{ tur }}" checked>
+                                <label for="cari-tur-{{ loop.index }}">{{ tur }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row mt-3">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label for="cari" class="form-label">Cari Arama</label>
                     <div class="autocomplete">
                         <input type="text" class="form-control" id="cari" name="cari"
                                value="{{ selected_cari }}" placeholder="Cari adı ile arayın...">
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="durum" class="form-label">Durum</label>
-                    <select class="form-select" id="durum" name="durum">
-                        <option value="all" {% if selected_durum == 'all' %}selected{% endif %}>Tümü</option>
-                        <option value="borclu" {% if selected_durum == 'borclu' %}selected{% endif %}>Borçlu</option>
-                        <option value="alacakli" {% if selected_durum == 'alacakli' %}selected{% endif %}>Alacaklı</option>
-                    </select>
+                <div class="col-md-2">
+                    <label class="form-label">Durum</label>
+                    <div class="multi-select" id="durum-select">
+                        <button type="button" class="multi-select-button">
+                            <span class="multi-select-text">Tümü</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="multi-select-dropdown">
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="durum-borclu" value="borclu" checked>
+                                <label for="durum-borclu">Borçlu</label>
+                            </div>
+                            <div class="multi-select-option">
+                                <input type="checkbox" id="durum-alacakli" value="alacakli" checked>
+                                <label for="durum-alacakli">Alacaklı</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-clear" id="clearFilters">
+                        <i class="fas fa-eraser"></i> Temizle
+                    </button>
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Getir
                     </button>
                 </div>
             </div>
+
+            <!-- Hidden inputs for form submission -->
+            <input type="hidden" id="selected-firmas" name="firmas" value="">
+            <input type="hidden" id="selected-cari-grups" name="cari_grups" value="">
+            <input type="hidden" id="selected-cari-turs" name="cari_turs" value="">
+            <input type="hidden" id="selected-durums" name="durums" value="">
         </form>
+
+        <!-- Export Buttons -->
+        <div class="export-buttons">
+            <button class="export-btn btn-copy" title="Kopyala" onclick="exportData('copy')">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button class="export-btn btn-csv" title="CSV" onclick="exportData('csv')">
+                <i class="fas fa-file-csv"></i>
+            </button>
+            <button class="export-btn btn-excel" title="Excel" onclick="exportData('excel')">
+                <i class="fas fa-file-excel"></i>
+            </button>
+            <button class="export-btn btn-pdf" title="PDF" onclick="exportData('pdf')">
+                <i class="fas fa-file-pdf"></i>
+            </button>
+            <button class="export-btn btn-print" title="Yazdır" onclick="exportData('print')">
+                <i class="fas fa-print"></i>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -433,45 +614,42 @@
                     <tr>
                         <th>Firma</th>
                         <th>VKN/TCKNO</th>
-                        <th>Cari Grup</th>
-                        <th>Cari Türü</th>
                         <th>Cari Ünvanı</th>
                         <th>USD Borç</th>
                         <th>EUR Borç</th>
                         <th>TL Borç</th>
-                        <th>Toplam TL Borç</th>
+                        <th>Toplam Borç TL Karşılığı</th>
                         <th>USD Alacak</th>
                         <th>EUR Alacak</th>
                         <th>TL Alacak</th>
-                        <th>Toplam TL Alacak</th>
+                        <th>Toplam Alacak TL Karşılığı</th>
                         <th>Net Durum</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for row in results %}
-                    <tr>
-                        <td><strong>{{ row.FIRMA }}</strong></td>
-                        <td>{{ row['VKN&TCKNO'] }}</td>
-                        <td>{{ row['CARİ GRUP'] }}</td>
-                        <td>{{ row['KOD YAPISI'] }}</td>
-                        <td>{{ row.CARI_UNVANI }}</td>
-                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
-                        <td class="text-end total-debt">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }} ₺</td>
-                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end receivable-amount">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end total-receivable">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }} ₺</td>
-                        <td class="text-end">
-                            {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
-                            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}" data-sort="{{ net }}">
-                                {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+               <!-- Tablo HTML kısmı - Net Durum düzeltmesi -->
+<tbody>
+    {% for row in results %}
+    <tr>
+        <td><strong>{{ row.FIRMA }}</strong></td>
+        <td>{{ row['VKN&TCKNO'] }}</td>
+        <td>{{ row.CARI_UNVANI }}</td>
+        <td class="text-end debt-amount" data-export="{{ row.USD_BORC }}">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
+        <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
+        <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
+        <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }}</td>
+        <td class="text-end receivable-amount" data-export="{{ row.USD_ALACAK }}">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
+        <td class="text-end receivable-amount" data-export="{{ row.EURO_ALACAK }}">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
+        <td class="text-end receivable-amount" data-export="{{ row.TL_ALACAK }}">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
+        <td class="text-end total-receivable" data-export="{{ row.TOPLAM_TL_ALACAK }}">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }}</td>
+        <td class="text-end">
+            {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
+            <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}" data-sort="{{ net }}" data-export="{{ net }}">
+                {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
+            </span>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
             </table>
         </div>
     </div>
@@ -645,22 +823,210 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    // DataTable initialization
-    $('#detailTable').DataTable({
+    // DataTable initialization with enhanced Excel export
+    var table = $('#detailTable').DataTable({
         responsive: true,
         pageLength: 250,
-        order: [[13, 'asc']], // Net Durum'a göre sırala (küçükten büyüğe)
+        order: [[11, 'asc']], // Net Durum'a göre sırala (küçükten büyüğe)
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
         },
         dom: 'Bfrtip',
-        buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print'
-        ],
+        buttons: {
+            dom: {
+                button: {
+                    className: 'btn'
+                }
+            },
+            buttons: [
+                {
+                    extend: 'copy',
+                    className: 'buttons-copy d-none',
+                    exportOptions: {
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Firma sütunu (0. sütun)
+                                if (column === 0) {
+                                    // HTML tag'larını temizle
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Net Durum sütunu (11. sütun)
+                                else if (column === 11) {
+                                    var tempDiv = $('<div>').html(data);
+                                    var spanElement = tempDiv.find('span');
+                                    if (spanElement.length > 0) {
+                                        var exportValue = spanElement.attr('data-export');
+                                        if (exportValue !== undefined) {
+                                            return parseFloat(exportValue).toFixed(2);
+                                        }
+                                    }
+                                    // Fallback: text'ten sayıyı çıkar
+                                    var text = tempDiv.text().replace(' ₺', '').replace(/\./g, '').replace(',', '.');
+                                    return parseFloat(text) || 0;
+                                }
+                                // Diğer sayısal sütunlar (3-10)
+                                else if (column >= 3 && column <= 10) {
+                                    var exportValue = $(node).attr('data-export');
+                                    if (exportValue !== undefined) {
+                                        return parseFloat(exportValue).toFixed(2);
+                                    }
+                                    return data;
+                                }
+                                // String sütunlar
+                                else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'csv',
+                    className: 'buttons-csv d-none',
+                    exportOptions: {
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Firma sütunu (0. sütun)
+                                if (column === 0) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Net Durum sütunu (11. sütun)
+                                else if (column === 11) {
+                                    var tempDiv = $('<div>').html(data);
+                                    var spanElement = tempDiv.find('span');
+                                    if (spanElement.length > 0) {
+                                        var exportValue = spanElement.attr('data-export');
+                                        if (exportValue !== undefined) {
+                                            return parseFloat(exportValue).toFixed(2);
+                                        }
+                                    }
+                                    var text = tempDiv.text().replace(' ₺', '').replace(/\./g, '').replace(',', '.');
+                                    return parseFloat(text) || 0;
+                                }
+                                // Diğer sayısal sütunlar (3-10)
+                                else if (column >= 3 && column <= 10) {
+                                    var exportValue = $(node).attr('data-export');
+                                    if (exportValue !== undefined) {
+                                        return parseFloat(exportValue).toFixed(2);
+                                    }
+                                    return data;
+                                }
+                                // String sütunlar
+                                else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'excel',
+                    className: 'buttons-excel d-none',
+                    title: 'Cari Bakiye Raporu',
+                    filename: function() {
+                        var tarih = $('#date').val() || 'bugün';
+                        return 'Cari_Bakiye_' + tarih;
+                    },
+                    exportOptions: {
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Firma sütunu (0. sütun)
+                                if (column === 0) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Net Durum sütunu (11. sütun)
+                                else if (column === 11) {
+                                    var tempDiv = $('<div>').html(data);
+                                    var spanElement = tempDiv.find('span');
+                                    if (spanElement.length > 0) {
+                                        var exportValue = spanElement.attr('data-export');
+                                        if (exportValue !== undefined) {
+                                            return parseFloat(exportValue);
+                                        }
+                                    }
+                                    // Text'ten sayıyı çıkar
+                                    var text = tempDiv.text().replace(' ₺', '').replace(/\./g, '').replace(',', '.');
+                                    return parseFloat(text) || 0;
+                                }
+                                // Diğer sayısal sütunlar (3-10)
+                                else if (column >= 3 && column <= 10) {
+                                    var exportValue = $(node).attr('data-export');
+                                    if (exportValue !== undefined) {
+                                        return parseFloat(exportValue);
+                                    }
+                                    return data;
+                                }
+                                // String sütunlar (VKN/TCKNO ve Cari Ünvanı)
+                                else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'pdf',
+                    className: 'buttons-pdf d-none',
+                    title: 'Cari Bakiye Raporu',
+                    filename: function() {
+                        var tarih = $('#date').val() || 'bugün';
+                        return 'Cari_Bakiye_' + tarih;
+                    },
+                    exportOptions: {
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Firma sütunu (0. sütun)
+                                if (column === 0) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Net Durum sütunu (11. sütun)
+                                else if (column === 11) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Diğer sütunlar
+                                else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    extend: 'print',
+                    className: 'buttons-print d-none',
+                    title: 'Cari Bakiye Raporu',
+                    exportOptions: {
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Firma sütunu (0. sütun)
+                                if (column === 0) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Net Durum sütunu (11. sütun)
+                                else if (column === 11) {
+                                    var tempDiv = $('<div>').html(data);
+                                    return tempDiv.text().trim();
+                                }
+                                // Diğer sütunlar
+                                else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         columnDefs: [
             {
                 // Para formatını uygula (virgüllü gösterim)
-                targets: [5, 6, 7, 8, 9, 10, 11, 12],
+                targets: [3, 4, 5, 6, 7, 8, 9, 10],
                 render: function(data, type, row) {
                     if (type === 'display' || type === 'filter') {
                         return data; // Zaten Jinja2 ile formatlanmış
@@ -670,7 +1036,7 @@ $(document).ready(function() {
             },
             {
                 // Net Durum sütunu için özel sıralama
-                targets: [13],
+                targets: [11],
                 type: 'num',
                 render: function(data, type, row) {
                     if (type === 'display' || type === 'filter') {
@@ -678,8 +1044,13 @@ $(document).ready(function() {
                     }
                     if (type === 'type' || type === 'sort') {
                         // Sıralama için span içindeki data-sort değerini kullan
-                        var sortValue = $(data).attr('data-sort');
-                        return parseFloat(sortValue) || 0;
+                        var tempDiv = $('<div>').html(data);
+                        var spanElement = tempDiv.find('span');
+                        if (spanElement.length > 0) {
+                            var sortValue = spanElement.attr('data-sort');
+                            return parseFloat(sortValue) || 0;
+                        }
+                        return 0;
                     }
                     return data;
                 }
@@ -687,84 +1058,163 @@ $(document).ready(function() {
         ]
     });
 
-    // Autocomplete for cari search
-    const cariList = {{ cari_list|tojson }};
+    // Export functions (global)
+    window.exportData = function(type) {
+        switch(type) {
+            case 'copy':
+                table.button('.buttons-copy').trigger();
+                break;
+            case 'csv':
+                table.button('.buttons-csv').trigger();
+                break;
+            case 'excel':
+                table.button('.buttons-excel').trigger();
+                break;
+            case 'pdf':
+                table.button('.buttons-pdf').trigger();
+                break;
+            case 'print':
+                table.button('.buttons-print').trigger();
+                break;
+        }
+    }
+ initAutocomplete();
+    // Clear filters functionality
+    $('#clearFilters').on('click', function() {
+        // Firma, Cari Tür ve Durum için tüm checkbox'ları işaretle
+        $('#firma-select input[type="checkbox"]').prop('checked', true);
+        $('#cari-tur-select input[type="checkbox"]').prop('checked', true);
+        $('#durum-select input[type="checkbox"]').prop('checked', true);
 
-    function autocomplete(inp, arr) {
-        let currentFocus;
+        // Cari Grup için özel durum: sadece "(Boş)" seçili yap
+        $('#cari-grup-select input[type="checkbox"]').prop('checked', false);
+        $('#cari-grup-select input[value=""]').prop('checked', true);
 
-        inp.addEventListener("input", function(e) {
-            let a, b, i, val = this.value;
-            closeAllLists();
-            if (!val) return false;
-            currentFocus = -1;
+        // Cari arama alanını temizle
+        $('#cari').val('');
 
-            a = document.createElement("DIV");
-            a.setAttribute("class", "autocomplete-items");
-            this.parentNode.appendChild(a);
-
-            for (i = 0; i < arr.length; i++) {
-                if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
-                    b = document.createElement("DIV");
-                    b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
-                    b.innerHTML += arr[i].substr(val.length);
-                    b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-
-                    b.addEventListener("click", function(e) {
-                        inp.value = this.getElementsByTagName("input")[0].value;
-                        closeAllLists();
-                    });
-                    a.appendChild(b);
-                }
-            }
+        // Multi-select text'lerini güncelle
+        $('.multi-select').each(function() {
+            updateMultiSelectText(this);
         });
 
-        inp.addEventListener("keydown", function(e) {
-            let x = document.querySelector(".autocomplete-items");
-            if (x) x = x.getElementsByTagName("div");
-            if (e.keyCode == 40) {
-                currentFocus++;
-                addActive(x);
-            } else if (e.keyCode == 38) {
-                currentFocus--;
-                addActive(x);
-            } else if (e.keyCode == 13) {
-                e.preventDefault();
-                if (currentFocus > -1) {
-                    if (x) x[currentFocus].click();
-                }
-            }
+        // Dropdown'ları kapat
+        $('.multi-select-dropdown').hide();
+    });
+
+    // Seçilmiş değerleri restore et
+    function restoreSelectedValues() {
+        // Backend'den gelen seçilmiş değerler (JSON formatında güvenli)
+        const selectedFirmasRaw = '{{ selected_firmas }}';
+        const selectedCariGrupsRaw = '{{ selected_cari_grups }}';
+        const selectedCariTursRaw = '{{ selected_cari_turs }}';
+        const selectedDurumsRaw = '{{ selected_durums }}';
+
+        // Eğer hiç değer yoksa (ilk yükleme), hiçbir şey yapma - ama Cari Grup için özel durum
+        if (!selectedFirmasRaw && !selectedCariGrupsRaw && !selectedCariTursRaw && !selectedDurumsRaw) {
+            console.log('İlk yükleme - tüm checkbox\'lar seçili kalacak, Cari Grup hariç');
+            // Cari Grup için özel durum: sadece "(Boş)" seçili yap
+            $('#cari-grup-select input[type="checkbox"]').prop('checked', false);
+            $('#cari-grup-select input[value=""]').prop('checked', true);
+            updateMultiSelectText(document.getElementById('cari-grup-select'));
+            return;
+        }
+
+        const selectedFirmas = selectedFirmasRaw.split(',').map(f => f.trim()).filter(f => f);
+        const selectedCariGrups = selectedCariGrupsRaw.split(',').map(g => g.trim());
+        const selectedCariTurs = selectedCariTursRaw.split(',').map(t => t.trim());
+        const selectedDurums = selectedDurumsRaw.split(',').map(d => d.trim()).filter(d => d);
+
+        console.log('Restoring values:', {
+            firmas: selectedFirmas,
+            grups: selectedCariGrups,
+            turs: selectedCariTurs,
+            durums: selectedDurums
         });
 
-        function addActive(x) {
-            if (!x) return false;
-            removeActive(x);
-            if (currentFocus >= x.length) currentFocus = 0;
-            if (currentFocus < 0) currentFocus = (x.length - 1);
-            x[currentFocus].classList.add("autocomplete-active");
+        // Firma filtreleri
+        if (selectedFirmasRaw) {
+            $('#firma-select input[type="checkbox"]').prop('checked', false);
+            selectedFirmas.forEach(firma => {
+                $('#firma-select input[value="' + firma + '"]').prop('checked', true);
+            });
+            updateMultiSelectText(document.getElementById('firma-select'));
         }
 
-        function removeActive(x) {
-            for (let i = 0; i < x.length; i++) {
-                x[i].classList.remove("autocomplete-active");
-            }
-        }
-
-        function closeAllLists(elmnt) {
-            let x = document.getElementsByClassName("autocomplete-items");
-            for (let i = 0; i < x.length; i++) {
-                if (elmnt != x[i] && elmnt != inp) {
-                    x[i].parentNode.removeChild(x[i]);
+        // Cari Grup filtreleri
+        if (selectedCariGrupsRaw) {
+            $('#cari-grup-select input[type="checkbox"]').prop('checked', false);
+            selectedCariGrups.forEach(grup => {
+                if (grup === '') {
+                    $('#cari-grup-select input[value=""]').prop('checked', true);
+                } else if (grup) {
+                    $('#cari-grup-select input[value="' + grup + '"]').prop('checked', true);
                 }
-            }
+            });
+            updateMultiSelectText(document.getElementById('cari-grup-select'));
         }
 
-        document.addEventListener("click", function (e) {
-            closeAllLists(e.target);
-        });
+        // Cari Tür filtreleri
+        if (selectedCariTursRaw) {
+            $('#cari-tur-select input[type="checkbox"]').prop('checked', false);
+            selectedCariTurs.forEach(tur => {
+                if (tur === '') {
+                    $('#cari-tur-select input[value=""]').prop('checked', true);
+                } else if (tur) {
+                    $('#cari-tur-select input[value="' + tur + '"]').prop('checked', true);
+                }
+            });
+            updateMultiSelectText(document.getElementById('cari-tur-select'));
+        }
+
+        // Durum filtreleri
+        if (selectedDurumsRaw) {
+            $('#durum-select input[type="checkbox"]').prop('checked', false);
+            selectedDurums.forEach(durum => {
+                $('#durum-select input[value="' + durum + '"]').prop('checked', true);
+            });
+            updateMultiSelectText(document.getElementById('durum-select'));
+        }
     }
 
-    autocomplete(document.getElementById("cari"), cariList);
+    // Form submission handler
+    $('#filterForm').on('submit', function(e) {
+        // Collect selected values from multi-selects
+        const selectedFirmas = [];
+        $('#firma-select input[type="checkbox"]:checked').each(function() {
+            selectedFirmas.push($(this).val());
+        });
+
+        const selectedCariGrups = [];
+        $('#cari-grup-select input[type="checkbox"]:checked').each(function() {
+            selectedCariGrups.push($(this).val());
+        });
+
+        const selectedCariTurs = [];
+        $('#cari-tur-select input[type="checkbox"]:checked').each(function() {
+            selectedCariTurs.push($(this).val());
+        });
+
+        const selectedDurums = [];
+        $('#durum-select input[type="checkbox"]:checked').each(function() {
+            selectedDurums.push($(this).val());
+        });
+
+        // Set hidden input values
+        $('#selected-firmas').val(selectedFirmas.join(','));
+        $('#selected-cari-grups').val(selectedCariGrups.join(','));
+        $('#selected-cari-turs').val(selectedCariTurs.join(','));
+        $('#selected-durums').val(selectedDurums.join(','));
+
+        showLoading();
+    });
+
+    // Initialize multi-select dropdowns
+    initMultiSelect();
+
+
+    // Sayfa yüklendiğinde seçilmiş değerleri restore et
+    restoreSelectedValues();
 
     // Para formatı fonksiyonu
     function formatMoney(amount) {
@@ -1129,7 +1579,247 @@ $(document).ready(function() {
         }
     });
 });
+function initMultiSelect() {
+    $('.multi-select').each(function() {
+        const multiSelect = this;
+        const button = $(this).find('.multi-select-button');
+        const dropdown = $(this).find('.multi-select-dropdown');
+        const textElement = $(this).find('.multi-select-text');
 
+        // Buton tıklama olayı
+        button.off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Diğer dropdown'ları kapat
+            $('.multi-select-dropdown').not(dropdown).hide();
+
+            // Bu dropdown'ı aç/kapat
+            dropdown.toggle();
+        });
+
+        // Checkbox değişim olayları
+        $(this).find('input[type="checkbox"]').off('change').on('change', function() {
+            updateMultiSelectText(multiSelect);
+        });
+
+        // İlk yüklemede text'i güncelle
+        updateMultiSelectText(multiSelect);
+    });
+
+    // Sayfa herhangi bir yerine tıklandığında dropdown'ları kapat
+    $(document).off('click.multiselect').on('click.multiselect', function(e) {
+        if (!$(e.target).closest('.multi-select').length) {
+            $('.multi-select-dropdown').hide();
+        }
+    });
+}
+
+// Multi-select text'ini güncelle
+function updateMultiSelectText(multiSelectElement) {
+    const textElement = $(multiSelectElement).find('.multi-select-text');
+    const checkboxes = $(multiSelectElement).find('input[type="checkbox"]:checked');
+    const selectId = $(multiSelectElement).attr('id');
+
+    if (checkboxes.length === 0) {
+        // Hiç seçili değil
+        if (selectId === 'firma-select') {
+            textElement.text('Hiç Firma Seçilmedi');
+        } else if (selectId === 'cari-grup-select') {
+            textElement.text('Hiç Grup Seçilmedi');
+        } else if (selectId === 'cari-tur-select') {
+            textElement.text('Hiç Tür Seçilmedi');
+        } else if (selectId === 'durum-select') {
+            textElement.text('Hiç Durum Seçilmedi');
+        } else {
+            textElement.text('Hiç Seçilmedi');
+        }
+    } else {
+        const totalCheckboxes = $(multiSelectElement).find('input[type="checkbox"]').length;
+
+        if (checkboxes.length === totalCheckboxes) {
+            // Hepsi seçili
+            if (selectId === 'firma-select') {
+                textElement.text('Tüm Firmalar');
+            } else if (selectId === 'cari-grup-select') {
+                textElement.text('Tüm Gruplar');
+            } else if (selectId === 'cari-tur-select') {
+                textElement.text('Tüm Türler');
+            } else if (selectId === 'durum-select') {
+                textElement.text('Tümü');
+            } else {
+                textElement.text('Tümü');
+            }
+        } else if (checkboxes.length === 1) {
+            // Tek seçim
+            const selectedLabel = checkboxes.first().next('label').text();
+            textElement.text(selectedLabel);
+        } else {
+            // Çoklu seçim
+            textElement.text(`${checkboxes.length} Seçili`);
+        }
+    }
+}
+
+function initAutocomplete() {
+    const cariInput = document.getElementById('cari');
+    if (!cariInput) {
+        console.log('Cari input elementi bulunamadı');
+        return;
+    }
+
+    // Cari listesini güvenli şekilde al - JSON parse hatası düzeltmesi
+    let cariList = [];
+    try {
+        // Template'ten gelen veriyi al - güvenli parsing
+        const cariListRaw = '{{ cari_list|tojson|safe }}';
+        console.log('Raw cari list data:', cariListRaw);
+
+        if (cariListRaw && cariListRaw !== '[]' && cariListRaw !== 'null') {
+            cariList = JSON.parse(cariListRaw);
+        }
+
+        if (!Array.isArray(cariList)) {
+            console.log('Cari list veri tipi hatalı:', typeof cariList);
+            cariList = [];
+        }
+    } catch (e) {
+        console.log('Cari list parse hatası:', e);
+        cariList = [];
+    }
+
+    console.log('Cari listesi yüklendi:', cariList.length, 'adet cari');
+    if (cariList.length > 0) {
+        console.log('İlk 5 cari:', cariList.slice(0, 5));
+    }
+
+    // Eğer liste boşsa, uyarı ver
+    if (cariList.length === 0) {
+        console.warn('Cari listesi boş! Backend\'den veri gelmiyor olabilir.');
+        return;
+    }
+
+    // Input olaylarını temizle ve tekrar ekle
+    cariInput.removeEventListener('input', handleInput);
+    cariInput.removeEventListener('keydown', handleKeydown);
+
+    cariInput.addEventListener('input', handleInput);
+    cariInput.addEventListener('keydown', handleKeydown);
+function handleKeydown(e) {
+        const autocompleteList = document.getElementById(this.id + '-autocomplete-list');
+        if (autocompleteList) {
+            const items = autocompleteList.getElementsByTagName('div');
+            let currentFocus = -1;
+
+            // Aktif elementi bul
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].classList.contains('autocomplete-active')) {
+                    currentFocus = i;
+                    break;
+                }
+            }
+
+            if (e.keyCode == 40) { // Aşağı ok
+                e.preventDefault();
+                currentFocus++;
+                addActive(items, currentFocus);
+            } else if (e.keyCode == 38) { // Yukarı ok
+                e.preventDefault();
+                currentFocus--;
+                addActive(items, currentFocus);
+            } else if (e.keyCode == 13) { // Enter
+                e.preventDefault();
+                if (currentFocus > -1 && items[currentFocus]) {
+                    items[currentFocus].click();
+                }
+            } else if (e.keyCode == 27) { // Escape
+                closeAllLists();
+            }
+        }
+    }
+
+    function handleInput() {
+        console.log('Cari input değeri:', this.value);
+        closeAllLists();
+        const val = this.value.trim();
+
+        if (!val || val.length < 2) {
+            console.log('Çok kısa arama terimi:', val);
+            return false;
+        }
+
+        const autocompleteList = document.createElement('div');
+        autocompleteList.setAttribute('id', this.id + '-autocomplete-list');
+        autocompleteList.setAttribute('class', 'autocomplete-items');
+        this.parentNode.appendChild(autocompleteList);
+
+        let matchCount = 0;
+        const searchTerm = val.toLowerCase();
+        console.log('Arama terimi:', searchTerm);
+
+        for (let i = 0; i < cariList.length; i++) {
+            if (matchCount >= 10) break; // Maksimum 10 sonuç göster
+
+            const cariName = String(cariList[i]).toLowerCase();
+            if (cariName.includes(searchTerm)) {
+                const item = document.createElement('div');
+                const matchIndex = cariName.indexOf(searchTerm);
+
+                // Orijinal metni koruyarak highlight yap
+                const originalText = String(cariList[i]);
+                item.innerHTML = originalText.substr(0, matchIndex);
+                item.innerHTML += '<strong>' + originalText.substr(matchIndex, val.length) + '</strong>';
+                item.innerHTML += originalText.substr(matchIndex + val.length);
+
+                item.addEventListener('click', function() {
+                    console.log('Cari seçildi:', originalText);
+                    cariInput.value = originalText;
+                    closeAllLists();
+                });
+
+                autocompleteList.appendChild(item);
+                matchCount++;
+            }
+        }
+
+        console.log('Bulunan sonuç sayısı:', matchCount);
+
+        if (matchCount === 0) {
+            const item = document.createElement('div');
+            item.innerHTML = '<em>Sonuç bulunamadı...</em>';
+            item.style.fontStyle = 'italic';
+            item.style.color = '#666';
+            autocompleteList.appendChild(item);
+        }
+    }
+    function addActive(items, currentFocus) {
+        if (!items) return false;
+        removeActive(items);
+        if (currentFocus >= items.length) currentFocus = 0;
+        if (currentFocus < 0) currentFocus = items.length - 1;
+        items[currentFocus].classList.add('autocomplete-active');
+    }
+
+    function removeActive(items) {
+        for (let i = 0; i < items.length; i++) {
+            items[i].classList.remove('autocomplete-active');
+        }
+    }
+
+    function closeAllLists(except) {
+        const autocompleteItems = document.getElementsByClassName('autocomplete-items');
+        for (let i = 0; i < autocompleteItems.length; i++) {
+            if (except != autocompleteItems[i] && except != cariInput) {
+                autocompleteItems[i].parentNode.removeChild(autocompleteItems[i]);
+            }
+        }
+    }
+
+    // Dışarıya tıklandığında kapat
+    document.addEventListener('click', function(e) {
+        closeAllLists(e.target);
+    });
+}
 // Loading spinner functions
 function showLoading() {
     $('.loading-spinner').show();

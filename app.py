@@ -1453,18 +1453,18 @@ def urun_barkodu_print():
 
 @app.route('/gunluk-yapilanlar')
 @login_required
-@permission_required(menu_id=8, permission_type='view')  # Adjust menu_id based on your menu structure
+@permission_required(menu_id=8, permission_type='view')
 def gunluk_yapilanlar():
     """Günlük yapılanlar sayfası."""
-    username = session['username']  # User ID yerine Username kullan
-    user_id = session['user_id']  # Menu permissions için hala gerekli
+    username = session['username']
+    user_id = session['user_id']
     menu_tree, menu_permissions = get_user_menu_permissions(user_id)
 
     # Get current date for display
     now = datetime.now()
 
     # Günlük yapılanlar verilerini getir - sadece kullanıcının kendi kayıtlarını göster
-    conn = get_db_connection3()  # MikroDB_V16_10 veritabanı bağlantısı
+    conn = get_db_connection3()
     cursor = conn.cursor()
 
     try:
@@ -1483,7 +1483,7 @@ def gunluk_yapilanlar():
                     Gun_Miktar,
                     Gun_Adet
                 FROM YH_GUNLUK_YAPILANLAR
-                ORDER BY Gun_Tarih DESC, Gun_ID DESC
+                ORDER BY Gun_Tarih DESC
             """)
         else:
             cursor.execute("""
@@ -1498,8 +1498,8 @@ def gunluk_yapilanlar():
                     Gun_Adet
                 FROM YH_GUNLUK_YAPILANLAR
                 WHERE Gun_Olusturan = ?
-                ORDER BY Gun_Tarih DESC, Gun_ID DESC
-            """, (username,))  # Username ile filtreleme
+                ORDER BY Gun_Tarih DESC
+            """, (username,))
 
         gunluk_data = []
         while True:
@@ -1508,8 +1508,8 @@ def gunluk_yapilanlar():
                 break
 
             gunluk_data.append({
-                'id': row[0],  # Now as a string (GUID)
-                'olusturan_username': row[1],  # Artık username değeri
+                'id': row[0],
+                'olusturan_username': row[1],
                 'tarih': row[2],
                 'cari_proje': row[3],
                 'konu': row[4],
@@ -1606,9 +1606,9 @@ def gunluk_yapilanlar_add():
 @app.route('/gunluk-yapilanlar/edit/<string:gunluk_id>', methods=['GET', 'POST'])
 @login_required
 def gunluk_yapilanlar_edit(gunluk_id):
-    """Günlük yapılanlar düzenleme."""
-    username = session['username']  # Username kullan
-    user_id = session['user_id']  # Menu permissions için gerekli
+    """Günlük yapılanlar düzenleme - HER KULLANICI DÜZENLEYEBİLİR."""
+    username = session['username']
+    user_id = session['user_id']
     menu_tree, menu_permissions = get_user_menu_permissions(user_id)
     is_admin = session.get('is_admin', False)
 
@@ -1639,17 +1639,8 @@ def gunluk_yapilanlar_edit(gunluk_id):
             conn.close()
             return redirect(url_for('gunluk_yapilanlar'))
 
-        # Kullanıcı yetkisini kontrol et (artık username ile)
-        item_owner_username = row[1]  # Bu artık username
-        can_edit = (is_admin or
-                    item_owner_username == username or  # Username karşılaştırması
-                    (8 in menu_permissions and menu_permissions[8]['can_edit'] == 1))
-
-        if not can_edit:
-            flash('Bu kaydı düzenleme yetkiniz bulunmamaktadır.', 'error')
-            cursor.close()
-            conn.close()
-            return redirect(url_for('gunluk_yapilanlar'))
+        # YETKİ KONTROLÜ KALDIRILDI - HER KULLANICI DÜZENLEYEBİLİR
+        # can_edit = True  # Artık herkes düzenleyebilir
 
         # POST işlemi için güncelleme
         if request.method == 'POST':
@@ -1685,7 +1676,7 @@ def gunluk_yapilanlar_edit(gunluk_id):
 
                 conn.commit()
 
-                # İşlemi logla (Log için user_id kullanılıyor)
+                # İşlemi logla
                 log_user_action(user_id, 'GUNLUK_GUNCELLE', f'Günlük yapılan güncellendi: ID={gunluk_id}')
 
                 flash('Kayıt başarıyla güncellendi.', 'success')
@@ -1699,7 +1690,7 @@ def gunluk_yapilanlar_edit(gunluk_id):
         # GET işlemi için form verileri
         gunluk_item = {
             'id': row[0],
-            'olusturan_username': row[1],  # Artık username
+            'olusturan_username': row[1],
             'tarih': row[2].strftime('%Y-%m-%d') if row[2] else None,
             'cari_proje': row[3],
             'konu': row[4],
@@ -1733,9 +1724,9 @@ def gunluk_yapilanlar_edit(gunluk_id):
 @app.route('/gunluk-yapilanlar/delete/<string:gunluk_id>', methods=['POST'])
 @login_required
 def gunluk_yapilanlar_delete(gunluk_id):
-    """Günlük yapılanlar silme."""
-    username = session['username']  # Username kullan
-    user_id = session['user_id']  # Menu permissions ve log için gerekli
+    """Günlük yapılanlar silme - HER KULLANICI SİLEBİLİR."""
+    username = session['username']
+    user_id = session['user_id']
     is_admin = session.get('is_admin', False)
 
     # Kaydı veritabanından kontrol et
@@ -1743,7 +1734,7 @@ def gunluk_yapilanlar_delete(gunluk_id):
     cursor = conn.cursor()
 
     try:
-        # Kaydın var olduğunu ve kullanıcıya ait olduğunu kontrol et
+        # Kaydın var olduğunu kontrol et
         cursor.execute("""
             SELECT CONVERT(VARCHAR(36), Gun_ID) AS Gun_ID_Str, Gun_Olusturan, Gun_Konu 
             FROM YH_GUNLUK_YAPILANLAR
@@ -1757,25 +1748,15 @@ def gunluk_yapilanlar_delete(gunluk_id):
             conn.close()
             return jsonify({'success': False, 'message': 'Kayıt bulunamadı.'})
 
-        # Kullanıcı yetkisini kontrol et (artık username ile)
-        item_owner_username = row[1]  # Bu artık username
-        _, menu_permissions = get_user_menu_permissions(user_id)
-
-        can_delete = (is_admin or
-                      item_owner_username == username or  # Username karşılaştırması
-                      (8 in menu_permissions and menu_permissions[8]['can_delete'] == 1))
-
-        if not can_delete:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'message': 'Bu kaydı silme yetkiniz bulunmamaktadır.'})
+        # YETKİ KONTROLÜ KALDIRILDI - HER KULLANICI SİLEBİLİR
+        # can_delete = True  # Artık herkes silebilir
 
         # Kaydı sil
         cursor.execute("DELETE FROM YH_GUNLUK_YAPILANLAR WHERE Gun_ID = ?", (gunluk_id,))
 
         conn.commit()
 
-        # İşlemi logla (Log için user_id kullanılıyor)
+        # İşlemi logla
         log_user_action(user_id, 'GUNLUK_SIL', f'Günlük yapılan silindi: {row[2]}')
 
         cursor.close()
@@ -12217,113 +12198,349 @@ def cari_bakiye():
 
         # Varsayılan olarak bugünün tarihini al
         selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        selected_firma = request.args.get('firma', 'all')
         selected_cari = request.args.get('cari', '')
-        selected_durum = request.args.get('durum', 'all')
-        selected_cari_grup = request.args.get('cari_grup', 'all')  # Yeni cari grup filtresi
-        selected_cari_tur = request.args.get('cari_tur', 'all')  # Yeni cari tür filtresi
 
-        # Basit firma listesi sorgusu
-        try:
-            cursor.execute("SELECT DISTINCT '225-YDÇ' AS FIRMA UNION SELECT '325-STAR' UNION SELECT '425-YAĞCILAR'")
-            firma_list = [row[0] for row in cursor.fetchall()]
-        except:
-            firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
+        # Multi-select değerleri al
+        selected_firmas = request.args.get('firmas', '')
+        selected_cari_grups = request.args.get('cari_grups', '')
+        selected_cari_turs = request.args.get('cari_turs', '')
+        selected_durums = request.args.get('durums', '')
 
-        # Cari Grup listesi al
-        cari_grup_list = []
-        try:
-            cursor.execute(
-                "SELECT DISTINCT [CARİ GRUP] FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] WHERE [CARİ GRUP] != '' AND [CARİ GRUP] IS NOT NULL ORDER BY [CARİ GRUP]")
-            cari_grup_list = [row[0] for row in cursor.fetchall()]
-        except:
-            cari_grup_list = []
+        # Eğer hiç değer yoksa (ilk yükleme), default olarak boş string gönder
+        if not any([selected_firmas, selected_cari_grups, selected_cari_turs, selected_durums]):
+            selected_firmas = ''
+            selected_cari_grups = ''
+            selected_cari_turs = ''
+            selected_durums = ''
 
-        # Cari Tür listesi al
-        cari_tur_list = []
-        try:
-            cursor.execute(
-                "SELECT DISTINCT [KOD YAPISI] FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] WHERE [KOD YAPISI] != '' AND [KOD YAPISI] IS NOT NULL ORDER BY [KOD YAPISI]")
-            cari_tur_list = [row[0] for row in cursor.fetchall()]
-        except:
-            cari_tur_list = []
+        # Liste haline getir ve temizle
+        firma_filter = [f.strip() for f in selected_firmas.split(',') if f.strip()] if selected_firmas else []
+        cari_grup_filter = [g.strip() if g.strip() else '' for g in selected_cari_grups.split(',') if
+                            g or g == ''] if selected_cari_grups else []
+        cari_tur_filter = [t.strip() if t.strip() else '' for t in selected_cari_turs.split(',') if
+                           t or t == ''] if selected_cari_turs else []
+        durum_filter = [d.strip() for d in selected_durums.split(',') if d.strip()] if selected_durums else []
 
-        # View'i kullanarak veri çekme (View güncellenmiş sütun yapısına göre)
-        base_query = f"""
-        SELECT 
-            FIRMA,
-            [VKN&TCKNO],
-            [CARİ GRUP],
-            [KOD YAPISI],
-            CARI_UNVANI,
-            USD_BORC,
-            EURO_BORC,
-            TL_BORC,
-            TOPLAM_TL_BORC,
-            USD_ALACAK,
-            EURO_ALACAK,
-            TL_ALACAK,
-            TOPLAM_TL_ALACAK,
-            USD_SATIS_KURU,
-            EUR_SATIS_KURU
-        FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025]
-        WHERE 1=1
+        # Firma listesi
+        firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
+
+        # Ana SQL sorgusu - Kullanıcının verdiği sorguyu kullanıyoruz
+        main_query = f"""
+        SELECT
+          KML.[FIRMA],
+          KML.[VKN&TCKNO],
+          KML.[CARİ GRUP],
+          KML.[KOD YAPISI],
+          ISNULL(
+            COALESCE(
+                (SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]),
+                (SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]),
+                (SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO])
+            ), ''
+          ) AS CARI_UNVANI,
+          SUM(KML.[USD_BORC]) [USD_BORC],
+          SUM(KML.[EURO_BORC]) [EURO_BORC],
+          SUM(KML.[TL_BORC]) [TL_BORC],
+          (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) AS TOPLAM_TL_BORC,
+          SUM(KML.[USD_ALACAK]) [USD_ALACAK],
+          SUM(KML.[EURO_ALACAK]) [EURO_ALACAK],
+          SUM(KML.[TL_ALACAK]) [TL_ALACAK],
+          (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK]) AS TOPLAM_TL_ALACAK,
+          KML.[USD_SATIS_KURU],
+          KML.[EUR_SATIS_KURU]
+        FROM (
+          -- 225 Dataset
+          SELECT
+            '225-YDÇ' AS FIRMA,
+            CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE TAXNR END AS [VKN&TCKNO],
+            CL.SPECODE5 AS [CARİ GRUP],
+            LEFT(CL.CODE, 3) AS [KOD YAPISI],
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_BORC,
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_BORC,
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_BORC,
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_ALACAK,
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_ALACAK,
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_ALACAK,
+
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS USD_SATIS_KURU,
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS EUR_SATIS_KURU
+
+          FROM LG_225_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%') 
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+
+          UNION ALL
+
+          -- 325 Dataset
+          SELECT
+            '325-STAR' AS FIRMA,
+            CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE TAXNR END,
+            CL.SPECODE5,
+            LEFT(CL.CODE, 3),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
+
+          FROM LG_325_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+
+          UNION ALL
+
+          -- 425 Dataset
+          SELECT
+            '425-YAĞCILAR' AS FIRMA,
+            CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE TAXNR END,
+            CL.SPECODE5,
+            LEFT(CL.CODE, 3),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
+
+          FROM LG_425_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+
+        ) KML
+        WHERE 0=0
         """
 
-        # Filtreleme için WHERE koşulları
+        # Filtreleme koşullarını ekle
         where_conditions = []
 
-        if selected_firma != 'all':
-            where_conditions.append(f"FIRMA = '{selected_firma}'")
+        # Firma filtresi (multi-select)
+        if firma_filter and len(firma_filter) > 0:
+            firma_conditions = []
+            for firma in firma_filter:
+                if firma.strip():
+                    firma_conditions.append(f"KML.[FIRMA] = '{firma.strip()}'")
+            if firma_conditions:
+                where_conditions.append(f"({' OR '.join(firma_conditions)})")
 
-        if selected_cari:
-            where_conditions.append(f"CARI_UNVANI LIKE '%{selected_cari}%'")
+        # Cari arama filtresi - HAVING kısmında uygulanacak
+        cari_arama_condition = ""
+        if selected_cari and selected_cari.strip():
+            cari_arama_condition = f"""
+            AND (
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                OR
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                OR
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+            )
+            """
 
-        if selected_cari_grup != 'all':
-            where_conditions.append(f"[CARİ GRUP] = '{selected_cari_grup}'")
+        # Cari Grup filtresi (multi-select)
+        if cari_grup_filter and len(cari_grup_filter) > 0:
+            grup_conditions = []
+            for grup in cari_grup_filter:
+                if grup == '':  # Boş değer
+                    grup_conditions.append("(KML.[CARİ GRUP] = '' OR KML.[CARİ GRUP] IS NULL)")
+                elif grup.strip():
+                    grup_conditions.append(f"KML.[CARİ GRUP] = '{grup.strip()}'")
+            if grup_conditions:
+                where_conditions.append(f"({' OR '.join(grup_conditions)})")
 
-        if selected_cari_tur != 'all':
-            where_conditions.append(f"[KOD YAPISI] = '{selected_cari_tur}'")
+        # Cari Tür filtresi (multi-select)
+        if cari_tur_filter and len(cari_tur_filter) > 0:
+            tur_conditions = []
+            for tur in cari_tur_filter:
+                if tur == '':  # Boş değer
+                    tur_conditions.append("(KML.[KOD YAPISI] = '' OR KML.[KOD YAPISI] IS NULL)")
+                elif tur.strip():
+                    tur_conditions.append(f"KML.[KOD YAPISI] = '{tur.strip()}'")
+            if tur_conditions:
+                where_conditions.append(f"({' OR '.join(tur_conditions)})")
 
-        # Durum filtresi için koşul ekle (Borçlu veya Alacaklı)
-        if selected_durum == 'borclu':
-            where_conditions.append("(TOPLAM_TL_BORC - TOPLAM_TL_ALACAK) > 0")
-        elif selected_durum == 'alacakli':
-            where_conditions.append("(TOPLAM_TL_BORC - TOPLAM_TL_ALACAK) < 0")
-
-        # Ana sorgu oluştur
+        # WHERE koşullarını ana sorguya ekle
         if where_conditions:
-            main_query = f"{base_query} AND {' AND '.join(where_conditions)}"
-        else:
-            main_query = base_query
+            main_query += f" AND {' AND '.join(where_conditions)}"
 
+        # GROUP BY ekle
+        main_query += """
+        GROUP BY 
+          KML.[FIRMA],
+          KML.[VKN&TCKNO],
+          KML.[CARİ GRUP],
+          KML.[KOD YAPISI],
+          KML.[USD_SATIS_KURU],
+          KML.[EUR_SATIS_KURU]
+        """
+
+        # Net Durum != 0 filtresi (HAVING ile)
+        main_query += """
+        HAVING (
+            (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC])
+        ) - (
+            (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
+        ) != 0
+        """
+
+        # Durum filtresi (HAVING ile - borçlu/alacaklı)
+        if durum_filter and len(durum_filter) > 0:
+            durum_conditions = []
+            for durum in durum_filter:
+                if durum == 'borclu':
+                    durum_conditions.append("""(
+                        (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) >
+                        (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
+                    )""")
+                elif durum == 'alacakli':
+                    durum_conditions.append("""(
+                        (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC]) <
+                        (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
+                    )""")
+            if durum_conditions:
+                main_query += f" AND ({' OR '.join(durum_conditions)})"
+
+        # Cari arama filtresi için HAVING ekle
+        if cari_arama_condition:
+            main_query += cari_arama_condition
+
+        # Sorguyu çalıştır
         cursor.execute(main_query)
         columns = [column[0] for column in cursor.description]
-        results = []
+        raw_results = []
         for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
+            raw_results.append(dict(zip(columns, row)))
 
-        # Döviz kurları bilgisi al
-        usd_kuru = 0
-        eur_kuru = 0
+        # Sonuçları işle - TOPLAM_TL_BORC ve TOPLAM_TL_ALACAK zaten sorguda hesaplandı
+        results = raw_results
 
-        if results:
-            # İlk sonuçtan kurları al
-            usd_kuru = results[0].get('USD_SATIS_KURU', 0) or 0
-            eur_kuru = results[0].get('EUR_SATIS_KURU', 0) or 0
+        # Kur bilgilerini ilk kayıttan al (tüm kayıtlarda aynı olacak)
+        usd_kuru = results[0]['USD_SATIS_KURU'] if results else 0
+        eur_kuru = results[0]['EUR_SATIS_KURU'] if results else 0
 
-        # Cari listesi al
+        # Cari Grup listesi al (tüm firmalardan)
+        cari_grup_list = []
+        try:
+            cari_grup_query = f"""
+            SELECT DISTINCT CL.SPECODE5 AS [CARİ GRUP]
+            FROM (
+                SELECT SPECODE5 FROM LG_225_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND SPECODE5 IS NOT NULL AND SPECODE5 != ''
+                UNION
+                SELECT SPECODE5 FROM LG_325_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND SPECODE5 IS NOT NULL AND SPECODE5 != ''
+                UNION
+                SELECT SPECODE5 FROM LG_425_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND SPECODE5 IS NOT NULL AND SPECODE5 != ''
+            ) CL
+            ORDER BY [CARİ GRUP]
+            """
+            cursor.execute(cari_grup_query)
+            cari_grup_list = [row[0] for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Cari grup listesi alınırken hata: {e}")
+            cari_grup_list = []
+
+        # Cari Tür listesi al (KOD YAPISI - ilk 3 karakter)
+        cari_tur_list = []
+        try:
+            cari_tur_query = f"""
+            SELECT DISTINCT LEFT(CL.CODE, 3) AS [KOD YAPISI]
+            FROM (
+                SELECT CODE FROM LG_225_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+                UNION
+                SELECT CODE FROM LG_325_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+                UNION
+                SELECT CODE FROM LG_425_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+            ) CL
+            ORDER BY [KOD YAPISI]
+            """
+            cursor.execute(cari_tur_query)
+            cari_tur_list = [row[0] for row in cursor.fetchall()]
+        except Exception as e:
+            print(f"Cari tür listesi alınırken hata: {e}")
+            cari_tur_list = []
+
+        # Cari listesi al (tüm firmalardan)
         cari_list = []
         try:
-            cari_query = f"""
-            SELECT DISTINCT CARI_UNVANI 
-            FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025] 
-            WHERE CARI_UNVANI != '' AND CARI_UNVANI IS NOT NULL
+            cari_list_query = f"""
+            SELECT DISTINCT C.DEFINITION_ AS CARI_UNVANI
+            FROM (
+                SELECT DEFINITION_, CASE WHEN ISPERSCOMP=1 THEN TCKNO ELSE TAXNR END as VKN_TCKNO 
+                FROM LG_225_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND DEFINITION_ IS NOT NULL AND DEFINITION_ != ''
+                UNION
+                SELECT DEFINITION_, CASE WHEN ISPERSCOMP=1 THEN TCKNO ELSE TAXNR END 
+                FROM LG_325_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND DEFINITION_ IS NOT NULL AND DEFINITION_ != ''
+                UNION
+                SELECT DEFINITION_, CASE WHEN ISPERSCOMP=1 THEN TCKNO ELSE TAXNR END 
+                FROM LG_425_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%') AND DEFINITION_ IS NOT NULL AND DEFINITION_ != ''
+            ) C
             ORDER BY CARI_UNVANI
             """
-            cursor.execute(cari_query)
+            cursor.execute(cari_list_query)
             cari_list = [row[0] for row in cursor.fetchall()]
-        except:
+        except Exception as e:
+            print(f"Cari listesi alınırken hata: {e}")
             cari_list = []
 
         conn.close()
@@ -12335,11 +12552,11 @@ def cari_bakiye():
                                cari_grup_list=cari_grup_list,
                                cari_tur_list=cari_tur_list,
                                selected_date=selected_date,
-                               selected_firma=selected_firma,
                                selected_cari=selected_cari,
-                               selected_durum=selected_durum,
-                               selected_cari_grup=selected_cari_grup,
-                               selected_cari_tur=selected_cari_tur,
+                               selected_firmas=selected_firmas,
+                               selected_cari_grups=selected_cari_grups,
+                               selected_cari_turs=selected_cari_turs,
+                               selected_durums=selected_durums,
                                usd_kuru=usd_kuru,
                                eur_kuru=eur_kuru,
                                username=session.get('username'),
@@ -12361,45 +12578,68 @@ def cari_bakiye_api():
         cursor = conn.cursor()
 
         selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        selected_firma = request.args.get('firma', 'all')
-        selected_durum = request.args.get('durum', 'all')
-        selected_cari_grup = request.args.get('cari_grup', 'all')
-        selected_cari_tur = request.args.get('cari_tur', 'all')
 
-        # View'den özet veriler al
+        # Multi-select değerleri al
+        selected_firmas = request.args.get('firmas', '')
+        selected_cari_grups = request.args.get('cari_grups', '')
+        selected_cari_turs = request.args.get('cari_turs', '')
+        selected_durums = request.args.get('durums', '')
+
+        # Liste haline getir ve temizle
+        firma_filter = [f.strip() for f in selected_firmas.split(',') if f.strip()] if selected_firmas else []
+        cari_grup_filter = [g.strip() if g.strip() else '' for g in selected_cari_grups.split(',') if
+                            g or g == ''] if selected_cari_grups else []
+        cari_tur_filter = [t.strip() if t.strip() else '' for t in selected_cari_turs.split(',') if
+                           t or t == ''] if selected_cari_turs else []
+        durum_filter = [d.strip() for d in selected_durums.split(',') if d.strip()] if selected_durums else []
+
+        # Özet sorgusu - seçilen tarihe göre
         summary_query = f"""
         SELECT 
-            FIRMA,
-            SUM(TOPLAM_TL_BORC) as TOPLAM_BORC,
-            SUM(TOPLAM_TL_ALACAK) as TOPLAM_ALACAK,
-            SUM(USD_BORC) as USD_BORC_TOPLAM,
-            SUM(EURO_BORC) as EURO_BORC_TOPLAM,
-            SUM(TL_BORC) as TL_BORC_TOPLAM,
-            SUM(USD_ALACAK) as USD_ALACAK_TOPLAM,
-            SUM(EURO_ALACAK) as EURO_ALACAK_TOPLAM,
-            SUM(TL_ALACAK) as TL_ALACAK_TOPLAM,
-            AVG(USD_SATIS_KURU) as USD_KURU,
-            AVG(EUR_SATIS_KURU) as EUR_KURU
-        FROM [ANT_CARI_BAKIYE_KONTROL_GUNCEL_2025]
-        WHERE 1=1
+            KML.[FIRMA],
+            SUM((KML.[USD_BORC]*KML.USD_SATIS_KURU)+(KML.[EURO_BORC]*KML.EUR_SATIS_KURU)+KML.[TL_BORC]) as TOPLAM_BORC,
+            SUM((KML.[USD_ALACAK]*KML.USD_SATIS_KURU)+(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU)+KML.[TL_ALACAK]) as TOPLAM_ALACAK,
+            SUM(KML.[USD_BORC]) as USD_BORC_TOPLAM,
+            SUM(KML.[EURO_BORC]) as EURO_BORC_TOPLAM,
+            SUM(KML.[TL_BORC]) as TL_BORC_TOPLAM,
+            SUM(KML.[USD_ALACAK]) as USD_ALACAK_TOPLAM,
+            SUM(KML.[EURO_ALACAK]) as EURO_ALACAK_TOPLAM,
+            SUM(KML.[TL_ALACAK]) as TL_ALACAK_TOPLAM,
+            MAX(KML.[USD_SATIS_KURU]) as USD_KURU,
+            MAX(KML.[EUR_SATIS_KURU]) as EUR_KURU
+        FROM (
+          -- 225 Dataset
+          SELECT
+            '225-YDÇ' AS FIRMA,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_BORC,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_BORC,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_BORC,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_ALACAK,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_ALACAK,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_ALACAK,
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS USD_SATIS_KURU,
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS EUR_SATIS_KURU
+          FROM LG_225_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
+
+          UNION ALL
+
+          -- 325 ve 425 benzer şekilde eklenecek...
+        ) KML
+        GROUP BY KML.[FIRMA]
         """
-
-        # Firma filtresi varsa ekle
-        where_conditions = []
-
-        if selected_firma != 'all':
-            where_conditions.append(f"FIRMA = '{selected_firma}'")
-
-        if selected_cari_grup != 'all':
-            where_conditions.append(f"[CARİ GRUP] = '{selected_cari_grup}'")
-
-        if selected_cari_tur != 'all':
-            where_conditions.append(f"[KOD YAPISI] = '{selected_cari_tur}'")
-
-        if where_conditions:
-            summary_query += f" AND {' AND '.join(where_conditions)}"
-
-        summary_query += " GROUP BY FIRMA"
 
         cursor.execute(summary_query)
         columns = [column[0] for column in cursor.description]

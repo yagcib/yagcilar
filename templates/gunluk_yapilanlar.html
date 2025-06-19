@@ -168,17 +168,15 @@
                         <td>{{ item.miktar }} {% if item.miktar %}KG{% endif %}</td>
                         <td>{{ item.adet }} {% if item.adet %}ADET{% endif %}</td>
                         <td class="text-center table-actions">
-                            {% if 20 in permissions and permissions[20].can_edit or is_admin or item.olusturan_id == session.user_id %}
-                            <a href="{{ url_for('gunluk_yapilanlar_edit', gunluk_id=item.id) }}" class="btn btn-sm btn-primary">
+                            <!-- HER KULLANICI DÜZENLEYEBİLİR -->
+                            <a href="{{ url_for('gunluk_yapilanlar_edit', gunluk_id=item.id) }}" class="btn btn-sm btn-primary" title="Düzenle">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            {% endif %}
 
-                            {% if 20 in permissions and permissions[20].can_delete or is_admin or item.olusturan_id == session.user_id %}
-                            <button class="btn btn-sm btn-danger delete-item" data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <!-- HER KULLANICI SİLEBİLİR -->
+                            <button class="btn btn-sm btn-danger delete-item" data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#deleteModal" title="Sil">
                                 <i class="fas fa-trash"></i>
                             </button>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
