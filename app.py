@@ -12203,10 +12203,10 @@ def emergency_cleanup():
 
     print("[SUCCESS] Emergency cleanup completed")
 
-
 @app.route('/cari_bakiye')
 @permission_required(menu_id=1026, permission_type='view')
 def cari_bakiye():
+    from datetime import datetime  # Import ekle
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -12216,7 +12216,19 @@ def cari_bakiye():
 
         # Varsayılan olarak bugünün tarihini al
         selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+
+        # Tarih formatını kontrol et (güvenlik)
+        try:
+            datetime.strptime(selected_date, '%Y-%m-%d')
+        except ValueError:
+            selected_date = datetime.now().strftime('%Y-%m-%d')
         selected_cari = request.args.get('cari', '')
+
+        # Tarih formatını kontrol et (güvenlik)
+        try:
+            datetime.strptime(selected_date, '%Y-%m-%d')
+        except ValueError:
+            selected_date = datetime.now().strftime('%Y-%m-%d')
 
         # Multi-select değerleri al
         selected_firmas = request.args.get('firmas', '')
@@ -12260,7 +12272,7 @@ def cari_bakiye():
         # Firma listesi
         firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
 
-        # Ana SQL sorgusu - Net Durum = 0 koşulunu kaldır ve VKN/TCKNO = 0000000000 olanları hariç tut
+        # Ana SQL sorgusu - Girilen tarihteki Net Durum = 0 olanları hariç tut
         main_query = f"""
         SELECT
           KML.[FIRMA],
@@ -12421,7 +12433,8 @@ def cari_bakiye():
             firma_conditions = []
             for firma in firma_filter:
                 if firma.strip():
-                    firma_conditions.append(f"KML.[FIRMA] = '{firma.strip()}'")
+                    safe_firma = firma.strip().replace("'", "''")  # SQL injection koruması
+                    firma_conditions.append(f"KML.[FIRMA] = '{safe_firma}'")
             if firma_conditions:
                 where_conditions.append(f"({' OR '.join(firma_conditions)})")
 
@@ -12432,7 +12445,8 @@ def cari_bakiye():
                 if grup == '':  # Boş değer
                     grup_conditions.append("(KML.[CARİ GRUP] = '' OR KML.[CARİ GRUP] IS NULL)")
                 elif grup.strip():
-                    grup_conditions.append(f"KML.[CARİ GRUP] = '{grup.strip()}'")
+                    safe_grup = grup.strip().replace("'", "''")  # SQL injection koruması
+                    grup_conditions.append(f"KML.[CARİ GRUP] = '{safe_grup}'")
             if grup_conditions:
                 where_conditions.append(f"({' OR '.join(grup_conditions)})")
 
@@ -12443,7 +12457,8 @@ def cari_bakiye():
                 if tur == '':  # Boş değer
                     tur_conditions.append("(KML.[KOD YAPISI] = '' OR KML.[KOD YAPISI] IS NULL)")
                 elif tur.strip():
-                    tur_conditions.append(f"KML.[KOD YAPISI] = '{tur.strip()}'")
+                    safe_tur = tur.strip().replace("'", "''")  # SQL injection koruması
+                    tur_conditions.append(f"KML.[KOD YAPISI] = '{safe_tur}'")
             if tur_conditions:
                 where_conditions.append(f"({' OR '.join(tur_conditions)})")
 
@@ -12465,14 +12480,15 @@ def cari_bakiye():
         # HAVING koşullarını birleştir
         having_conditions = []
 
-        # Net Durum != 0 filtresi - Sıfır olanları getirme
+        # ÖNEMLI: Girilen tarihteki Net Durum != 0 filtresi
+        # Seçilen tarih itibariyle Net Durum sıfır olanları hariç tut
         having_conditions.append("""(
             (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC])
         ) - (
             (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
         ) != 0""")
 
-        # Durum filtresi (borçlu/alacaklı)
+        # Durum filtresi (borçlu/alacaklı) - Girilen tarihe göre
         if durum_filter and len(durum_filter) > 0:
             durum_conditions = []
             for durum in durum_filter:
@@ -12491,12 +12507,13 @@ def cari_bakiye():
 
         # Cari arama filtresi
         if selected_cari and selected_cari.strip():
+            cari_search = selected_cari.strip().replace("'", "''")  # SQL injection koruması
             having_conditions.append(f"""(
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{cari_search}%'
                 OR
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{cari_search}%'
                 OR
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{cari_search}%'
             )""")
 
         # HAVING koşullarını ekle
@@ -12606,6 +12623,7 @@ def cari_bakiye():
 @app.route('/cari_bakiye_api')
 def cari_bakiye_api():
     """API endpoint for AJAX requests"""
+    from datetime import datetime  # Import ekle
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
@@ -12644,7 +12662,7 @@ def cari_bakiye_api():
             MAX(KML.[USD_SATIS_KURU]) as USD_KURU,
             MAX(KML.[EUR_SATIS_KURU]) as EUR_KURU
         FROM (
-          -- 225 Dataset
+          -- 225 Dataset - {selected_date} tarihi itibariyle
           SELECT
             '225-YDÇ' AS FIRMA,
             ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
@@ -12672,7 +12690,60 @@ def cari_bakiye_api():
 
           UNION ALL
 
-          -- 325 ve 425 benzer şekilde eklenecek...
+          -- 325 Dataset
+          SELECT
+            '325-STAR' AS FIRMA,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
+          FROM LG_325_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
+
+          UNION ALL
+
+          -- 425 Dataset
+          SELECT
+            '425-YAĞCILAR' AS FIRMA,
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
+                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
+                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
+            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
+          FROM LG_425_CLCARD CL WITH (NOLOCK)
+          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
+
         ) KML
         GROUP BY KML.[FIRMA]
         """
@@ -12692,7 +12763,6 @@ def cari_bakiye_api():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/send-daily-report-email', methods=['POST'])
 @login_required
