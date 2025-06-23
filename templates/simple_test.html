@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günlük Raporlar Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .main-tabs .nav-link.active {
+            color: #282965;
+            background-color: transparent;
+            border-bottom: 3px solid #282965;
+        }
+        .sub-tabs .nav-link.active {
+            color: #fff;
+            background-color: #282965;
+            border-color: #282965;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>📊 Günlük Raporlar</h2>
+
+        <!-- Ana Sekmeler -->
+        <ul class="nav nav-tabs main-tabs mb-3" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="ydc-metal-tab" data-bs-toggle="tab" data-bs-target="#ydc-metal" type="button" role="tab">
+                    🏭 Ydç Metal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="star-yagcilar-tab" data-bs-toggle="tab" data-bs-target="#star-yagcilar" type="button" role="tab">
+                    ⭐ Star Yağcılar
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="yagcilar-metal-tab" data-bs-toggle="tab" data-bs-target="#yagcilar-metal" type="button" role="tab">
+                    ⚙️ Yağcılar Metal Endüstri
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="genel-tab" data-bs-toggle="tab" data-bs-target="#genel" type="button" role="tab">
+                    🏢 Genel
+                </button>
+            </li>
+        </ul>
+
+        <!-- Sekme İçerikleri -->
+        <div class="tab-content" id="mainTabContent">
+
+            <!-- Ydç Metal Sekmesi -->
+            <div class="tab-pane fade show active" id="ydc-metal" role="tabpanel">
+                <ul class="nav nav-pills sub-tabs mb-3" id="ydcSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ydc-gunluk-tab" data-bs-toggle="tab" data-bs-target="#ydc-gunluk" type="button" role="tab">
+                            📋 Günlük Yapılanlar
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ydc-satis-tab" data-bs-toggle="tab" data-bs-target="#ydc-satis" type="button" role="tab">
+                            📊 Satış
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ydc-uretim-tab" data-bs-toggle="tab" data-bs-target="#ydc-uretim" type="button" role="tab">
+                            🏭 Üretim
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="ydcSubTabContent">
+                    <div class="tab-pane fade show active" id="ydc-gunluk" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>📋 Ydç Metal - Günlük Yapılanlar</h4>
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Proje/Cari</th>
+                                            <th>Konu</th>
+                                            <th>Detay</th>
+                                            <th>Miktar</th>
+                                            <th>Adet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>Örnek Proje</td>
+                                            <td>Üretim Planlaması</td>
+                                            <td>Günlük üretim hedefleri belirlendi</td>
+                                            <td>100 kg</td>
+                                            <td>50</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="ydc-satis" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>📊 Ydç Metal - Satış</h4>
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Müşteri</th>
+                                            <th>Ürün</th>
+                                            <th>Miktar</th>
+                                            <th>Tutar</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>ABC Şirketi</td>
+                                            <td>Metal Parça</td>
+                                            <td>500 kg</td>
+                                            <td>₺25,000</td>
+                                            <td><span class="badge bg-success">Tamamlandı</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="ydc-uretim" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>🏭 Ydç Metal - Üretim</h4>
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Ürün Kodu</th>
+                                            <th>Ürün Adı</th>
+                                            <th>Üretilen Miktar</th>
+                                            <th>Hedef Miktar</th>
+                                            <th>Verimlilik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>YDC001</td>
+                                            <td>Metal Parça A</td>
+                                            <td>450 adet</td>
+                                            <td>500 adet</td>
+                                            <td><span class="badge bg-warning">%90</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- E-posta Gönderme Bölümü -->
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5>📧 Raporu E-posta ile Gönder</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="emailRecipient" class="form-label">Alıcı E-posta Adresi</label>
+                                <input type="email" class="form-control" id="emailRecipient" value="bayramyagci@yagcilar.com.tr" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailSubject" class="form-label">Konu</label>
+                                <input type="text" class="form-control" id="emailSubject" value="Günlük Raporlar - 23.06.2025">
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailMessage" class="form-label">Mesaj (İsteğe Bağlı)</label>
+                                <textarea class="form-control" id="emailMessage" rows="3" placeholder="Ek mesajınızı buraya yazabilirsiniz..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" class="btn btn-success btn-lg w-100" onclick="sendEmailReport()">
+                                📧 Raporu Gönder
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3" id="emailStatus" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function sendEmailReport() {
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.className = 'alert alert-success mt-3';
+            statusDiv.textContent = '✅ E-posta gönderme işlevi test modunda çalışıyor. Gerçek uygulamada bayramyagci@yagcilar.com.tr adresine e-posta gönderilecek.';
+            statusDiv.style.display = 'block';
+
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

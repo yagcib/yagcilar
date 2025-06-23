@@ -1,0 +1,819 @@
+{% extends "base_layout.html" %}
+
+{% block title %}Günlük Raporlar - Yagcilar Holding{% endblock %}
+
+{% block head %}
+<style>
+    .main-tabs {
+        border-bottom: 2px solid #282965;
+        margin-bottom: 20px;
+    }
+    
+    .main-tabs .nav-link {
+        color: #282965;
+        font-weight: 600;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 20px;
+        margin-right: 10px;
+    }
+    
+    .main-tabs .nav-link.active {
+        color: #282965;
+        background-color: transparent;
+        border-bottom-color: #282965;
+    }
+    
+    .main-tabs .nav-link:hover {
+        color: #1a1a4a;
+        border-bottom-color: #1a1a4a;
+    }
+    
+    .sub-tabs {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .sub-tabs .nav-link {
+        color: #6c757d;
+        font-weight: 500;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        padding: 8px 15px;
+    }
+    
+    .sub-tabs .nav-link.active {
+        color: #fff;
+        background-color: #282965;
+        border-color: #282965;
+    }
+    
+    .sub-tabs .nav-link:hover {
+        color: #282965;
+        border-color: #282965;
+    }
+    
+    .content-area {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        min-height: 400px;
+    }
+    
+    .email-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .email-section h5 {
+        color: #282965;
+        margin-bottom: 15px;
+    }
+    
+    .btn-send-email {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-send-email:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .report-table {
+        margin-top: 20px;
+    }
+    
+    .report-table th {
+        background-color: #282965;
+        color: white;
+        border: none;
+    }
+    
+    .report-table td {
+        border-color: #dee2e6;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .email-status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        display: none;
+    }
+    
+    .email-status.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .email-status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-line"></i> Günlük Raporlar
+        </h2>
+        
+        <!-- Ana Sekmeler -->
+        <ul class="nav nav-tabs main-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="ydc-metal-tab" data-bs-toggle="tab" data-bs-target="#ydc-metal" type="button" role="tab">
+                    <i class="fas fa-industry"></i> Ydç Metal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="star-yagcilar-tab" data-bs-toggle="tab" data-bs-target="#star-yagcilar" type="button" role="tab">
+                    <i class="fas fa-star"></i> Star Yağcılar
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="yagcilar-metal-tab" data-bs-toggle="tab" data-bs-target="#yagcilar-metal" type="button" role="tab">
+                    <i class="fas fa-cogs"></i> Yağcılar Metal Endüstri
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="genel-tab" data-bs-toggle="tab" data-bs-target="#genel" type="button" role="tab">
+                    <i class="fas fa-building"></i> Genel
+                </button>
+            </li>
+        </ul>
+
+        <!-- Sekme İçerikleri -->
+        <div class="tab-content" id="mainTabContent">
+            
+            <!-- Ydç Metal Sekmesi -->
+            <div class="tab-pane fade show active" id="ydc-metal" role="tabpanel">
+                <ul class="nav nav-pills sub-tabs" id="ydcSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="ydc-gunluk-tab" data-bs-toggle="tab" data-bs-target="#ydc-gunluk" type="button" role="tab">
+                            Günlük Yapılanlar
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ydc-satis-tab" data-bs-toggle="tab" data-bs-target="#ydc-satis" type="button" role="tab">
+                            Satış
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ydc-uretim-tab" data-bs-toggle="tab" data-bs-target="#ydc-uretim" type="button" role="tab">
+                            Üretim
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="ydcSubTabContent">
+                    <div class="tab-pane fade show active" id="ydc-gunluk" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-tasks"></i> Ydç Metal - Günlük Yapılanlar</h4>
+                            <div class="loading-spinner" id="ydc-gunluk-loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                                <p>Veriler yükleniyor...</p>
+                            </div>
+                            <div id="ydc-gunluk-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Proje/Cari</th>
+                                            <th>Konu</th>
+                                            <th>Detay</th>
+                                            <th>Miktar</th>
+                                            <th>Adet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>Örnek Proje</td>
+                                            <td>Üretim Planlaması</td>
+                                            <td>Günlük üretim hedefleri belirlendi</td>
+                                            <td>100 kg</td>
+                                            <td>50</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="ydc-satis" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-chart-bar"></i> Ydç Metal - Satış</h4>
+                            <div id="ydc-satis-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Müşteri</th>
+                                            <th>Ürün</th>
+                                            <th>Miktar</th>
+                                            <th>Tutar</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>ABC Şirketi</td>
+                                            <td>Metal Parça</td>
+                                            <td>500 kg</td>
+                                            <td>₺25,000</td>
+                                            <td><span class="badge bg-success">Tamamlandı</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="ydc-uretim" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-industry"></i> Ydç Metal - Üretim</h4>
+                            <div id="ydc-uretim-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Ürün Kodu</th>
+                                            <th>Ürün Adı</th>
+                                            <th>Üretilen Miktar</th>
+                                            <th>Hedef Miktar</th>
+                                            <th>Verimlilik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>YDC001</td>
+                                            <td>Metal Parça A</td>
+                                            <td>450 adet</td>
+                                            <td>500 adet</td>
+                                            <td><span class="badge bg-warning">%90</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Star Yağcılar Sekmesi -->
+            <div class="tab-pane fade" id="star-yagcilar" role="tabpanel">
+                <ul class="nav nav-pills sub-tabs" id="starSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="star-gunluk-tab" data-bs-toggle="tab" data-bs-target="#star-gunluk" type="button" role="tab">
+                            Günlük Yapılanlar
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="starSubTabContent">
+                    <div class="tab-pane fade show active" id="star-gunluk" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-tasks"></i> Star Yağcılar - Günlük Yapılanlar</h4>
+                            <div id="star-gunluk-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Proje/Cari</th>
+                                            <th>Konu</th>
+                                            <th>Detay</th>
+                                            <th>Miktar</th>
+                                            <th>Adet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>Star Projesi</td>
+                                            <td>Operasyon Planlaması</td>
+                                            <td>Günlük operasyon hedefleri belirlendi</td>
+                                            <td>200 litre</td>
+                                            <td>25</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yağcılar Metal Endüstri Sekmesi -->
+            <div class="tab-pane fade" id="yagcilar-metal" role="tabpanel">
+                <ul class="nav nav-pills sub-tabs" id="yagcilarSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="yagcilar-gunluk-tab" data-bs-toggle="tab" data-bs-target="#yagcilar-gunluk" type="button" role="tab">
+                            Günlük Yapılanlar
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="yagcilar-satis-tab" data-bs-toggle="tab" data-bs-target="#yagcilar-satis" type="button" role="tab">
+                            Satış
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="yagcilarSubTabContent">
+                    <div class="tab-pane fade show active" id="yagcilar-gunluk" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-tasks"></i> Yağcılar Metal Endüstri - Günlük Yapılanlar</h4>
+                            <div id="yagcilar-gunluk-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Proje/Cari</th>
+                                            <th>Konu</th>
+                                            <th>Detay</th>
+                                            <th>Miktar</th>
+                                            <th>Adet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>Endüstri Projesi</td>
+                                            <td>Makine Bakımı</td>
+                                            <td>Periyodik bakım işlemleri tamamlandı</td>
+                                            <td>-</td>
+                                            <td>3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="yagcilar-satis" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-chart-bar"></i> Yağcılar Metal Endüstri - Satış</h4>
+                            <div id="yagcilar-satis-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Müşteri</th>
+                                            <th>Ürün</th>
+                                            <th>Miktar</th>
+                                            <th>Tutar</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>XYZ Endüstri</td>
+                                            <td>Endüstriyel Parça</td>
+                                            <td>300 kg</td>
+                                            <td>₺18,000</td>
+                                            <td><span class="badge bg-warning">Beklemede</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Genel Sekmesi -->
+            <div class="tab-pane fade" id="genel" role="tabpanel">
+                <ul class="nav nav-pills sub-tabs" id="genelSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="genel-mesai-tab" data-bs-toggle="tab" data-bs-target="#genel-mesai" type="button" role="tab">
+                            Holding Mesai Giriş ve Çıkış
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-isguc-tab" data-bs-toggle="tab" data-bs-target="#genel-isguc" type="button" role="tab">
+                            İş Gücü
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-kantar-tab" data-bs-toggle="tab" data-bs-target="#genel-kantar" type="button" role="tab">
+                            Kantar
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-lastik-tab" data-bs-toggle="tab" data-bs-target="#genel-lastik" type="button" role="tab">
+                            Lastik
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-stok-tab" data-bs-toggle="tab" data-bs-target="#genel-stok" type="button" role="tab">
+                            Stok
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-pesin-tab" data-bs-toggle="tab" data-bs-target="#genel-pesin" type="button" role="tab">
+                            Peşin Kesilen Fatura
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="genel-satis-ekibi-tab" data-bs-toggle="tab" data-bs-target="#genel-satis-ekibi" type="button" role="tab">
+                            Satış Ekibi Kesilen Faturalar
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="genelSubTabContent">
+                    <div class="tab-pane fade show active" id="genel-mesai" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-clock"></i> Holding Mesai Giriş ve Çıkış</h4>
+                            <div id="genel-mesai-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Personel</th>
+                                            <th>Giriş Saati</th>
+                                            <th>Çıkış Saati</th>
+                                            <th>Toplam Süre</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Ahmet Yılmaz</td>
+                                            <td>08:00</td>
+                                            <td>17:00</td>
+                                            <td>9 saat</td>
+                                            <td><span class="badge bg-success">Normal</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-isguc" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-users"></i> İş Gücü</h4>
+                            <div id="genel-isguc-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Departman</th>
+                                            <th>Toplam Personel</th>
+                                            <th>Mevcut</th>
+                                            <th>İzinli</th>
+                                            <th>Verimlilik</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Üretim</td>
+                                            <td>25</td>
+                                            <td>23</td>
+                                            <td>2</td>
+                                            <td><span class="badge bg-success">%92</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-kantar" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-weight"></i> Kantar</h4>
+                            <div id="genel-kantar-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Araç Plakası</th>
+                                            <th>Giriş Ağırlığı</th>
+                                            <th>Çıkış Ağırlığı</th>
+                                            <th>Net Ağırlık</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>23.06.2025</td>
+                                            <td>34 ABC 123</td>
+                                            <td>15,500 kg</td>
+                                            <td>5,200 kg</td>
+                                            <td>10,300 kg</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-lastik" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-circle"></i> Lastik</h4>
+                            <div id="genel-lastik-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Araç</th>
+                                            <th>Lastik Tipi</th>
+                                            <th>Değişim Tarihi</th>
+                                            <th>Km</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Kamyon 1</td>
+                                            <td>295/80R22.5</td>
+                                            <td>15.01.2025</td>
+                                            <td>125,000</td>
+                                            <td><span class="badge bg-success">İyi</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-stok" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-boxes"></i> Stok</h4>
+                            <div id="genel-stok-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ürün Kodu</th>
+                                            <th>Ürün Adı</th>
+                                            <th>Mevcut Stok</th>
+                                            <th>Minimum Stok</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>STK001</td>
+                                            <td>Metal Parça A</td>
+                                            <td>150</td>
+                                            <td>50</td>
+                                            <td><span class="badge bg-success">Yeterli</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-pesin" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-receipt"></i> Peşin Kesilen Fatura</h4>
+                            <div id="genel-pesin-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fatura No</th>
+                                            <th>Müşteri</th>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                            <th>Ödeme Durumu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>FAT2025001</td>
+                                            <td>ABC Şirketi</td>
+                                            <td>23.06.2025</td>
+                                            <td>₺15,000</td>
+                                            <td><span class="badge bg-success">Ödendi</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="genel-satis-ekibi" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-file-invoice"></i> Satış Ekibi Kesilen Faturalar</h4>
+                            <div id="genel-satis-ekibi-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Satış Temsilcisi</th>
+                                            <th>Fatura No</th>
+                                            <th>Müşteri</th>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Mehmet Kaya</td>
+                                            <td>FAT2025002</td>
+                                            <td>XYZ Ltd.</td>
+                                            <td>23.06.2025</td>
+                                            <td>₺22,500</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- E-posta Gönderme Bölümü -->
+        <div class="email-section">
+            <h5><i class="fas fa-envelope"></i> Raporu E-posta ile Gönder</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="emailRecipient" class="form-label">Alıcı E-posta Adresi</label>
+                        <input type="email" class="form-control" id="emailRecipient" value="bayramyagci@yagcilar.com.tr" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="emailSubject" class="form-label">Konu</label>
+                        <input type="text" class="form-control" id="emailSubject" value="Günlük Raporlar - 23.06.2025">
+                    </div>
+                    <div class="mb-3">
+                        <label for="emailMessage" class="form-label">Mesaj (İsteğe Bağlı)</label>
+                        <textarea class="form-control" id="emailMessage" rows="3" placeholder="Ek mesajınızı buraya yazabilirsiniz..."></textarea>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="button" class="btn btn-send-email btn-lg w-100" onclick="sendEmailReport()">
+                        <i class="fas fa-paper-plane"></i> Raporu Gönder
+                    </button>
+                </div>
+            </div>
+            <div class="email-status" id="emailStatus"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sekme değişikliklerini dinle ve içeriği güncelle
+document.addEventListener('DOMContentLoaded', function() {
+    // Ana sekme değişikliklerini dinle
+    const mainTabs = document.querySelectorAll('#mainTabs button[data-bs-toggle="tab"]');
+    mainTabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            loadTabContent(event.target.getAttribute('data-bs-target'));
+        });
+    });
+    
+    // Alt sekme değişikliklerini dinle
+    const subTabs = document.querySelectorAll('.sub-tabs button[data-bs-toggle="tab"]');
+    subTabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            loadTabContent(event.target.getAttribute('data-bs-target'));
+        });
+    });
+    
+    // İlk sekmeyi yükle
+    loadTabContent('#ydc-gunluk');
+});
+
+function loadTabContent(tabId) {
+    // Burada gerçek veriler için AJAX çağrıları yapılabilir
+    console.log('Loading content for tab:', tabId);
+    
+    // Örnek: Yükleme animasyonu göster
+    const loadingElement = document.querySelector(tabId.replace('#', '#') + '-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'block';
+        setTimeout(() => {
+            loadingElement.style.display = 'none';
+        }, 1000);
+    }
+}
+
+function sendEmailReport() {
+    const recipient = document.getElementById('emailRecipient').value;
+    const subject = document.getElementById('emailSubject').value;
+    const message = document.getElementById('emailMessage').value;
+    const statusDiv = document.getElementById('emailStatus');
+    
+    // Aktif sekmeyi belirle
+    const activeMainTab = document.querySelector('#mainTabs .nav-link.active').textContent.trim();
+    const activeSubTab = document.querySelector('.sub-tabs .nav-link.active')?.textContent.trim() || '';
+    
+    // Buton durumunu değiştir
+    const sendButton = event.target;
+    const originalText = sendButton.innerHTML;
+    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+    sendButton.disabled = true;
+    
+    // E-posta gönderme işlemi (AJAX)
+    fetch('/send-daily-report-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            recipient: recipient,
+            subject: subject,
+            message: message,
+            activeTab: activeMainTab,
+            activeSubTab: activeSubTab,
+            reportData: getCurrentTabData()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.className = 'email-status success';
+            statusDiv.textContent = 'E-posta başarıyla gönderildi!';
+        } else {
+            statusDiv.className = 'email-status error';
+            statusDiv.textContent = 'E-posta gönderilirken bir hata oluştu: ' + (data.error || 'Bilinmeyen hata');
+        }
+        statusDiv.style.display = 'block';
+        
+        // 5 saniye sonra mesajı gizle
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    })
+    .catch(error => {
+        statusDiv.className = 'email-status error';
+        statusDiv.textContent = 'E-posta gönderilirken bir hata oluştu: ' + error.message;
+        statusDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    })
+    .finally(() => {
+        // Buton durumunu eski haline getir
+        sendButton.innerHTML = originalText;
+        sendButton.disabled = false;
+    });
+}
+
+function getCurrentTabData() {
+    // Aktif sekmenin verilerini topla
+    const activeTabPane = document.querySelector('.tab-pane.active .content-area');
+    if (!activeTabPane) return null;
+    
+    const table = activeTabPane.querySelector('table');
+    if (!table) return null;
+    
+    const data = [];
+    const rows = table.querySelectorAll('tbody tr');
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    
+    rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+        const rowData = {};
+        headers.forEach((header, index) => {
+            rowData[header] = cells[index] || '';
+        });
+        data.push(rowData);
+    });
+    
+    return {
+        headers: headers,
+        rows: data
+    };
+}
+
+// DataTables'ı başlat
+$(document).ready(function() {
+    $('.report-table').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
+        },
+        responsive: true,
+        pageLength: 25,
+        order: [[0, 'desc']] // Tarihe göre azalan sıralama
+    });
+});
+</script>
+{% endblock %}
+

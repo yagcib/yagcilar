@@ -25,9 +25,6 @@ from email.utils import formatdate
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 
-
-
-
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Generate a random secret key for session security
 
@@ -37,23 +34,30 @@ def get_db_connection():
     CONNECTION_STRING = "DRIVER={SQL Server};SERVER=SRVMICRO;DATABASE=YAGCILAR;Trusted_Connection=yes;"
     conn = pyodbc.connect(CONNECTION_STRING)
     return conn
+
+
 def get_db_connection2():
     CONNECTION_STRING2 = "Driver={SQL Server};Server=LOGO-ENT;Database=TIGERDB;UID=sa;PWD=YagciHol24*;Encrypt=False;TrustServerCertificate=True"
     conn = pyodbc.connect(CONNECTION_STRING2)
     return conn
+
+
 def get_db_connection3():
     CONNECTION_STRING3 = "DRIVER={SQL Server};SERVER=SRVMICRO;DATABASE=MikroDB_V16_10;Trusted_Connection=yes;"
     conn = pyodbc.connect(CONNECTION_STRING3)
     return conn
+
 
 def get_db_connection4():
     CONNECTION_STRING4 = "Driver={SQL Server};Server=192.168.4.84;Database=BarkoDB_V1_YDCPETROL;UID=sa;PWD=YagciHol24*;Encrypt=False;TrustServerCertificate=True"
     conn = pyodbc.connect(CONNECTION_STRING4)
     return conn
 
+
 # Helper function to hash passwords
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
 
 # Helper function to save user logs
 def log_user_action(user_id, action_type, action_details=None):
@@ -166,9 +170,6 @@ def admin_required(f):
     return decorated_function
 
 
-
-
-
 @app.route('/')
 def index():
     if 'user_id' in session:
@@ -227,6 +228,8 @@ def permission_required(menu_id, permission_type='view'):
         return decorated_function
 
     return decorator
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -309,6 +312,7 @@ def dashboard():
                            menus=menu_tree,
                            permissions=menu_permissions,
                            is_admin=is_admin)
+
 
 @app.route('/admin')
 @login_required
@@ -427,6 +431,7 @@ def forgot_password():
 
     return render_template('forgot_password.html')
 
+
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     # Check if token is valid
@@ -483,7 +488,6 @@ def reset_password(token):
 
 
 from datetime import datetime
-
 
 
 # Admin User Management Routes
@@ -1770,6 +1774,7 @@ def gunluk_yapilanlar_delete(gunluk_id):
         conn.close()
         return jsonify({'success': False, 'message': f'Kayıt silinirken bir hata oluştu: {str(e)}'})
 
+
 @app.route('/gunluk-yapilanlar/download-excel')
 @login_required
 @permission_required(menu_id=8, permission_type='view')
@@ -1888,6 +1893,7 @@ def gunluk_yapilanlar_download_excel():
     finally:
         cursor.close()
         conn.close()
+
 
 @app.route('/admin/menus/delete/<int:menu_id>', methods=['POST'])
 @admin_required
@@ -2153,7 +2159,7 @@ def tahsilat_tum_veri():
                 [SAT_TEM]
             FROM [TIGERDB].[dbo].[BYT_TAHSILAT_ANALIZ_SATIS_ELEMANI_YDC_2025]
             WHERE [CARİ GRUP] IS NULL
-            
+
             ORDER BY [VADESI GEÇEN TUTAR] DESC
         """)
 
@@ -2664,6 +2670,7 @@ def satis_maliyet():
                            cari_list=cari_list,
                            saved_costs=saved_costs)
 
+
 @app.route('/satis-maliyet/details/<int:sale_id>')
 @login_required
 def satis_maliyet_details(sale_id):
@@ -2784,6 +2791,7 @@ def satis_maliyet_details(sale_id):
     except Exception as e:
         print(f"Maliyet detayları alınırken hata: {e}")
         return f"<div class='alert alert-danger'>Detaylar yüklenirken bir hata oluştu: {str(e)}</div>"
+
 
 @app.route('/satis-maliyet/delete/<int:sale_id>', methods=['POST'])
 @login_required
@@ -3020,6 +3028,7 @@ def send_sales_cost_email(sale_id, is_emri_no, main_data, details, user_id):
     except Exception as e:
         print(f"E-posta gönderilirken hata oluştu: {e}")
         return False
+
 
 @app.route('/maliyet-veri')
 @login_required
@@ -3269,12 +3278,12 @@ def maliyet_veri_details(sale_id):
         }
 
         return render_template('maliyet_veri_details.html',
-                           username=session['username'],
-                           fullname=session.get('fullname', ''),
-                           main_data=main_data,
-                           sales_details=sales_details,
-                           cost_details=cost_details,
-                           maliyet_girildi=maliyet_girildi)
+                               username=session['username'],
+                               fullname=session.get('fullname', ''),
+                               main_data=main_data,
+                               sales_details=sales_details,
+                               cost_details=cost_details,
+                               maliyet_girildi=maliyet_girildi)
 
     except Exception as e:
         print(f"Maliyet veri detayları alınırken hata: {e}")
@@ -3409,6 +3418,7 @@ def maliyet_veri_save(sale_id):
         print(f"Maliyet bilgileri kaydedilirken genel hata: {e}")
         return jsonify({'success': False, 'message': f'İşlem sırasında bir hata oluştu: {str(e)}'})
 
+
 @app.route('/stok-listesi')
 @login_required
 @permission_required(menu_id=14, permission_type='view')  # Adjust menu_id based on your menu structure
@@ -3426,6 +3436,7 @@ def stok_listesi():
                            menus=menu_tree,
                            permissions=menu_permissions,
                            now=now)
+
 
 @app.route('/stok-listesi/data')
 @login_required
@@ -3781,6 +3792,7 @@ def fatura_onay_ekle():
                            menus=menu_tree,
                            permissions=menu_permissions,
                            is_edit_mode=False)
+
 
 # IMPORTANT: Replace the existing routes with these implementations!
 @app.route('/fatura-onay/detay/<int:fatura_id>')
@@ -4557,8 +4569,12 @@ def haftalik_yemek():
             ilk_tarih = row[1]
             son_tarih = row[2]
 
-            formatted_ilk_tarih = ilk_tarih.strftime('%d.%m.%Y') if ilk_tarih and hasattr(ilk_tarih, 'strftime') else str(ilk_tarih) if ilk_tarih else ''
-            formatted_son_tarih = son_tarih.strftime('%d.%m.%Y') if son_tarih and hasattr(son_tarih, 'strftime') else str(son_tarih) if son_tarih else ''
+            formatted_ilk_tarih = ilk_tarih.strftime('%d.%m.%Y') if ilk_tarih and hasattr(ilk_tarih,
+                                                                                          'strftime') else str(
+                ilk_tarih) if ilk_tarih else ''
+            formatted_son_tarih = son_tarih.strftime('%d.%m.%Y') if son_tarih and hasattr(son_tarih,
+                                                                                          'strftime') else str(
+                son_tarih) if son_tarih else ''
 
             menu_list.append({
                 'menu_id': row[0],
@@ -4604,14 +4620,14 @@ def haftalik_yemek():
             conn.close()
 
     return render_template('haftalik_yemek.html',
-                          username=session['username'],
-                          fullname=session.get('fullname', ''),
-                          menus=menu_tree,
-                          permissions=menu_permissions,
-                          menu_list=menu_list,
-                          now=now,
-                          is_admin=is_admin,
-                          has_permission=has_permission)
+                           username=session['username'],
+                           fullname=session.get('fullname', ''),
+                           menus=menu_tree,
+                           permissions=menu_permissions,
+                           menu_list=menu_list,
+                           now=now,
+                           is_admin=is_admin,
+                           has_permission=has_permission)
 
 
 # Route for adding new menu
@@ -4714,7 +4730,8 @@ def haftalik_yemek_ekle():
                 conn.commit()
 
                 # Log action
-                log_user_action(user_id, 'HAFTALIK_YEMEK_EKLE', f'Haftalık yemek menüsü eklendi: {ilk_tarih} - {son_tarih}')
+                log_user_action(user_id, 'HAFTALIK_YEMEK_EKLE',
+                                f'Haftalık yemek menüsü eklendi: {ilk_tarih} - {son_tarih}')
 
                 flash('Haftalık yemek menüsü başarıyla eklendi.', 'success')
                 return redirect(url_for('haftalik_yemek'))
@@ -4728,10 +4745,11 @@ def haftalik_yemek_ekle():
             return redirect(url_for('haftalik_yemek_ekle'))
 
     return render_template('haftalik_yemek_ekle.html',
-                          username=session['username'],
-                          fullname=session.get('fullname', ''),
-                          menus=menu_tree,
-                          permissions=menu_permissions)
+                           username=session['username'],
+                           fullname=session.get('fullname', ''),
+                           menus=menu_tree,
+                           permissions=menu_permissions)
+
 
 # Route for viewing menu image (continued)
 @app.route('/haftalik-yemek/goruntu/<int:menu_id>')
@@ -4793,95 +4811,93 @@ def haftalik_yemek_goruntu(menu_id):
         flash(f'Görüntü yüklenirken bir hata oluştu: {str(e)}', 'error')
         return redirect(url_for('haftalik_yemek'))
 
+
 @app.route('/haftalik-yemek/sil/<int:menu_id>', methods=['POST'])
 @login_required
 def haftalik_yemek_sil(menu_id):
-        """Haftalık yemek menüsünü silme."""
-        user_id = session['user_id']
+    """Haftalık yemek menüsünü silme."""
+    user_id = session['user_id']
 
-        # Check permissions
-        is_admin = session.get('is_admin', False)
-        has_permission = False
+    # Check permissions
+    is_admin = session.get('is_admin', False)
+    has_permission = False
 
-        if is_admin:
-            has_permission = True
-        else:
-            # Check if user has "İnsan Kaynakları" role
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute("""
+    if is_admin:
+        has_permission = True
+    else:
+        # Check if user has "İnsan Kaynakları" role
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
                     SELECT COUNT(*) 
                     FROM UserRoles ur 
                     JOIN Roles r ON ur.RoleID = r.RoleID 
                     WHERE ur.UserID = ? AND r.RoleName = 'İnsan Kaynakları'
                 """, (user_id,))
 
-                count = cursor.fetchone()[0]
-                has_permission = (count > 0)
-            except Exception as e:
-                print(f"Yetki kontrolü sırasında hata: {str(e)}")
-            finally:
-                cursor.close()
-                conn.close()
+            count = cursor.fetchone()[0]
+            has_permission = (count > 0)
+        except Exception as e:
+            print(f"Yetki kontrolü sırasında hata: {str(e)}")
+        finally:
+            cursor.close()
+            conn.close()
 
-        if not has_permission:
-            flash('Bu menüyü silme yetkiniz bulunmamaktadır.', 'error')
-            return redirect(url_for('haftalik_yemek'))
+    if not has_permission:
+        flash('Bu menüyü silme yetkiniz bulunmamaktadır.', 'error')
+        return redirect(url_for('haftalik_yemek'))
 
-        # Get menu details for logging before deletion
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    # Get menu details for logging before deletion
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-        try:
-            # First, get menu details for logging
-            cursor.execute("""
+    try:
+        # First, get menu details for logging
+        cursor.execute("""
                 SELECT IlkTarih, SonTarih, DosyaAdi 
                 FROM HaftalikYemekMenu 
                 WHERE MenuID = ?
             """, (menu_id,))
 
-            row = cursor.fetchone()
+        row = cursor.fetchone()
 
-            if not row:
-                flash('Silinecek menü bulunamadı.', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('haftalik_yemek'))
-
-            ilk_tarih = row[0]
-            son_tarih = row[1]
-            dosya_adi = row[2]
-
-            # Format dates for logging
-            formatted_ilk_tarih = ilk_tarih.strftime('%d.%m.%Y') if ilk_tarih and hasattr(ilk_tarih,
-                                                                                          'strftime') else str(
-                ilk_tarih)
-            formatted_son_tarih = son_tarih.strftime('%d.%m.%Y') if son_tarih and hasattr(son_tarih,
-                                                                                          'strftime') else str(
-                son_tarih)
-
-            # Delete the menu
-            cursor.execute("DELETE FROM HaftalikYemekMenu WHERE MenuID = ?", (menu_id,))
-            conn.commit()
-
-            # Log the action
-            log_user_action(user_id, 'HAFTALIK_YEMEK_SIL',
-                            f'Haftalık yemek menüsü silindi: {formatted_ilk_tarih} - {formatted_son_tarih}, {dosya_adi}')
-
-            flash('Menü başarıyla silindi.', 'success')
-
-        except Exception as e:
-            conn.rollback()
-            flash(f'Menü silinirken bir hata oluştu: {str(e)}', 'error')
-        finally:
+        if not row:
+            flash('Silinecek menü bulunamadı.', 'error')
             cursor.close()
             conn.close()
+            return redirect(url_for('haftalik_yemek'))
 
-        return redirect(url_for('haftalik_yemek'))
+        ilk_tarih = row[0]
+        son_tarih = row[1]
+        dosya_adi = row[2]
 
+        # Format dates for logging
+        formatted_ilk_tarih = ilk_tarih.strftime('%d.%m.%Y') if ilk_tarih and hasattr(ilk_tarih,
+                                                                                      'strftime') else str(
+            ilk_tarih)
+        formatted_son_tarih = son_tarih.strftime('%d.%m.%Y') if son_tarih and hasattr(son_tarih,
+                                                                                      'strftime') else str(
+            son_tarih)
 
+        # Delete the menu
+        cursor.execute("DELETE FROM HaftalikYemekMenu WHERE MenuID = ?", (menu_id,))
+        conn.commit()
 
+        # Log the action
+        log_user_action(user_id, 'HAFTALIK_YEMEK_SIL',
+                        f'Haftalık yemek menüsü silindi: {formatted_ilk_tarih} - {formatted_son_tarih}, {dosya_adi}')
+
+        flash('Menü başarıyla silindi.', 'success')
+
+    except Exception as e:
+        conn.rollback()
+        flash(f'Menü silinirken bir hata oluştu: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('haftalik_yemek'))
 
 
 @app.route('/gunluk-satis-raporu')
@@ -5005,7 +5021,6 @@ def gunluk_satis_raporu():
                            now=now)
 
 
-
 # Add this route for daily sales details
 @app.route('/ydc-satis-raporu/daily-details/<date>')
 @login_required
@@ -5092,9 +5107,6 @@ def ydc_daily_sales_details(date):
             'success': False,
             'error': str(e)
         })
-
-
-
 
 
 @app.route('/mikroskop-yanlis-veri')
@@ -5761,6 +5773,8 @@ def check_barko_files():
             'success': False,
             'error': str(e)
         })
+
+
 # Add these routes to app.py
 
 @app.route('/barkopos-tum-girisler')
@@ -6355,7 +6369,7 @@ def ydc_gunluk_rapor_mail_report3_data():
                 'avg_daily_brut_kg': avg_daily_brut_kg,
                 'avg_daily_net_kg': avg_daily_net_kg,
                 'avg_daily_brut_price': avg_daily_brut_price,  # Eklendi
-                'avg_daily_net_price': avg_daily_net_price,   # Eklendi
+                'avg_daily_net_price': avg_daily_net_price,  # Eklendi
                 'avg_daily_amount': avg_daily_amount,
                 'total_brut_kg': total_brut_kg,
                 'total_net_kg': total_net_kg,
@@ -6483,7 +6497,7 @@ def ydc_gunluk_rapor_mail_report4_data():
                 'avg_monthly_brut_kg': avg_monthly_brut_kg,
                 'avg_monthly_net_kg': avg_monthly_net_kg,
                 'avg_monthly_brut_price': avg_monthly_brut_price,  # Eklendi
-                'avg_monthly_net_price': avg_monthly_net_price,   # Eklendi
+                'avg_monthly_net_price': avg_monthly_net_price,  # Eklendi
                 'avg_monthly_amount': avg_monthly_amount,
                 'total_brut_kg': total_brut_kg,
                 'total_net_kg': total_net_kg,
@@ -6496,6 +6510,7 @@ def ydc_gunluk_rapor_mail_report4_data():
             'success': False,
             'error': str(e)
         })
+
 
 # Rapor 5 - Top Customers by TL
 @app.route('/ydc-gunluk-rapor-mail/top-customers-by-tl', methods=['POST'])
@@ -7183,6 +7198,7 @@ def ydc_gunluk_rapor_mail_send_mail():
             'error': f'Mail gönderilirken hata oluştu: {str(e)}'
         })
 
+
 def get_report1_data_for_mail(filters):
     """Mail için Rapor 1 verilerini getirir"""
     try:
@@ -7522,7 +7538,7 @@ def get_report3_data_for_mail(filters):
                 'avg_daily_brut_kg': avg_daily_brut_kg,
                 'avg_daily_net_kg': avg_daily_net_kg,
                 'avg_daily_brut_price': avg_daily_brut_price,  # Eklendi
-                'avg_daily_net_price': avg_daily_net_price,   # Eklendi
+                'avg_daily_net_price': avg_daily_net_price,  # Eklendi
                 'avg_daily_amount': avg_daily_amount,
                 'total_brut_kg': total_brut_kg,
                 'total_net_kg': total_net_kg,
@@ -7643,7 +7659,7 @@ def get_report4_data_for_mail(filters):
                 'avg_monthly_brut_kg': avg_monthly_brut_kg,
                 'avg_monthly_net_kg': avg_monthly_net_kg,
                 'avg_monthly_brut_price': avg_monthly_brut_price,  # Eklendi
-                'avg_monthly_net_price': avg_monthly_net_price,   # Eklendi
+                'avg_monthly_net_price': avg_monthly_net_price,  # Eklendi
                 'avg_monthly_amount': avg_monthly_amount,
                 'total_brut_kg': total_brut_kg,
                 'total_net_kg': total_net_kg,
@@ -10059,7 +10075,6 @@ def yagcilar_genel_satis_raporu_send_mail():
         })
 
 
-
 def get_yagcilar_report1_data_for_mail(filters):
     """Mail için Rapor 1 verilerini getirir"""
     try:
@@ -11532,6 +11547,7 @@ def generate_yagcilar_mail_html(report_data, note, include_reports):
 
     return html_content
 
+
 # Gmail SMTP Ayarları için Ortak Fonksiyon (İsteğe bağlı)
 def send_gmail_email(sender_email, sender_password, recipients, subject, html_content):
     """Gmail SMTP ile e-posta gönderme için ortak fonksiyon"""
@@ -11732,6 +11748,7 @@ def cleanup_old_files():
     except Exception as e:
         print(f"[WARNING] Cleanup error: {e}")
 
+
 # ============================================================================
 # ULTRA-SAFE MAIL GÖNDERİM GUARD
 # ============================================================================
@@ -11880,6 +11897,7 @@ def add_daily_mail_job():
         print(f"[ERROR] Failed to add daily mail job: {e}")
         return False
 
+
 def start_scheduler():
     """Scheduler'ı başlat"""
     scheduler = get_scheduler()
@@ -11937,8 +11955,8 @@ def send_daily_mail_internal():
             'subject': f'{datetime.now().strftime("%d.%m.%Y")} - YDÇ Metal Günlük Satış Raporu',
             'recipients': ['huseyinyagci@ydcmetal.com.tr', 'yunus@beymasmetal.com.tr'],
             'cc_recipients': ['hasan@staryagcilar.com.tr', 'kadiryagci@staryagcilar.com.tr',
-                    'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
-                    'bayramyagci@ydcmetal.com.tr','bayramyagci@yagcilar.com.tr'],
+                              'veli@staryagcilar.com.tr', 'turancam@ydcmetal.com.tr',
+                              'bayramyagci@ydcmetal.com.tr', 'bayramyagci@yagcilar.com.tr'],
             'note': 'Bu mail otomatik olarak sistem tarafından gönderilmiştir.',
             'include_reports': {
                 'report1': True,
@@ -12206,10 +12224,28 @@ def cari_bakiye():
         selected_cari_turs = request.args.get('cari_turs', '')
         selected_durums = request.args.get('durums', '')
 
-        # Eğer hiç değer yoksa (ilk yükleme), default olarak boş string gönder
+        # Eğer hiç değer yoksa (ilk yükleme), default değerleri ayarla
         if not any([selected_firmas, selected_cari_grups, selected_cari_turs, selected_durums]):
             selected_firmas = ''
-            selected_cari_grups = ''
+            # Cari grup için tüm değerleri seç (boş dahil)
+            try:
+                cari_grup_query = """
+                SELECT DISTINCT CL.SPECODE5 AS [CARİ GRUP]
+                FROM (
+                    SELECT SPECODE5 FROM LG_225_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+                    UNION
+                    SELECT SPECODE5 FROM LG_325_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+                    UNION
+                    SELECT SPECODE5 FROM LG_425_CLCARD WHERE ACTIVE = 0 AND (CODE LIKE '320%' OR CODE LIKE '120%')
+                ) CL
+                ORDER BY [CARİ GRUP]
+                """
+                cursor.execute(cari_grup_query)
+                all_cari_grups = [row[0] if row[0] is not None else '' for row in cursor.fetchall()]
+                selected_cari_grups = ','.join(all_cari_grups)
+            except:
+                selected_cari_grups = ''
+
             selected_cari_turs = ''
             selected_durums = ''
 
@@ -12224,7 +12260,7 @@ def cari_bakiye():
         # Firma listesi
         firma_list = ['225-YDÇ', '325-STAR', '425-YAĞCILAR']
 
-        # Ana SQL sorgusu - Kullanıcının verdiği sorguyu kullanıyoruz
+        # Ana SQL sorgusu - Net Durum = 0 koşulunu kaldır ve VKN/TCKNO = 0000000000 olanları hariç tut
         main_query = f"""
         SELECT
           KML.[FIRMA],
@@ -12287,6 +12323,7 @@ def cari_bakiye():
           WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%') 
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != '0000000000'
 
           UNION ALL
 
@@ -12328,6 +12365,7 @@ def cari_bakiye():
           WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != '0000000000'
 
           UNION ALL
 
@@ -12369,6 +12407,7 @@ def cari_bakiye():
           WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) IS NOT NULL 
             AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != ''
+            AND (CASE WHEN CL.ISPERSCOMP=1 THEN CL.TCKNO ELSE CL.TAXNR END) != '0000000000'
 
         ) KML
         WHERE 0=0
@@ -12385,19 +12424,6 @@ def cari_bakiye():
                     firma_conditions.append(f"KML.[FIRMA] = '{firma.strip()}'")
             if firma_conditions:
                 where_conditions.append(f"({' OR '.join(firma_conditions)})")
-
-        # Cari arama filtresi - HAVING kısmında uygulanacak
-        cari_arama_condition = ""
-        if selected_cari and selected_cari.strip():
-            cari_arama_condition = f"""
-            AND (
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
-                OR
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
-                OR
-                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
-            )
-            """
 
         # Cari Grup filtresi (multi-select)
         if cari_grup_filter and len(cari_grup_filter) > 0:
@@ -12436,16 +12462,17 @@ def cari_bakiye():
           KML.[EUR_SATIS_KURU]
         """
 
-        # Net Durum != 0 filtresi (HAVING ile)
-        main_query += """
-        HAVING (
+        # HAVING koşullarını birleştir
+        having_conditions = []
+
+        # Net Durum != 0 filtresi - Sıfır olanları getirme
+        having_conditions.append("""(
             (SUM(KML.[USD_BORC]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_BORC]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_BORC])
         ) - (
             (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
-        ) != 0
-        """
+        ) != 0""")
 
-        # Durum filtresi (HAVING ile - borçlu/alacaklı)
+        # Durum filtresi (borçlu/alacaklı)
         if durum_filter and len(durum_filter) > 0:
             durum_conditions = []
             for durum in durum_filter:
@@ -12460,11 +12487,21 @@ def cari_bakiye():
                         (SUM(KML.[USD_ALACAK]*KML.USD_SATIS_KURU))+(SUM(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU))+SUM(KML.[TL_ALACAK])
                     )""")
             if durum_conditions:
-                main_query += f" AND ({' OR '.join(durum_conditions)})"
+                having_conditions.append(f"({' OR '.join(durum_conditions)})")
 
-        # Cari arama filtresi için HAVING ekle
-        if cari_arama_condition:
-            main_query += cari_arama_condition
+        # Cari arama filtresi
+        if selected_cari and selected_cari.strip():
+            having_conditions.append(f"""(
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_225_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                OR
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_325_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+                OR
+                ISNULL((SELECT TOP 1 C.DEFINITION_ FROM LG_425_CLCARD C WITH (NOLOCK) WHERE (CASE WHEN C.ISPERSCOMP=1 THEN C.TCKNO ELSE C.TAXNR END) = KML.[VKN&TCKNO]), '') LIKE '%{selected_cari.strip()}%'
+            )""")
+
+        # HAVING koşullarını ekle
+        if having_conditions:
+            main_query += f" HAVING {' AND '.join(having_conditions)}"
 
         # Sorguyu çalıştır
         cursor.execute(main_query)
@@ -12566,7 +12603,6 @@ def cari_bakiye():
         flash(f'Hata: {str(e)}', 'danger')
         return redirect(url_for('dashboard'))
 
-
 @app.route('/cari_bakiye_api')
 def cari_bakiye_api():
     """API endpoint for AJAX requests"""
@@ -12656,6 +12692,902 @@ def cari_bakiye_api():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/send-daily-report-email', methods=['POST'])
+@login_required
+def send_daily_report_email():
+    """Günlük rapor e-postası gönderme işlevi."""
+    try:
+        print("DEBUG: E-posta gönderme işlemi başladı")
+
+        data = request.get_json()
+        print(f"DEBUG: Gelen veri: {data}")
+
+        recipient = data.get('recipient', 'bayramyagci@yagcilar.com.tr')
+        subject = data.get('subject', f'Günlük Raporlar - {datetime.now().strftime("%d.%m.%Y")}')
+        user_message = data.get('message', '')
+        active_tab = data.get('activeTab', '')
+        active_sub_tab = data.get('activeSubTab', '')
+        report_data = data.get('reportData', {})
+
+        print(f"DEBUG: E-posta bilgileri - Alıcı: {recipient}, Konu: {subject}")
+        print(f"DEBUG: Aktif sekme: {active_tab}, Alt sekme: {active_sub_tab}")
+
+        # E-posta içeriğini oluştur
+        print("DEBUG: HTML içeriği oluşturuluyor")
+        html_content = generate_email_html_content(active_tab, active_sub_tab, report_data, user_message)
+        print("DEBUG: HTML içeriği oluşturuldu")
+
+        # Gmail SMTP ayarları
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
+
+        # E-posta mesajını oluştur
+        print("DEBUG: E-posta mesajı oluşturuluyor")
+        message = MIMEMultipart("alternative")
+        message["From"] = sender_email
+        message["To"] = recipient
+        message["Subject"] = subject
+        message["Date"] = formatdate(localtime=True)
+
+        # HTML içeriği ekle
+        html_part = MIMEText(html_content, "html", "utf-8")
+        message.attach(html_part)
+
+        # E-postayı gönder
+        print("DEBUG: SMTP bağlantısı kuruluyor")
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        print("DEBUG: E-posta gönderiliyor")
+        server.sendmail(sender_email, recipient, message.as_string())
+        server.quit()
+        print("DEBUG: E-posta başarıyla gönderildi")
+
+        # Başarılı gönderim logla
+        log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL',
+                        f'Günlük rapor e-postası gönderildi: {recipient} - {active_tab}/{active_sub_tab}')
+
+        return jsonify({
+            'success': True,
+            'message': 'E-posta başarıyla gönderildi'
+        })
+
+    except Exception as e:
+        print(f"DEBUG: Hata oluştu: {str(e)}")
+        import traceback
+        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
+
+        # Hata logla
+        log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL_ERROR',
+                        f'E-posta gönderme hatası: {str(e)}')
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+def generate_email_html_content(active_tab, active_sub_tab, report_data, user_message):
+    """E-posta için HTML içeriği oluştur."""
+    try:
+        print("DEBUG: generate_email_html_content fonksiyonu başladı")
+
+        # Tarih ve saat bilgileri
+        now = datetime.now()
+        date_str = now.strftime("%d.%m.%Y")
+        time_str = now.strftime("%H:%M")
+
+        print(f"DEBUG: Tarih bilgileri - {date_str} {time_str}")
+
+        # Kullanıcı mesajı bölümü
+        user_message_section = ""
+        if user_message.strip():
+            user_message_section = f"""
+            <div class="user-message">
+                <strong>💬 Ek Mesaj:</strong><br>
+                {user_message}
+            </div>
+            """
+
+        # Güncel rapor verisini oluştur
+        current_report_html = generate_current_report_html(report_data, active_tab, active_sub_tab)
+
+        # Aktif sekmeyi belirle (varsayılan: Ydç Metal)
+        default_main_tab = 'ydc' if not active_tab or 'Ydç Metal' in active_tab else 'star' if 'Star' in active_tab else 'yagcilar' if 'Yağcılar Metal' in active_tab else 'genel'
+
+        html_template = f"""
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Günlük Raporlar</title>
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 1000px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f8f9fa;
+                }}
+                .header {{
+                    background-color: #282965;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    border-radius: 8px 8px 0 0;
+                }}
+                .content {{
+                    background-color: white;
+                    padding: 20px;
+                    border-radius: 0 0 8px 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }}
+                .user-message {{
+                    background-color: #d4edda;
+                    border: 1px solid #c3e6cb;
+                    color: #155724;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                }}
+
+                .current-report {{
+                    background-color: #e3f2fd;
+                    border: 2px solid #2196f3;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-bottom: 30px;
+                }}
+                .current-report h3 {{
+                    color: #1976d2;
+                    margin-top: 0;
+                }}
+
+                /* CSS-only Tab System */
+                .tab-system {{
+                    margin-bottom: 30px;
+                }}
+
+                /* Ana sekme input'ları gizli */
+                .main-tab-input {{
+                    display: none;
+                }}
+
+                /* Ana sekme butonları */
+                .main-tabs {{
+                    border-bottom: 2px solid #282965;
+                    margin-bottom: 20px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
+                }}
+
+                .main-tab-label {{
+                    color: #282965;
+                    font-weight: 600;
+                    border: none;
+                    border-bottom: 3px solid transparent;
+                    padding: 12px 20px;
+                    background: white;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: inline-block;
+                    border-radius: 5px 5px 0 0;
+                    margin-bottom: -2px;
+                }}
+
+                .main-tab-input:checked + .main-tab-label {{
+                    color: #282965;
+                    background-color: #f8f9fa;
+                    border-bottom-color: #282965;
+                }}
+
+                /* Ana sekme içerikleri */
+                .main-tab-content {{
+                    display: none;
+                }}
+
+                .main-tab-input:checked ~ .main-tab-content {{
+                    display: block;
+                }}
+
+                /* Alt sekmeler */
+                .sub-tabs {{
+                    background-color: #f8f9fa;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
+                }}
+
+                .sub-tab-input {{
+                    display: none;
+                }}
+
+                .sub-tab-label {{
+                    color: #6c757d;
+                    font-weight: 500;
+                    border: 1px solid #dee2e6;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    background: white;
+                    cursor: pointer;
+                    text-decoration: none;
+                    font-size: 14px;
+                    display: inline-block;
+                }}
+
+                .sub-tab-input:checked + .sub-tab-label {{
+                    color: #fff;
+                    background-color: #282965;
+                    border-color: #282965;
+                }}
+
+                /* Alt sekme içerikleri */
+                .sub-tab-content {{
+                    display: none;
+                }}
+
+                .sub-tab-input:checked ~ .sub-tab-content {{
+                    display: block;
+                }}
+
+                .content-area {{
+                    background-color: #fff;
+                    border-radius: 8px;
+                    padding: 20px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    min-height: 300px;
+                }}
+
+                /* Tablolar */
+                .report-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                }}
+                .report-table th {{
+                    background-color: #282965;
+                    color: white;
+                    padding: 12px 8px;
+                    text-align: left;
+                    border: 1px solid #ddd;
+                    font-size: 14px;
+                }}
+                .report-table td {{
+                    padding: 10px 8px;
+                    border: 1px solid #ddd;
+                    background-color: #f9f9f9;
+                    font-size: 14px;
+                }}
+                .report-table tr:nth-child(even) td {{
+                    background-color: #f1f1f1;
+                }}
+
+                .footer {{
+                    text-align: center;
+                    margin-top: 30px;
+                    padding: 20px;
+                    color: #6c757d;
+                    font-size: 14px;
+                }}
+
+                .badge {{
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: bold;
+                }}
+                .badge.bg-success {{
+                    background-color: #28a745;
+                    color: white;
+                }}
+                .badge.bg-warning {{
+                    background-color: #ffc107;
+                    color: black;
+                }}
+                .badge.bg-danger {{
+                    background-color: #dc3545;
+                    color: white;
+                }}
+
+                .section-divider {{
+                    border-top: 3px solid #282965;
+                    margin: 40px 0 20px 0;
+                    padding-top: 20px;
+                }}
+
+                @media screen and (max-width: 600px) {{
+                    .main-tabs {{
+                        flex-direction: column;
+                    }}
+                    .sub-tabs {{
+                        flex-direction: column;
+                    }}
+                    .main-tab-label, .sub-tab-label {{
+                        text-align: center;
+                        margin-bottom: 5px;
+                    }}
+                    .report-table th, .report-table td {{
+                        padding: 6px 4px;
+                        font-size: 12px;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📊 Günlük Raporlar</h1>
+                <p>Yağcılar Holding - {date_str}</p>
+            </div>
+
+            <div class="content">
+                {user_message_section}
+
+                {current_report_html}
+
+                <div class="section-divider">
+                    <h2>📋 Tüm Raporlar (Sekmeleri tıklayarak geçiş yapabilirsiniz)</h2>
+                </div>
+
+                <div class="tab-system">
+                    <!-- Ana Sekme Butonları -->
+                    <div class="main-tabs">
+                        <input type="radio" id="main-ydc" name="maintab" class="main-tab-input" {"checked" if default_main_tab == 'ydc' else ""}>
+                        <label for="main-ydc" class="main-tab-label">🏭 Ydç Metal</label>
+
+                        <input type="radio" id="main-star" name="maintab" class="main-tab-input" {"checked" if default_main_tab == 'star' else ""}>
+                        <label for="main-star" class="main-tab-label">⭐ Star Yağcılar</label>
+
+                        <input type="radio" id="main-yagcilar" name="maintab" class="main-tab-input" {"checked" if default_main_tab == 'yagcilar' else ""}>
+                        <label for="main-yagcilar" class="main-tab-label">⚙️ Yağcılar Metal Endüstri</label>
+
+                        <input type="radio" id="main-genel" name="maintab" class="main-tab-input" {"checked" if default_main_tab == 'genel' else ""}>
+                        <label for="main-genel" class="main-tab-label">🏢 Genel</label>
+                    </div>
+
+                    <!-- Ydç Metal İçeriği -->
+                    <div class="main-tab-content">
+                        <div class="sub-tabs">
+                            <input type="radio" id="ydc-gunluk" name="ydcsub" class="sub-tab-input" checked>
+                            <label for="ydc-gunluk" class="sub-tab-label">📋 Günlük Yapılanlar</label>
+
+                            <input type="radio" id="ydc-satis" name="ydcsub" class="sub-tab-input">
+                            <label for="ydc-satis" class="sub-tab-label">📊 Satış</label>
+
+                            <input type="radio" id="ydc-uretim" name="ydcsub" class="sub-tab-input">
+                            <label for="ydc-uretim" class="sub-tab-label">🏭 Üretim</label>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📋 Ydç Metal - Günlük Yapılanlar</h4>
+                                {generate_sample_table('ydc_gunluk', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📊 Ydç Metal - Satış</h4>
+                                {generate_sample_table('ydc_satis', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>🏭 Ydç Metal - Üretim</h4>
+                                {generate_sample_table('ydc_uretim', date_str)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Star Yağcılar İçeriği -->
+                    <div class="main-tab-content">
+                        <div class="sub-tabs">
+                            <input type="radio" id="star-gunluk" name="starsub" class="sub-tab-input" checked>
+                            <label for="star-gunluk" class="sub-tab-label">📋 Günlük Yapılanlar</label>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📋 Star Yağcılar - Günlük Yapılanlar</h4>
+                                {generate_sample_table('star_gunluk', date_str)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yağcılar Metal Endüstri İçeriği -->
+                    <div class="main-tab-content">
+                        <div class="sub-tabs">
+                            <input type="radio" id="yagcilar-gunluk" name="yagcilarsub" class="sub-tab-input" checked>
+                            <label for="yagcilar-gunluk" class="sub-tab-label">📋 Günlük Yapılanlar</label>
+
+                            <input type="radio" id="yagcilar-satis" name="yagcilarsub" class="sub-tab-input">
+                            <label for="yagcilar-satis" class="sub-tab-label">📊 Satış</label>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📋 Yağcılar Metal Endüstri - Günlük Yapılanlar</h4>
+                                {generate_sample_table('yagcilar_gunluk', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📊 Yağcılar Metal Endüstri - Satış</h4>
+                                {generate_sample_table('yagcilar_satis', date_str)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Genel İçeriği -->
+                    <div class="main-tab-content">
+                        <div class="sub-tabs">
+                            <input type="radio" id="genel-mesai" name="genelsub" class="sub-tab-input" checked>
+                            <label for="genel-mesai" class="sub-tab-label">🕐 Mesai</label>
+
+                            <input type="radio" id="genel-isguc" name="genelsub" class="sub-tab-input">
+                            <label for="genel-isguc" class="sub-tab-label">👥 İş Gücü</label>
+
+                            <input type="radio" id="genel-kantar" name="genelsub" class="sub-tab-input">
+                            <label for="genel-kantar" class="sub-tab-label">⚖️ Kantar</label>
+
+                            <input type="radio" id="genel-lastik" name="genelsub" class="sub-tab-input">
+                            <label for="genel-lastik" class="sub-tab-label">🛞 Lastik</label>
+
+                            <input type="radio" id="genel-stok" name="genelsub" class="sub-tab-input">
+                            <label for="genel-stok" class="sub-tab-label">📦 Stok</label>
+
+                            <input type="radio" id="genel-pesin" name="genelsub" class="sub-tab-input">
+                            <label for="genel-pesin" class="sub-tab-label">🧾 Peşin Fatura</label>
+
+                            <input type="radio" id="genel-satis-ekibi" name="genelsub" class="sub-tab-input">
+                            <label for="genel-satis-ekibi" class="sub-tab-label">👨‍💼 Satış Ekibi</label>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>🕐 Holding Mesai Giriş ve Çıkış</h4>
+                                {generate_sample_table('genel_mesai', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>👥 İş Gücü</h4>
+                                {generate_sample_table('genel_isguc', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>⚖️ Kantar</h4>
+                                {generate_sample_table('genel_kantar', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>🛞 Lastik</h4>
+                                {generate_sample_table('genel_lastik', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>📦 Stok</h4>
+                                {generate_sample_table('genel_stok', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>🧾 Peşin Kesilen Fatura</h4>
+                                {generate_sample_table('genel_pesin', date_str)}
+                            </div>
+                        </div>
+
+                        <div class="sub-tab-content">
+                            <div class="content-area">
+                                <h4>👨‍💼 Satış Ekibi Kesilen Faturalar</h4>
+                                {generate_sample_table('genel_satis_ekibi', date_str)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Bu e-posta Yağcılar Holding Günlük Raporlar sistemi tarafından otomatik olarak oluşturulmuştur.</p>
+                <p>📧 Gönderen: {session.get('fullname', session.get('username', 'Sistem'))} | 📅 Tarih: {date_str} {time_str}</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        print("DEBUG: HTML template oluşturuldu")
+        return html_template
+
+    except Exception as e:
+        print(f"DEBUG: generate_email_html_content hatası: {str(e)}")
+        import traceback
+        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
+        raise
+
+
+def generate_current_report_html(report_data, active_tab, active_sub_tab):
+    """Mevcut aktif rapor için HTML oluştur."""
+    try:
+        if not report_data or 'rows' not in report_data or not report_data['rows']:
+            return ""
+
+        headers = report_data.get('headers', [])
+        rows = report_data['rows']
+
+        html = f"""
+        <div class="current-report">
+            <h3>📊 Şu An Görüntülenen Rapor: {active_tab} {('→ ' + active_sub_tab) if active_sub_tab else ''}</h3>
+            <table class="report-table">
+                <thead>
+                    <tr>
+        """
+
+        for header in headers:
+            html += f'<th>{header}</th>'
+
+        html += """
+                    </tr>
+                </thead>
+                <tbody>
+        """
+
+        for row in rows:
+            html += '<tr>'
+            for header in headers:
+                value = row.get(header, '-')
+                html += f'<td>{value}</td>'
+            html += '</tr>'
+
+        html += """
+                </tbody>
+            </table>
+        </div>
+        """
+
+        return html
+
+    except Exception as e:
+        print(f"DEBUG: generate_current_report_html hatası: {str(e)}")
+        return ""
+
+
+def generate_sample_table(table_type, date_str):
+    """Örnek tablo verisi oluştur."""
+    try:
+        sample_data = {
+            'ydc_gunluk': {
+                'headers': ['Tarih', 'Proje/Cari', 'Konu', 'Detay', 'Miktar', 'Adet'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Örnek Proje 1',
+                        'Konu': 'Üretim Planlaması',
+                        'Detay': 'Günlük üretim hedefleri belirlendi',
+                        'Miktar': '100 kg',
+                        'Adet': '50'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Örnek Proje 2',
+                        'Konu': 'Kalite Kontrolü',
+                        'Detay': 'Ürün kalite testleri yapıldı',
+                        'Miktar': '75 kg',
+                        'Adet': '30'
+                    }
+                ]
+            },
+            'ydc_satis': {
+                'headers': ['Tarih', 'Müşteri', 'Ürün', 'Miktar', 'Tutar', 'Durum'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Müşteri': 'ABC Şirketi',
+                        'Ürün': 'Metal Parça',
+                        'Miktar': '500 kg',
+                        'Tutar': '₺25,000',
+                        'Durum': '<span class="badge bg-success">Tamamlandı</span>'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Müşteri': 'DEF Ltd.',
+                        'Ürün': 'Çelik Profil',
+                        'Miktar': '300 kg',
+                        'Tutar': '₺18,500',
+                        'Durum': '<span class="badge bg-warning">İşlemde</span>'
+                    }
+                ]
+            },
+            'ydc_uretim': {
+                'headers': ['Tarih', 'Ürün Kodu', 'Ürün Adı', 'Üretilen Miktar', 'Hedef Miktar', 'Verimlilik'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Ürün Kodu': 'YDC001',
+                        'Ürün Adı': 'Metal Parça A',
+                        'Üretilen Miktar': '450 adet',
+                        'Hedef Miktar': '500 adet',
+                        'Verimlilik': '<span class="badge bg-warning">%90</span>'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Ürün Kodu': 'YDC002',
+                        'Ürün Adı': 'Metal Parça B',
+                        'Üretilen Miktar': '620 adet',
+                        'Hedef Miktar': '600 adet',
+                        'Verimlilik': '<span class="badge bg-success">%103</span>'
+                    }
+                ]
+            },
+            'star_gunluk': {
+                'headers': ['Tarih', 'Proje/Cari', 'Konu', 'Detay', 'Miktar', 'Adet'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Star Projesi',
+                        'Konu': 'Operasyon Planlaması',
+                        'Detay': 'Günlük operasyon hedefleri belirlendi',
+                        'Miktar': '200 litre',
+                        'Adet': '25'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Star Bakım',
+                        'Konu': 'Ekipman Kontrolü',
+                        'Detay': 'Tüm ekipmanlar kontrol edildi',
+                        'Miktar': '-',
+                        'Adet': '8'
+                    }
+                ]
+            },
+            'yagcilar_gunluk': {
+                'headers': ['Tarih', 'Proje/Cari', 'Konu', 'Detay', 'Miktar', 'Adet'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Endüstri Projesi',
+                        'Konu': 'Makine Bakımı',
+                        'Detay': 'Periyodik bakım işlemleri tamamlandı',
+                        'Miktar': '-',
+                        'Adet': '3'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Proje/Cari': 'Yedek Parça',
+                        'Konu': 'Stok Kontrolü',
+                        'Detay': 'Yedek parça envanteri güncellendi',
+                        'Miktar': '50 kg',
+                        'Adet': '120'
+                    }
+                ]
+            },
+            'yagcilar_satis': {
+                'headers': ['Tarih', 'Müşteri', 'Ürün', 'Miktar', 'Tutar', 'Durum'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Müşteri': 'XYZ Endüstri',
+                        'Ürün': 'Endüstriyel Parça',
+                        'Miktar': '300 kg',
+                        'Tutar': '₺18,000',
+                        'Durum': '<span class="badge bg-warning">Beklemede</span>'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Müşteri': 'GHI Makina',
+                        'Ürün': 'Yedek Parça',
+                        'Miktar': '150 kg',
+                        'Tutar': '₺12,500',
+                        'Durum': '<span class="badge bg-success">Sevk Edildi</span>'
+                    }
+                ]
+            },
+            'genel_mesai': {
+                'headers': ['Personel', 'Giriş Saati', 'Çıkış Saati', 'Toplam Süre', 'Durum'],
+                'rows': [
+                    {
+                        'Personel': 'Ahmet Yılmaz',
+                        'Giriş Saati': '08:00',
+                        'Çıkış Saati': '17:00',
+                        'Toplam Süre': '9 saat',
+                        'Durum': '<span class="badge bg-success">Normal</span>'
+                    },
+                    {
+                        'Personel': 'Mehmet Kaya',
+                        'Giriş Saati': '08:15',
+                        'Çıkış Saati': '17:30',
+                        'Toplam Süre': '9 saat 15 dk',
+                        'Durum': '<span class="badge bg-success">Normal</span>'
+                    },
+                    {
+                        'Personel': 'Fatma Demir',
+                        'Giriş Saati': '09:00',
+                        'Çıkış Saati': '18:00',
+                        'Toplam Süre': '9 saat',
+                        'Durum': '<span class="badge bg-warning">Geç Giriş</span>'
+                    }
+                ]
+            },
+            'genel_isguc': {
+                'headers': ['Departman', 'Toplam Personel', 'Mevcut', 'İzinli', 'Verimlilik'],
+                'rows': [
+                    {
+                        'Departman': 'Üretim',
+                        'Toplam Personel': '25',
+                        'Mevcut': '23',
+                        'İzinli': '2',
+                        'Verimlilik': '<span class="badge bg-success">%92</span>'
+                    },
+                    {
+                        'Departman': 'Satış',
+                        'Toplam Personel': '8',
+                        'Mevcut': '7',
+                        'İzinli': '1',
+                        'Verimlilik': '<span class="badge bg-success">%87</span>'
+                    },
+                    {
+                        'Departman': 'İdari',
+                        'Toplam Personel': '12',
+                        'Mevcut': '11',
+                        'İzinli': '1',
+                        'Verimlilik': '<span class="badge bg-success">%91</span>'
+                    }
+                ]
+            },
+            'genel_kantar': {
+                'headers': ['Tarih', 'Araç Plakası', 'Giriş Ağırlığı', 'Çıkış Ağırlığı', 'Net Ağırlık'],
+                'rows': [
+                    {
+                        'Tarih': date_str,
+                        'Araç Plakası': '34 ABC 123',
+                        'Giriş Ağırlığı': '15,500 kg',
+                        'Çıkış Ağırlığı': '5,200 kg',
+                        'Net Ağırlık': '10,300 kg'
+                    },
+                    {
+                        'Tarih': date_str,
+                        'Araç Plakası': '35 DEF 456',
+                        'Giriş Ağırlığı': '12,800 kg',
+                        'Çıkış Ağırlığı': '4,300 kg',
+                        'Net Ağırlık': '8,500 kg'
+                    }
+                ]
+            },
+            'genel_lastik': {
+                'headers': ['Araç', 'Lastik Tipi', 'Değişim Tarihi', 'Km', 'Durum'],
+                'rows': [
+                    {
+                        'Araç': 'Kamyon 1',
+                        'Lastik Tipi': '295/80R22.5',
+                        'Değişim Tarihi': '15.01.2025',
+                        'Km': '125,000',
+                        'Durum': '<span class="badge bg-success">İyi</span>'
+                    },
+                    {
+                        'Araç': 'Kamyon 2',
+                        'Lastik Tipi': '315/80R22.5',
+                        'Değişim Tarihi': '22.01.2025',
+                        'Km': '98,500',
+                        'Durum': '<span class="badge bg-warning">Orta</span>'
+                    }
+                ]
+            },
+            'genel_stok': {
+                'headers': ['Ürün Kodu', 'Ürün Adı', 'Mevcut Stok', 'Minimum Stok', 'Durum'],
+                'rows': [
+                    {
+                        'Ürün Kodu': 'STK001',
+                        'Ürün Adı': 'Metal Parça A',
+                        'Mevcut Stok': '150',
+                        'Minimum Stok': '50',
+                        'Durum': '<span class="badge bg-success">Yeterli</span>'
+                    },
+                    {
+                        'Ürün Kodu': 'STK002',
+                        'Ürün Adı': 'Çelik Profil B',
+                        'Mevcut Stok': '35',
+                        'Minimum Stok': '40',
+                        'Durum': '<span class="badge bg-danger">Kritik</span>'
+                    }
+                ]
+            },
+            'genel_pesin': {
+                'headers': ['Fatura No', 'Müşteri', 'Tarih', 'Tutar', 'Ödeme Durumu'],
+                'rows': [
+                    {
+                        'Fatura No': 'FAT2025001',
+                        'Müşteri': 'ABC Şirketi',
+                        'Tarih': date_str,
+                        'Tutar': '₺15,000',
+                        'Ödeme Durumu': '<span class="badge bg-success">Ödendi</span>'
+                    },
+                    {
+                        'Fatura No': 'FAT2025002',
+                        'Müşteri': 'DEF Ltd.',
+                        'Tarih': date_str,
+                        'Tutar': '₺22,800',
+                        'Ödeme Durumu': '<span class="badge bg-success">Ödendi</span>'
+                    }
+                ]
+            },
+            'genel_satis_ekibi': {
+                'headers': ['Satış Temsilcisi', 'Fatura No', 'Müşteri', 'Tarih', 'Tutar'],
+                'rows': [
+                    {
+                        'Satış Temsilcisi': 'Mehmet Kaya',
+                        'Fatura No': 'FAT2025003',
+                        'Müşteri': 'XYZ Ltd.',
+                        'Tarih': date_str,
+                        'Tutar': '₺22,500'
+                    },
+                    {
+                        'Satış Temsilcisi': 'Ali Veli',
+                        'Fatura No': 'FAT2025004',
+                        'Müşteri': 'GHI A.Ş.',
+                        'Tarih': date_str,
+                        'Tutar': '₺31,200'
+                    }
+                ]
+            }
+        }
+
+        data = sample_data.get(table_type, sample_data['ydc_gunluk'])
+        headers = data['headers']
+        rows = data['rows']
+
+        html = '<table class="report-table"><thead><tr>'
+
+        for header in headers:
+            html += f'<th>{header}</th>'
+        html += '</tr></thead><tbody>'
+
+        for row in rows:
+            html += '<tr>'
+            for header in headers:
+                value = row.get(header, '-')
+                html += f'<td>{value}</td>'
+            html += '</tr>'
+        html += '</tbody></table>'
+
+        return html
+
+    except Exception as e:
+        print(f"DEBUG: generate_sample_table hatası: {str(e)}")
+        return "<p>Tablo oluşturulurken hata oluştu.</p>"
+
+
+@app.route('/gunluk-raporlar')
+@login_required
+@permission_required(menu_id=1027, permission_type='view')  # Menu ID'yi uygun şekilde ayarlayın
+def gunluk_raporlar():
+    """Günlük raporlar sayfası."""
+    user_id = session['user_id']
+    menu_tree, menu_permissions = get_user_menu_permissions(user_id)
+
+    return render_template('gunluk_raporlar.html',
+                           username=session['username'],
+                           fullname=session.get('fullname', ''),
+                           menus=menu_tree,
+                           permissions=menu_permissions,
+                           is_admin=session.get('is_admin', False))
+
 if __name__ == '__main__':
     # Create required directories if they don't exist
     os.makedirs('templates', exist_ok=True)
@@ -12681,3 +13613,7 @@ if __name__ == '__main__':
     # and port set to 2025
     app.run(host='0.0.0.0', port=2025, debug=True)
     # Note: In production, you should set debug=False
+
+
+
+
