@@ -47,12 +47,18 @@ def get_db_connection3():
     conn = pyodbc.connect(CONNECTION_STRING3)
     return conn
 
-
 def get_db_connection4():
     CONNECTION_STRING4 = "Driver={SQL Server};Server=192.168.4.84;Database=BarkoDB_V1_YDCPETROL;UID=sa;PWD=YagciHol24*;Encrypt=False;TrustServerCertificate=True"
     conn = pyodbc.connect(CONNECTION_STRING4)
     return conn
-
+def get_db_connection5():
+    CONNECTION_STRING5 = "DRIVER={SQL Server};SERVER=SRVMICRO;DATABASE=YDCLASTIK;Trusted_Connection=yes;"
+    conn = pyodbc.connect(CONNECTION_STRING5)
+    return conn
+def get_db_connection6():
+    CONNECTION_STRING6 = "Driver={SQL Server};Server=RIVER;Database=KantarDB;UID=sa;PWD=Rıv3542*;Encrypt=False;TrustServerCertificate=True"
+    conn = pyodbc.connect(CONNECTION_STRING6)
+    return conn
 
 # Helper function to hash passwords
 def hash_password(password):
@@ -12763,19 +12769,1237 @@ def cari_bakiye_api():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-# E-posta şablonu güncellemesi - generate_email_html_content fonksiyonu
+
+
+# YDÇ Metal veri endpoint'i - Günlük ve Üretim kaldırıldı
+@app.route('/get-ydc-data/<data_type>')
+@login_required
+def get_ydc_data(data_type):
+    """YDÇ Metal verilerini getir - Günlük ve Üretim kaldırıldı"""
+    try:
+        data_functions = {
+            'ydc_sevkiyat': get_ydc_sevkiyat_data,
+            'ydc_satis': get_ydc_satis_data,
+            'ydc_petrol': get_ydc_petrol_data,
+            'ydc_lazer_planlama': get_ydc_lazer_planlama_data,
+            'ydc_kaynakhane': get_ydc_kaynakhane_data,
+            'ydc_kalite': get_ydc_kalite_data,
+            'ydc_isg': get_ydc_isg_data,
+            'ydc_insankaynaklari': get_ydc_insankaynaklari_data,
+            'ydc_ihracat': get_ydc_ihracat_data,
+            'ydc_lazer_gunduz': get_ydc_lazer_gunduz_data,
+            'ydc_lazer_gece': get_ydc_lazer_gece_data,
+            'ydc_depo': get_ydc_depo_data
+        }
+
+        if data_type in data_functions:
+            data = data_functions[data_type]()
+            return jsonify({
+                'success': True,
+                'data': data,
+                'count': len(data) if data else 0
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Geçersiz veri tipi: {data_type}'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sunucu hatası: {str(e)}'
+        }), 500
+
+
+# YDÇ Metal fonksiyonları - Günlük ve Üretim fonksiyonları kaldırıldı
+
+def get_ydc_sevkiyat_data():
+    """YDÇ Metal Sevkiyat verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[AD SOYAD]
+              ,[OLUŞTURMA SAATİ]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[MİKTAR ( KG )]
+              ,[MİKTAR ( ADET )]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_SEVKIYAT]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (KG)',
+                      'MİKTAR (ADET)']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_satis_data():
+    """YDÇ Metal Satış verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_SATIS]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_petrol_data():
+    """YDÇ Metal Petrol verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[AD SOYAD]
+              ,[CARİ]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_PETROL]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_lazer_planlama_data():
+    """YDÇ Metal Lazer Planlama verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_LAZER_PLANLAMA]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_kaynakhane_data():
+    """YDÇ Metal Kaynakhane verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[SORUMLU]
+              ,[OLUŞTURMA SAATİ]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[MİKTAR ( ADET )]
+              ,[MİKTAR ( KG )]
+              ,[SÜRE ( SAAT )]
+              ,[YARINKİ HEDEF]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_KAYNAKHANE]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'SORUMLU', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (ADET)',
+                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'YARINKİ HEDEF']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_kalite_data():
+    """YDÇ Metal Kalite verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_KALITE]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_isg_data():
+    """YDÇ Metal İSG verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_ISG]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_insankaynaklari_data():
+    """YDÇ Metal İnsan Kaynakları verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[LOKASYON]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_INSANKAYNAKLARI]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_ihracat_data():
+    """YDÇ Metal İhracat verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_IHRACAT]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_lazer_gunduz_data():
+    """YDÇ Metal Lazer Gündüz verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ADI SOYADI]
+              ,[OLUŞTURMA SAATİ]
+              ,[VARDİYA]
+              ,[CARİ/PROJE]
+              ,[MAKİNE]
+              ,[PERSONEL]
+              ,[MİKTAR ( KG )]
+              ,[SÜRE ( SAAT )]
+              ,[KAYIP ( SAAT )]
+              ,[DETAY]
+              ,[YARINKİ HEDEF]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_GUNDUZ_LAZER]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
+                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_lazer_gece_data():
+    """YDÇ Metal Lazer Gece verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ADI SOYADI]
+              ,[OLUŞTURMA SAATİ]
+              ,[VARDİYA]
+              ,[CARİ/PROJE]
+              ,[MAKİNE]
+              ,[PERSONEL]
+              ,[MİKTAR ( KG )]
+              ,[SÜRE ( SAAT )]
+              ,[KAYIP ( SAAT )]
+              ,[DETAY]
+              ,[YARINKİ HEDEF]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_GECE_LAZER]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
+                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_ydc_depo_data():
+    """YDÇ Metal Depo verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_DEPO]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+# Star Yağcılar veri endpoint'leri
+@app.route('/get-star-data/<data_type>')
+@login_required
+def get_star_data(data_type):
+    """Star Yağcılar verilerini getir"""
+    try:
+        data_functions = {
+            'star_uretim': get_star_uretim_data,
+            'star_satinalma': get_star_satinalma_data,
+            'star_proje': get_star_proje_data,
+            'star_kalite': get_star_kalite_data,
+            'star_insankaynaklari': get_star_insankaynaklari_data,
+            'star_ihracat': get_star_ihracat_data,
+            'star_depo': get_star_depo_data
+        }
+
+        if data_type in data_functions:
+            data = data_functions[data_type]()
+            return jsonify({
+                'success': True,
+                'data': data,
+                'count': len(data) if data else 0
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Geçersiz veri tipi: {data_type}'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sunucu hatası: {str(e)}'
+        }), 500
+
+
+# Star Yağcılar fonksiyonları
+
+def get_star_uretim_data():
+    """Star Yağcılar Üretim verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[SORUMLU]
+              ,[MİKTAR ( KG )]
+              ,[MİKTAR ( ADET )]
+              ,[YARINKİ HEDEF]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_URETIM]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'SORUMLU', 'MİKTAR (KG)', 'MİKTAR (ADET)',
+                      'YARINKİ HEDEF']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_satinalma_data():
+    """Star Yağcılar Satın Alma verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_SATINALMA]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_proje_data():
+    """Star Yağcılar Proje Ekibi verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[DETAY]
+              ,[YARINKİ HEDEF]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_PROJE]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'DETAY', 'YARINKİ HEDEF']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_kalite_data():
+    """Star Yağcılar Kalite verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_KALITE]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_insankaynaklari_data():
+    """Star Yağcılar İnsan Kaynakları verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[LOKASYON]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_INSANKAYNAKLARI]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_ihracat_data():
+    """Star Yağcılar İhracat verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_IHRACAT]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_star_depo_data():
+    """Star Yağcılar Depo verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[ AD SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_DEPO]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+# Yağcılar Metal Endüstri veri endpoint'i
+@app.route('/get-yagcilar-data/<data_type>')
+@login_required
+def get_yagcilar_data(data_type):
+    """Yağcılar Metal Endüstri verilerini getir"""
+    try:
+        data_functions = {
+            'yagcilar_satis': get_yagcilar_satis_data
+        }
+
+        if data_type in data_functions:
+            data = data_functions[data_type]()
+            return jsonify({
+                'success': True,
+                'data': data,
+                'count': len(data) if data else 0
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Geçersiz veri tipi: {data_type}'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sunucu hatası: {str(e)}'
+        }), 500
+
+
+def get_yagcilar_satis_data():
+    """Yağcılar Metal Endüstri Satış verilerini getir"""
+    try:
+        conn = get_db_connection3()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[AD_SOYAD]
+              ,[CARİ/PROJE]
+              ,[KONU]
+              ,[DETAY]
+              ,[TUTAR (TL)]
+        FROM [MikroDB_V16_10].[dbo].[_DT_YAGCILAR_RAPOR_SATIS]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'TUTAR (TL)']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+# Genel sekmesi veri endpoint'i
+@app.route('/get-genel-data/<data_type>')
+@login_required
+def get_genel_data(data_type):
+    """Genel sekmesi verilerini getir"""
+    try:
+        data_functions = {
+            'genel_lastik': get_genel_lastik_data,
+            'genel_kantar': get_genel_kantar_data,
+            'genel_pesin': get_genel_pesin_data,
+            'genel_satis_ekibi': get_genel_satis_ekibi_data
+        }
+
+        if data_type in data_functions:
+            data = data_functions[data_type]()
+            return jsonify({
+                'success': True,
+                'data': data,
+                'count': len(data) if data else 0
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Geçersiz veri tipi: {data_type}'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sunucu hatası: {str(e)}'
+        }), 500
+
+
+def get_genel_lastik_data():
+    """Genel - Lastik verilerini getir"""
+    try:
+        conn = get_db_connection5()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[TARİH]
+              ,[FİŞ NO]
+              ,[CARİ]
+              ,[PLAKA]
+              ,[YAPILAN İŞLEM]
+              ,[ÖDEME]
+              ,[TUTAR]
+        FROM [YDCLASTIK].[dbo].[_DT_GUNLUK_ISLEMLER]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'TARİH', 'FİŞ NO', 'CARİ', 'PLAKA', 'YAPILAN İŞLEM', 'ÖDEME', 'TUTAR']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_genel_kantar_data():
+    """Genel - Kantar verilerini getir"""
+    try:
+        conn = get_db_connection6()
+        query = """
+        SELECT TOP (1000) [SIRA]
+              ,[Plaka]
+              ,[ŞOFÖR]
+              ,[CARİ ADI]
+              ,[MALZEME]
+              ,[1. TARTI]
+              ,[2. TARTI]
+              ,[TOPLAM KG]
+              ,[ÜCRET]
+        FROM [KantarDB].[dbo].[_BYT_GunlukKantar]
+        ORDER BY [SIRA]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['SIRA', 'Plaka', 'ŞOFÖR', 'CARİ ADI', 'MALZEME', '1. TARTI', '2. TARTI', 'TOPLAM KG', 'ÜCRET']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_genel_pesin_data():
+    """Genel - Peşin Kesilen Fatura verilerini getir"""
+    try:
+        conn = get_db_connection2()
+        query = """
+        SELECT TOP (1000) [Sıra]
+              ,[Firma]
+              ,[Fatura Türü]
+              ,[Fatura Numarası]
+              ,[ Fatura Tarihi]
+              ,[Vade]
+              ,[Cari Adı]
+              ,[ Toplam Miktar]
+              ,[İşlem Döviz Türü]
+              ,[Tutar]
+              ,[Sorumlu]
+        FROM [TIGERDB].[dbo].[BYT_PESIN_FATURALAR]
+        ORDER BY [Sıra]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['Sıra', 'Firma', 'Fatura Türü', 'Fatura Numarası', 'Fatura Tarihi', 'Vade', 'Cari Adı',
+                      'Toplam Miktar', 'İşlem Döviz Türü', 'Tutar', 'Sorumlu']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+def get_genel_satis_ekibi_data():
+    """Genel - Satış Ekibi Kesilen Faturalar verilerini getir"""
+    try:
+        conn = get_db_connection2()
+        query = """
+        SELECT TOP (1000) [CARİ HESAP ÜNVANI]
+              ,[SİPARİŞ NUMARASI]
+              ,[SİPARİŞ TUTAR]
+              ,[İRSALİYE NUMARASI]
+              ,[FATURA NUMARASI]
+              ,[FATURA VE İRSALİYE TUTAR (TL))]
+              ,[VADE]
+              ,[TOPLAM MİKTAR]
+              ,[BİRİM]
+              ,[TOPLAM NET KG]
+        FROM [TIGERDB].[dbo].[_DT_SATIS_GUNLUK_KESILEN_FATURA2]
+        ORDER BY [CARİ HESAP ÜNVANI]
+        """
+        df = pd.read_sql(query, conn)
+        conn.close()
+
+        df.columns = ['CARİ HESAP ÜNVANI', 'SİPARİŞ NUMARASI', 'SİPARİŞ TUTAR', 'İRSALİYE NUMARASI',
+                      'FATURA NUMARASI', 'FATURA VE İRSALİYE TUTAR (TL)', 'VADE', 'TOPLAM MİKTAR', 'BİRİM',
+                      'TOPLAM NET KG']
+        df = df.fillna('')
+        df = df.replace([float('inf'), float('-inf')], '')
+
+        return df.to_dict('records')
+    except Exception as e:
+        return []
+
+
+# Tüm verileri tek seferde getiren endpoint
+@app.route('/get-all-daily-reports')
+@login_required
+def get_all_daily_reports():
+    """Tüm günlük rapor verilerini tek seferde getir"""
+    try:
+        all_data = {}
+
+        # YDÇ Metal verileri
+        ydc_functions = {
+            'ydc_sevkiyat': get_ydc_sevkiyat_data,
+            'ydc_satis': get_ydc_satis_data,
+            'ydc_petrol': get_ydc_petrol_data,
+            'ydc_lazer_planlama': get_ydc_lazer_planlama_data,
+            'ydc_kaynakhane': get_ydc_kaynakhane_data,
+            'ydc_kalite': get_ydc_kalite_data,
+            'ydc_isg': get_ydc_isg_data,
+            'ydc_insankaynaklari': get_ydc_insankaynaklari_data,
+            'ydc_ihracat': get_ydc_ihracat_data,
+            'ydc_lazer_gunduz': get_ydc_lazer_gunduz_data,
+            'ydc_lazer_gece': get_ydc_lazer_gece_data,
+            'ydc_depo': get_ydc_depo_data
+        }
+
+        # Star Yağcılar verileri
+        star_functions = {
+            'star_uretim': get_star_uretim_data,
+            'star_satinalma': get_star_satinalma_data,
+            'star_proje': get_star_proje_data,
+            'star_kalite': get_star_kalite_data,
+            'star_insankaynaklari': get_star_insankaynaklari_data,
+            'star_ihracat': get_star_ihracat_data,
+            'star_depo': get_star_depo_data
+        }
+
+        # Yağcılar Metal Endüstri verileri
+        yagcilar_functions = {
+            'yagcilar_satis': get_yagcilar_satis_data
+        }
+
+        # Genel veriler
+        genel_functions = {
+            'genel_lastik': get_genel_lastik_data,
+            'genel_kantar': get_genel_kantar_data,
+            'genel_pesin': get_genel_pesin_data,
+            'genel_satis_ekibi': get_genel_satis_ekibi_data
+        }
+
+        # Tüm fonksiyonları çalıştır
+        for key, func in ydc_functions.items():
+            try:
+                all_data[key] = func()
+            except Exception as e:
+                all_data[key] = []
+
+        for key, func in star_functions.items():
+            try:
+                all_data[key] = func()
+            except Exception as e:
+                all_data[key] = []
+
+        for key, func in yagcilar_functions.items():
+            try:
+                all_data[key] = func()
+            except Exception as e:
+                all_data[key] = []
+
+        for key, func in genel_functions.items():
+            try:
+                all_data[key] = func()
+            except Exception as e:
+                all_data[key] = []
+
+        return jsonify({
+            'success': True,
+            'data': all_data
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Sunucu hatası: {str(e)}'
+        }), 500
+
+
+@app.route('/send-daily-report-email', methods=['POST'])
+@login_required
+def send_daily_report_email():
+    """Günlük rapor e-postası gönderme işlevi."""
+    try:
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Content-Type application/json olmalı'
+            }), 400
+
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Geçersiz JSON verisi'
+            }), 400
+
+        recipient = data.get('recipient', 'bayramyagci@yagcilar.com.tr')
+        subject = data.get('subject', f'Günlük Raporlar - {datetime.now().strftime("%d.%m.%Y")}')
+        user_message = data.get('message', '')
+        active_tab = data.get('activeTab', '')
+        active_sub_tab = data.get('activeSubTab', '')
+        report_data = data.get('reportData', {})
+
+        try:
+            html_content = generate_email_html_content_updated(active_tab, active_sub_tab, report_data, user_message)
+        except Exception as html_error:
+            return jsonify({
+                'success': False,
+                'error': f'E-posta içeriği oluşturulurken hata oluştu: {str(html_error)}'
+            }), 500
+
+        if not recipient or '@' not in recipient:
+            return jsonify({
+                'success': False,
+                'error': 'Geçerli bir e-posta adresi giriniz'
+            }), 400
+
+        sender_email = "yagcilarholding1@gmail.com"
+        sender_password = "bqnp sius nztz padc"
+
+        try:
+            message = MIMEMultipart("alternative")
+            message["From"] = sender_email
+            message["To"] = recipient
+            message["Subject"] = subject
+            message["Date"] = formatdate(localtime=True)
+
+            html_part = MIMEText(html_content, "html", "utf-8")
+            message.attach(html_part)
+        except Exception as msg_error:
+            return jsonify({
+                'success': False,
+                'error': f'E-posta mesajı oluşturulurken hata oluştu: {str(msg_error)}'
+            }), 500
+
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, recipient, message.as_string())
+        except smtplib.SMTPAuthenticationError:
+            return jsonify({
+                'success': False,
+                'error': 'E-posta gönderme yetkilendirme hatası'
+            }), 500
+        except smtplib.SMTPException as smtp_error:
+            return jsonify({
+                'success': False,
+                'error': f'E-posta gönderme hatası: {str(smtp_error)}'
+            }), 500
+        except Exception as send_error:
+            return jsonify({
+                'success': False,
+                'error': f'E-posta gönderilirken hata oluştu: {str(send_error)}'
+            }), 500
+
+        try:
+            log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL',
+                            f'Günlük rapor e-postası gönderildi: {recipient} - {active_tab}/{active_sub_tab}')
+        except Exception as log_error:
+            pass
+
+        return jsonify({
+            'success': True,
+            'message': 'E-posta başarıyla gönderildi'
+        })
+
+    except Exception as e:
+        try:
+            if 'session' in globals() and 'user_id' in session:
+                log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL_ERROR',
+                                f'E-posta gönderme hatası: {str(e)}')
+        except Exception as log_error:
+            pass
+
+        return jsonify({
+            'success': False,
+            'error': f'E-posta gönderilirken beklenmeyen hata oluştu: {str(e)}'
+        }), 500
+
+
+@app.route('/gunluk-raporlar')
+@login_required
+@permission_required(menu_id=1027, permission_type='view')
+def gunluk_raporlar():
+    """Günlük raporlar sayfası."""
+    user_id = session['user_id']
+    menu_tree, menu_permissions = get_user_menu_permissions(user_id)
+
+    return render_template('gunluk_raporlar.html',
+                           username=session['username'],
+                           fullname=session.get('fullname', ''),
+                           menus=menu_tree,
+                           permissions=menu_permissions,
+                           is_admin=session.get('is_admin', False))
+
+
+# Tablo oluşturma fonksiyonları - Debug'lar kaldırıldı
+
+def generate_ydc_table_from_db(table_type):
+    """Veritabanından YDÇ Metal verisiyle tablo oluştur"""
+    try:
+        data_functions = {
+            'ydc_sevkiyat': get_ydc_sevkiyat_data,
+            'ydc_satis': get_ydc_satis_data,
+            'ydc_petrol': get_ydc_petrol_data,
+            'ydc_lazer_planlama': get_ydc_lazer_planlama_data,
+            'ydc_kaynakhane': get_ydc_kaynakhane_data,
+            'ydc_kalite': get_ydc_kalite_data,
+            'ydc_isg': get_ydc_isg_data,
+            'ydc_insankaynaklari': get_ydc_insankaynaklari_data,
+            'ydc_ihracat': get_ydc_ihracat_data,
+            'ydc_lazer_gunduz': get_ydc_lazer_gunduz_data,
+            'ydc_lazer_gece': get_ydc_lazer_gece_data,
+            'ydc_depo': get_ydc_depo_data
+        }
+
+        headers_mapping = {
+            'ydc_sevkiyat': ['SIRA', 'AD SOYAD', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (KG)',
+                             'MİKTAR (ADET)'],
+            'ydc_satis': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'ydc_petrol': ['SIRA', 'AD SOYAD', 'CARİ', 'KONU', 'DETAY'],
+            'ydc_lazer_planlama': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'ydc_kaynakhane': ['SIRA', 'SORUMLU', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (ADET)',
+                               'MİKTAR (KG)', 'SÜRE (SAAT)', 'YARINKİ HEDEF'],
+            'ydc_kalite': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'ydc_isg': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'ydc_insankaynaklari': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON'],
+            'ydc_ihracat': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'ydc_lazer_gunduz': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
+                                 'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
+            'ydc_lazer_gece': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
+                               'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
+            'ydc_depo': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        }
+
+        if table_type in data_functions:
+            data = data_functions[table_type]()
+            headers = headers_mapping[table_type]
+
+            if not data:
+                return '<p>Veri bulunamadı.</p>'
+
+            html = '<table class="report-table"><thead><tr>'
+
+            for header in headers:
+                html += f'<th>{header}</th>'
+            html += '</tr></thead><tbody>'
+
+            for row in data:
+                html += '<tr>'
+                for header in headers:
+                    value = row.get(header, '-')
+                    if value is None or value == '':
+                        value = '-'
+                    html += f'<td>{value}</td>'
+                html += '</tr>'
+            html += '</tbody></table>'
+
+            return html
+        else:
+            return '<p>Geçersiz tablo tipi.</p>'
+
+    except Exception as e:
+        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
+
+
+def generate_star_table_from_db(table_type):
+    """Veritabanından Star Yağcılar verisiyle tablo oluştur"""
+    try:
+        data_functions = {
+            'star_uretim': get_star_uretim_data,
+            'star_satinalma': get_star_satinalma_data,
+            'star_proje': get_star_proje_data,
+            'star_kalite': get_star_kalite_data,
+            'star_insankaynaklari': get_star_insankaynaklari_data,
+            'star_ihracat': get_star_ihracat_data,
+            'star_depo': get_star_depo_data
+        }
+
+        headers_mapping = {
+            'star_uretim': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'SORUMLU', 'MİKTAR (KG)',
+                            'MİKTAR (ADET)', 'YARINKİ HEDEF'],
+            'star_satinalma': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'star_proje': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'DETAY', 'YARINKİ HEDEF'],
+            'star_kalite': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'star_insankaynaklari': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON'],
+            'star_ihracat': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
+            'star_depo': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
+        }
+
+        if table_type in data_functions:
+            data = data_functions[table_type]()
+            headers = headers_mapping[table_type]
+
+            if not data:
+                return '<p>Veri bulunamadı.</p>'
+
+            html = '<table class="report-table"><thead><tr>'
+
+            for header in headers:
+                html += f'<th>{header}</th>'
+            html += '</tr></thead><tbody>'
+
+            for row in data:
+                html += '<tr>'
+                for header in headers:
+                    value = row.get(header, '-')
+                    if value is None or value == '':
+                        value = '-'
+                    html += f'<td>{value}</td>'
+                html += '</tr>'
+            html += '</tbody></table>'
+
+            return html
+        else:
+            return '<p>Geçersiz tablo tipi.</p>'
+
+    except Exception as e:
+        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
+
+
+def generate_yagcilar_table_from_db(table_type):
+    """Veritabanından Yağcılar Metal Endüstri verisiyle tablo oluştur"""
+    try:
+        data_functions = {
+            'yagcilar_satis': get_yagcilar_satis_data
+        }
+
+        headers_mapping = {
+            'yagcilar_satis': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'TUTAR (TL)']
+        }
+
+        if table_type in data_functions:
+            data = data_functions[table_type]()
+            headers = headers_mapping[table_type]
+
+            if not data:
+                return '<p>Veri bulunamadı.</p>'
+
+            html = '<table class="report-table"><thead><tr>'
+
+            for header in headers:
+                html += f'<th>{header}</th>'
+            html += '</tr></thead><tbody>'
+
+            for row in data:
+                html += '<tr>'
+                for header in headers:
+                    value = row.get(header, '-')
+                    if value is None or value == '':
+                        value = '-'
+                    html += f'<td>{value}</td>'
+                html += '</tr>'
+            html += '</tbody></table>'
+
+            return html
+        else:
+            return '<p>Geçersiz tablo tipi.</p>'
+
+    except Exception as e:
+        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
+
+
+def generate_genel_table_from_db(table_type):
+    """Veritabanından Genel sekmesi verisiyle tablo oluştur"""
+    try:
+        data_functions = {
+            'genel_lastik': get_genel_lastik_data,
+            'genel_kantar': get_genel_kantar_data,
+            'genel_pesin': get_genel_pesin_data,
+            'genel_satis_ekibi': get_genel_satis_ekibi_data
+        }
+
+        headers_mapping = {
+            'genel_lastik': ['SIRA', 'TARİH', 'FİŞ NO', 'CARİ', 'PLAKA', 'YAPILAN İŞLEM', 'ÖDEME', 'TUTAR'],
+            'genel_kantar': ['SIRA', 'Plaka', 'ŞOFÖR', 'CARİ ADI', 'MALZEME', '1. TARTI', '2. TARTI', 'TOPLAM KG',
+                             'ÜCRET'],
+            'genel_pesin': ['Sıra', 'Firma', 'Fatura Türü', 'Fatura Numarası', 'Fatura Tarihi', 'Vade', 'Cari Adı',
+                            'Toplam Miktar', 'İşlem Döviz Türü', 'Tutar', 'Sorumlu'],
+            'genel_satis_ekibi': ['CARİ HESAP ÜNVANI', 'SİPARİŞ NUMARASI', 'SİPARİŞ TUTAR', 'İRSALİYE NUMARASI',
+                                  'FATURA NUMARASI', 'FATURA VE İRSALİYE TUTAR (TL)', 'VADE', 'TOPLAM MİKTAR', 'BİRİM',
+                                  'TOPLAM NET KG']
+        }
+
+        if table_type in data_functions:
+            data = data_functions[table_type]()
+            headers = headers_mapping[table_type]
+
+            if not data:
+                return '<p>Veri bulunamadı.</p>'
+
+            html = '<table class="report-table"><thead><tr>'
+
+            for header in headers:
+                html += f'<th>{header}</th>'
+            html += '</tr></thead><tbody>'
+
+            for row in data:
+                html += '<tr>'
+                for header in headers:
+                    value = row.get(header, '-')
+                    if value is None or value == '':
+                        value = '-'
+                    html += f'<td>{value}</td>'
+                html += '</tr>'
+            html += '</tbody></table>'
+
+            return html
+        else:
+            return '<p>Geçersiz tablo tipi.</p>'
+
+    except Exception as e:
+        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
+
 
 def generate_email_html_content_updated(active_tab, active_sub_tab, report_data, user_message):
-    """E-posta için HTML içeriği oluştur - Yeni YDÇ Metal sekmeleri ile."""
+    """E-posta için HTML içeriği oluştur - Hiyerarşik sekme yapısı ile"""
     try:
-        print("DEBUG: generate_email_html_content fonksiyonu başladı")
-
-        # Tarih ve saat bilgileri
         now = datetime.now()
         date_str = now.strftime("%d.%m.%Y")
         time_str = now.strftime("%H:%M")
 
-        # Session bilgisini güvenli şekilde al
         sender_name = "Sistem"
         try:
             if 'fullname' in session and session['fullname']:
@@ -12785,7 +14009,6 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
         except:
             sender_name = "Sistem"
 
-        # Kullanıcı mesajı bölümü
         user_message_section = ""
         if user_message and user_message.strip():
             user_message_section = f"""
@@ -12795,67 +14018,213 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
             </div>
             """
 
-        # Güncel rapor verisini oluştur
-        current_report_html = generate_current_report_html(report_data, active_tab, active_sub_tab)
 
-        # Aktif sekmeyi belirle (varsayılan: Ydç Metal)
-        default_main_tab = 'ydc'
+        main_tab = ""
         if active_tab:
             if 'Star' in active_tab:
-                default_main_tab = 'star'
+                main_tab = "star"
             elif 'Yağcılar Metal' in active_tab:
-                default_main_tab = 'yagcilar'
+                main_tab = "yagcilar"
             elif 'Genel' in active_tab:
-                default_main_tab = 'genel'
+                main_tab = "genel"
+            elif 'Ydç Metal' in active_tab:
+                main_tab = "ydc"
 
-        # Tablo HTML'lerini önceden oluştur
-        print("DEBUG: Tablo HTML'leri oluşturuluyor...")
+        default_sub_tabs = {
+            'ydc': 'sevkiyat',
+            'star': 'uretim',
+            'yagcilar': 'satis',
+            'genel': 'kantar'
+        }
 
-        # YDC tabloları - Güncellenmiş
-        ydc_gunluk_table = generate_ydc_table_from_db('ydc_gunluk') if 'ydc_gunluk' in locals() else generate_sample_table('ydc_gunluk', date_str)
-        ydc_sevkiyat_table = generate_ydc_table_from_db('ydc_sevkiyat')
-        ydc_satis_table = generate_ydc_table_from_db('ydc_satis')
-        ydc_uretim_table = generate_ydc_table_from_db('ydc_uretim') if 'ydc_uretim' in locals() else generate_sample_table('ydc_uretim', date_str)
-        ydc_petrol_table = generate_ydc_table_from_db('ydc_petrol')
-        ydc_lazer_planlama_table = generate_ydc_table_from_db('ydc_lazer_planlama')
-        ydc_kaynakhane_table = generate_ydc_table_from_db('ydc_kaynakhane')
-        ydc_kalite_table = generate_ydc_table_from_db('ydc_kalite')
-        ydc_isg_table = generate_ydc_table_from_db('ydc_isg')
-        ydc_insankaynaklari_table = generate_ydc_table_from_db('ydc_insankaynaklari')
-        ydc_ihracat_table = generate_ydc_table_from_db('ydc_ihracat')
-        ydc_lazer_gunduz_table = generate_ydc_table_from_db('ydc_lazer_gunduz')
-        ydc_lazer_gece_table = generate_ydc_table_from_db('ydc_lazer_gece')
-        ydc_depo_table = generate_ydc_table_from_db('ydc_depo')
+        sub_tab = ""
+        if main_tab:
+            sub_tab = default_sub_tabs.get(main_tab, '')
+        if active_sub_tab and main_tab:
+            if 'Sevkiyat' in active_sub_tab:
+                sub_tab = 'sevkiyat'
+            elif 'Satış' in active_sub_tab or 'Satis' in active_sub_tab:
+                sub_tab = 'satis'
+            elif 'Petrol' in active_sub_tab:
+                sub_tab = 'petrol'
+            elif 'Lazer Planlama' in active_sub_tab:
+                sub_tab = 'lazer-planlama'
+            elif 'Kaynakhane' in active_sub_tab:
+                sub_tab = 'kaynakhane'
+            elif 'Kalite' in active_sub_tab:
+                sub_tab = 'kalite'
+            elif 'İSG' in active_sub_tab or 'ISG' in active_sub_tab:
+                sub_tab = 'isg'
+            elif 'İnsan Kaynakları' in active_sub_tab or 'Insan Kaynaklari' in active_sub_tab:
+                sub_tab = 'ik'
+            elif 'İhracat' in active_sub_tab or 'Ihracat' in active_sub_tab:
+                sub_tab = 'ihracat'
+            elif 'Lazer Gündüz' in active_sub_tab:
+                sub_tab = 'lazer-gunduz'
+            elif 'Lazer Gece' in active_sub_tab:
+                sub_tab = 'lazer-gece'
+            elif 'Depo' in active_sub_tab:
+                sub_tab = 'depo'
+            elif 'Üretim' in active_sub_tab or 'Uretim' in active_sub_tab:
+                sub_tab = 'uretim'
+            elif 'Satın Alma' in active_sub_tab:
+                sub_tab = 'satinalma'
+            elif 'Proje' in active_sub_tab:
+                sub_tab = 'proje'
+            elif 'Kantar' in active_sub_tab:
+                sub_tab = 'kantar'
+            elif 'Lastik' in active_sub_tab:
+                sub_tab = 'lastik'
+            elif 'Peşin' in active_sub_tab or 'Pesin' in active_sub_tab:
+                sub_tab = 'pesin'
+            elif 'Satış Ekibi' in active_sub_tab:
+                sub_tab = 'satis-ekibi'
 
-        # Star tabloları - Veritabanından çek
-        star_uretim_table = generate_star_table_from_db('star_uretim')
-        star_satinalma_table = generate_star_table_from_db('star_satinalma')
-        star_proje_table = generate_star_table_from_db('star_proje')
-        star_kalite_table = generate_star_table_from_db('star_kalite')
-        star_ik_table = generate_star_table_from_db('star_insankaynaklari')
-        star_ihracat_table = generate_star_table_from_db('star_ihracat')
-        star_depo_table = generate_star_table_from_db('star_depo')
+        def load_all_data():
+            all_data = {}
 
-        # Yağcılar tabloları
-        yagcilar_gunluk_table = generate_sample_table('yagcilar_gunluk', date_str)
-        yagcilar_satis_table = generate_sample_table('yagcilar_satis', date_str)
+            ydc_data_map = {
+                'sevkiyat': 'ydc_sevkiyat',
+                'satis': 'ydc_satis',
+                'petrol': 'ydc_petrol',
+                'lazer-planlama': 'ydc_lazer_planlama',
+                'kaynakhane': 'ydc_kaynakhane',
+                'kalite': 'ydc_kalite',
+                'isg': 'ydc_isg',
+                'ik': 'ydc_insankaynaklari',
+                'ihracat': 'ydc_ihracat',
+                'lazer-gunduz': 'ydc_lazer_gunduz',
+                'lazer-gece': 'ydc_lazer_gece',
+                'depo': 'ydc_depo'
+            }
 
-        # Genel tabloları
-        genel_mesai_table = generate_sample_table('genel_mesai', date_str)
-        genel_isguc_table = generate_sample_table('genel_isguc', date_str)
-        genel_kantar_table = generate_sample_table('genel_kantar', date_str)
-        genel_lastik_table = generate_sample_table('genel_lastik', date_str)
-        genel_stok_table = generate_sample_table('genel_stok', date_str)
-        genel_pesin_table = generate_sample_table('genel_pesin', date_str)
-        genel_satis_ekibi_table = generate_sample_table('genel_satis_ekibi', date_str)
+            for sub_key, db_key in ydc_data_map.items():
+                try:
+                    data = generate_ydc_table_from_db(db_key)
+                    all_data[f'ydc-{sub_key}'] = data
+                except Exception as e:
+                    all_data[f'ydc-{sub_key}'] = f'<p class="text-center text-danger">Veri yüklenemedi: {str(e)}</p>'
 
-        print("DEBUG: Tablo HTML'leri oluşturuldu")
+            star_data_map = {
+                'uretim': 'star_uretim',
+                'satinalma': 'star_satinalma',
+                'proje': 'star_proje',
+                'kalite': 'star_kalite',
+                'ik': 'star_insankaynaklari',
+                'ihracat': 'star_ihracat',
+                'depo': 'star_depo'
+            }
 
-        # Checked durumlarını belirle
-        ydc_checked = "checked" if default_main_tab == 'ydc' else ""
-        star_checked = "checked" if default_main_tab == 'star' else ""
-        yagcilar_checked = "checked" if default_main_tab == 'yagcilar' else ""
-        genel_checked = "checked" if default_main_tab == 'genel' else ""
+            for sub_key, db_key in star_data_map.items():
+                try:
+                    data = generate_star_table_from_db(db_key)
+                    all_data[f'star-{sub_key}'] = data
+                except Exception as e:
+                    all_data[f'star-{sub_key}'] = f'<p class="text-center text-danger">Veri yüklenemedi: {str(e)}</p>'
+
+            yagcilar_data_map = {
+                'satis': 'yagcilar_satis'
+            }
+
+            for sub_key, db_key in yagcilar_data_map.items():
+                try:
+                    data = generate_yagcilar_table_from_db(db_key)
+                    all_data[f'yagcilar-{sub_key}'] = data
+                except Exception as e:
+                    all_data[
+                        f'yagcilar-{sub_key}'] = f'<p class="text-center text-danger">Veri yüklenemedi: {str(e)}</p>'
+
+            genel_data_map = {
+                'kantar': 'genel_kantar',
+                'lastik': 'genel_lastik',
+                'pesin': 'genel_pesin',
+                'satis-ekibi': 'genel_satis_ekibi'
+            }
+
+            for sub_key, db_key in genel_data_map.items():
+                try:
+                    data = generate_genel_table_from_db(db_key)
+                    all_data[f'genel-{sub_key}'] = data
+                except Exception as e:
+                    all_data[f'genel-{sub_key}'] = f'<p class="text-center text-danger">Veri yüklenemedi: {str(e)}</p>'
+
+            return all_data
+
+        all_loaded_data = load_all_data()
+
+        sub_tab_info = {
+            'ydc': {
+                'sevkiyat': {'title': '🚚 Sevkiyat'},
+                'satis': {'title': '📊 Satış'},
+                'petrol': {'title': '⛽ Petrol'},
+                'lazer-planlama': {'title': '📐 Lazer Planlama'},
+                'kaynakhane': {'title': '🔥 Kaynakhane'},
+                'kalite': {'title': '✅ Kalite'},
+                'isg': {'title': '🦺 İSG'},
+                'ik': {'title': '👥 İnsan Kaynakları'},
+                'ihracat': {'title': '📦 İhracat'},
+                'lazer-gunduz': {'title': '☀️ Lazer Gündüz'},
+                'lazer-gece': {'title': '🌙 Lazer Gece'},
+                'depo': {'title': '🏪 Depo'}
+            },
+            'star': {
+                'uretim': {'title': '🏭 Üretim'},
+                'satinalma': {'title': '🛒 Satın Alma'},
+                'proje': {'title': '📋 Proje Ekibi'},
+                'kalite': {'title': '✅ Kalite'},
+                'ik': {'title': '👥 İnsan Kaynakları'},
+                'ihracat': {'title': '📦 İhracat'},
+                'depo': {'title': '🏪 Depo'}
+            },
+            'yagcilar': {
+                'satis': {'title': '📊 Satış'}
+            },
+            'genel': {
+                'kantar': {'title': '⚖️ Kantar'},
+                'lastik': {'title': '🛞 Lastik'},
+                'pesin': {'title': '💵 Peşin Kesilen Fatura'},
+                'satis-ekibi': {'title': '👨‍💼 Satış Ekibi Kesilen Faturalar'}
+            }
+        }
+
+        def generate_sub_tab_buttons_for_group(tab_group, current_sub, all_data, sub_info):
+            buttons_html = ""
+            for sub_key, sub_details in sub_info[tab_group].items():
+                is_active_main_tab = (tab_group == main_tab and main_tab != "")
+                is_active_sub_tab = (sub_key == current_sub)
+                checked = 'checked="checked"' if (is_active_main_tab and is_active_sub_tab) else ""
+
+                clean_title = sub_details['title'].replace('🚚 ', '').replace('📊 ', '').replace('⛽ ', '').replace('📐 ',
+                                                                                                                 '').replace(
+                    '🔥 ', '').replace('✅ ', '').replace('🦺 ', '').replace('👥 ', '').replace('📦 ', '').replace('☀️ ',
+                                                                                                              '').replace(
+                    '🌙 ', '').replace('🏪 ', '').replace('🏭 ', '').replace('🛒 ', '').replace('📋 ', '').replace('🕘 ',
+                                                                                                              '').replace(
+                    '👷 ', '').replace('⚖️ ', '').replace('🛞 ', '').replace('💵 ', '').replace('👨‍💼 ', '')
+
+                data_key = f'{tab_group}-{sub_key}'
+                table_data = all_data.get(data_key, '<p class="text-center text-muted">Veri bulunamadı</p>')
+
+                buttons_html += f"""
+                <input type="checkbox" id="{tab_group}-{sub_key}" {checked}>
+                <label for="{tab_group}-{sub_key}">{clean_title}</label>
+                <div class="sub-content">
+                    <div class="content-area">
+                        <h4>{sub_details['title']}</h4>
+                        {table_data}
+                    </div>
+                </div>
+                """
+            return buttons_html
+
+        ydc_sub_tabs = generate_sub_tab_buttons_for_group('ydc', sub_tab if main_tab == 'ydc' else '', all_loaded_data,
+                                                          sub_tab_info)
+        star_sub_tabs = generate_sub_tab_buttons_for_group('star', sub_tab if main_tab == 'star' else '',
+                                                           all_loaded_data, sub_tab_info)
+        yagcilar_sub_tabs = generate_sub_tab_buttons_for_group('yagcilar', sub_tab if main_tab == 'yagcilar' else '',
+                                                               all_loaded_data, sub_tab_info)
+        genel_sub_tabs = generate_sub_tab_buttons_for_group('genel', sub_tab if main_tab == 'genel' else '',
+                                                            all_loaded_data, sub_tab_info)
 
         html_template = f"""
         <!DOCTYPE html>
@@ -12863,7 +14232,7 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Günlük Raporlar</title>
+            <title>Günlük Raporlar - Yağcılar Holding</title>
             <style>
                 body {{
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12895,7 +14264,6 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                     border-radius: 5px;
                     margin-bottom: 20px;
                 }}
-
                 .current-report {{
                     background-color: #e3f2fd;
                     border: 2px solid #2196f3;
@@ -12908,241 +14276,96 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                     margin-top: 0;
                 }}
 
-                /* CSS-only Tab System - Optimized for Email */
-                .tab-container {{
-                    margin-bottom: 30px;
-                }}
-
-                /* Ana sekme input'ları gizli */
-                .main-tab-radio {{
-                    display: none;
-                }}
-
-                /* Ana sekme butonları */
                 .main-tabs {{
                     border-bottom: 2px solid #282965;
                     margin-bottom: 20px;
-                    text-align: left;
                 }}
 
-                .main-tab-label {{
+                .main-tabs input[type="checkbox"] {{
+                    display: none;
+                }}
+
+                .main-tabs input[type="checkbox"] + label {{
                     display: inline-block;
+                    padding: 12px 20px;
+                    margin-right: 10px;
+                    background-color: #f8f9fa;
+                    border: 1px solid #ddd;
+                    border-bottom: 3px solid transparent;
+                    cursor: pointer;
                     color: #282965;
                     font-weight: 600;
-                    border: 1px solid #dee2e6;
-                    border-bottom: 3px solid transparent;
-                    padding: 12px 20px;
-                    margin-right: 5px;
-                    margin-bottom: -2px;
-                    background: #f8f9fa;
-                    cursor: pointer;
-                    text-decoration: none;
-                    border-radius: 5px 5px 0 0;
-                    transition: all 0.3s ease;
+                    border-radius: 8px 8px 0 0;
                 }}
 
-                .main-tab-label:hover {{
+                .main-tabs input[type="checkbox"] + label:hover {{
                     background-color: #e9ecef;
-                    border-bottom-color: #1a1a4a;
+                    border-bottom-color: #6c757d;
                 }}
 
-                .main-tab-radio:checked + .main-tab-label {{
-                    background-color: #fff;
-                    border-bottom-color: #282965;
+                .main-tabs input[type="checkbox"]:checked + label {{
+                    background-color: transparent;
                     color: #282965;
+                    border-bottom-color: #282965;
                     font-weight: bold;
                 }}
 
-                /* Ana sekme içerikleri */
                 .main-tab-content {{
                     display: none;
+                    background-color: #fff;
+                    border-radius: 0 0 8px 8px;
+                    padding: 20px;
+                    margin-top: 20px;
+                }}
+
+                .main-tabs input[type="checkbox"]:checked + label + .main-tab-content {{
+                    display: block;
+                }}
+
+                .sub-tabs {{
                     background-color: #f8f9fa;
                     border-radius: 8px;
-                    padding: 20px;
+                    padding: 10px;
                     margin-bottom: 20px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
                 }}
 
-                /* Ana sekme gösterme - Her sekme için ayrı kural */
-                #main-tab-ydc:checked ~ .tab-contents #content-ydc {{
-                    display: block !important;
-                }}
-
-                #main-tab-star:checked ~ .tab-contents #content-star {{
-                    display: block !important;
-                }}
-
-                #main-tab-yagcilar:checked ~ .tab-contents #content-yagcilar {{
-                    display: block !important;
-                }}
-
-                #main-tab-genel:checked ~ .tab-contents #content-genel {{
-                    display: block !important;
-                }}
-
-                /* Alt sekmeler */
-                .sub-tab-radio {{
+                .sub-tabs input[type="checkbox"] {{
                     display: none;
                 }}
 
-                .sub-tab-container {{
-                    margin-bottom: 15px;
-                }}
-
-                .sub-tab-label {{
+                .sub-tabs input[type="checkbox"] + label {{
                     display: inline-block;
-                    color: #6c757d;
-                    font-weight: 500;
+                    padding: 8px 15px;
+                    background-color: #fff;
                     border: 1px solid #dee2e6;
                     border-radius: 5px;
-                    padding: 8px 15px;
-                    margin-right: 10px;
-                    margin-bottom: 5px;
-                    background: white;
                     cursor: pointer;
-                    text-decoration: none;
+                    color: #6c757d;
+                    font-weight: 500;
                     font-size: 14px;
-                    transition: all 0.3s ease;
                 }}
 
-                .sub-tab-label:hover {{
-                    border-color: #282965;
-                    color: #282965;
+                .sub-tabs input[type="checkbox"] + label:hover {{
+                    background-color: #f8f9fa;
+                    border-color: #6c757d;
                 }}
 
-                .sub-tab-radio:checked + .sub-tab-label {{
-                    color: #fff;
+                .sub-tabs input[type="checkbox"]:checked + label {{
                     background-color: #282965;
+                    color: white;
                     border-color: #282965;
                 }}
 
-                /* Alt sekme içerikleri */
-                .sub-tab-content {{
+                .sub-content {{
                     display: none;
-                    margin-top: 15px;
+                    margin-top: 20px;
                 }}
 
-                /* YDC Alt Sekmeler - Güncellenmiş */
-                #ydc-sub-gunluk:checked ~ .ydc-sub-contents #ydc-content-gunluk {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-sevkiyat:checked ~ .ydc-sub-contents #ydc-content-sevkiyat {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-satis:checked ~ .ydc-sub-contents #ydc-content-satis {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-uretim:checked ~ .ydc-sub-contents #ydc-content-uretim {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-petrol:checked ~ .ydc-sub-contents #ydc-content-petrol {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-lazer-planlama:checked ~ .ydc-sub-contents #ydc-content-lazer-planlama {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-kaynakhane:checked ~ .ydc-sub-contents #ydc-content-kaynakhane {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-kalite:checked ~ .ydc-sub-contents #ydc-content-kalite {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-isg:checked ~ .ydc-sub-contents #ydc-content-isg {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-insankaynaklari:checked ~ .ydc-sub-contents #ydc-content-insankaynaklari {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-ihracat:checked ~ .ydc-sub-contents #ydc-content-ihracat {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-lazer-gunduz:checked ~ .ydc-sub-contents #ydc-content-lazer-gunduz {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-lazer-gece:checked ~ .ydc-sub-contents #ydc-content-lazer-gece {{
-                    display: block !important;
-                }}
-
-                #ydc-sub-depo:checked ~ .ydc-sub-contents #ydc-content-depo {{
-                    display: block !important;
-                }}
-
-                /* Star Alt Sekmeler */
-                #star-sub-uretim:checked ~ .star-sub-contents #star-content-uretim {{
-                    display: block !important;
-                }}
-
-                #star-sub-satinalma:checked ~ .star-sub-contents #star-content-satinalma {{
-                    display: block !important;
-                }}
-
-                #star-sub-proje:checked ~ .star-sub-contents #star-content-proje {{
-                    display: block !important;
-                }}
-
-                #star-sub-kalite:checked ~ .star-sub-contents #star-content-kalite {{
-                    display: block !important;
-                }}
-
-                #star-sub-ik:checked ~ .star-sub-contents #star-content-ik {{
-                    display: block !important;
-                }}
-
-                #star-sub-ihracat:checked ~ .star-sub-contents #star-content-ihracat {{
-                    display: block !important;
-                }}
-
-                #star-sub-depo:checked ~ .star-sub-contents #star-content-depo {{
-                    display: block !important;
-                }}
-
-                /* Yağcılar Alt Sekmeler */
-                #yagcilar-sub-gunluk:checked ~ .yagcilar-sub-contents #yagcilar-content-gunluk {{
-                    display: block !important;
-                }}
-
-                #yagcilar-sub-satis:checked ~ .yagcilar-sub-contents #yagcilar-content-satis {{
-                    display: block !important;
-                }}
-
-                /* Genel Alt Sekmeler */
-                #genel-sub-mesai:checked ~ .genel-sub-contents #genel-content-mesai {{
-                    display: block !important;
-                }}
-
-                #genel-sub-isguc:checked ~ .genel-sub-contents #genel-content-isguc {{
-                    display: block !important;
-                }}
-
-                #genel-sub-kantar:checked ~ .genel-sub-contents #genel-content-kantar {{
-                    display: block !important;
-                }}
-
-                #genel-sub-lastik:checked ~ .genel-sub-contents #genel-content-lastik {{
-                    display: block !important;
-                }}
-
-                #genel-sub-stok:checked ~ .genel-sub-contents #genel-content-stok {{
-                    display: block !important;
-                }}
-
-                #genel-sub-pesin:checked ~ .genel-sub-contents #genel-content-pesin {{
-                    display: block !important;
-                }}
-
-                #genel-sub-satis-ekibi:checked ~ .genel-sub-contents #genel-content-satis-ekibi {{
-                    display: block !important;
+                .sub-tabs input[type="checkbox"]:checked + label + .sub-content {{
+                    display: block;
                 }}
 
                 .content-area {{
@@ -13150,10 +14373,9 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                     border-radius: 8px;
                     padding: 20px;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    min-height: 200px;
+                    border-left: 4px solid #282965;
                 }}
 
-                /* Tablolar */
                 .report-table {{
                     width: 100%;
                     border-collapse: collapse;
@@ -13179,7 +14401,6 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                 .report-table tr:nth-child(even) td {{
                     background-color: #f1f1f1;
                 }}
-
                 .footer {{
                     text-align: center;
                     margin-top: 30px;
@@ -13187,7 +14408,6 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                     color: #6c757d;
                     font-size: 14px;
                 }}
-
                 .badge {{
                     padding: 4px 8px;
                     border-radius: 4px;
@@ -13206,23 +14426,30 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
                     background-color: #dc3545;
                     color: white;
                 }}
-
-                .section-divider {{
-                    border-top: 3px solid #282965;
-                    margin: 40px 0 20px 0;
-                    padding-top: 20px;
+                .active-tab-info {{
+                    background-color: #d1ecf1;
+                    color: #0c5460;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    border: 1px solid #bee5eb;
                 }}
 
-                @media screen and (max-width: 600px) {{
-                    .main-tab-label, .sub-tab-label {{
-                        display: block;
-                        margin-bottom: 5px;
-                        text-align: center;
-                    }}
-                    .report-table th, .report-table td {{
-                        padding: 4px 2px;
-                        font-size: 10px;
-                    }}
+                .default-message {{
+                    text-align: center;
+                    color: #6c757d;
+                    font-style: italic;
+                    margin-top: 20px;
+                    padding: 30px;
+                    background-color: #f8f9fa;
+                    border-radius: 8px;
+                    border: 2px dashed #dee2e6;
+                    display: {'block' if not main_tab else 'none'};
+                }}
+
+                .main-tabs input[type="checkbox"]:checked ~ .default-message {{
+                    display: none;
                 }}
             </style>
         </head>
@@ -13235,180 +14462,47 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
             <div class="content">
                 {user_message_section}
 
-                {current_report_html}
-
-                <div class="section-divider">
-                    <h2>📋 Tüm Raporlar (Sekmeleri tıklayarak geçiş yapabilirsiniz)</h2>
-                </div>
-
                 <div class="tab-container">
-                    <!-- Ana Sekme Radio Butonları -->
-                    <input type="radio" id="main-tab-ydc" name="main-tab" class="main-tab-radio" {ydc_checked}>
-                    <input type="radio" id="main-tab-star" name="main-tab" class="main-tab-radio" {star_checked}>
-                    <input type="radio" id="main-tab-yagcilar" name="main-tab" class="main-tab-radio" {yagcilar_checked}>
-                    <input type="radio" id="main-tab-genel" name="main-tab" class="main-tab-radio" {genel_checked}>
-
-                    <!-- Ana Sekme Başlıkları -->
                     <div class="main-tabs">
-                        <label for="main-tab-ydc" class="main-tab-label">🏭 Ydç Metal</label>
-                        <label for="main-tab-star" class="main-tab-label">⭐ Star Yağcılar</label>
-                        <label for="main-tab-yagcilar" class="main-tab-label">⚙️ Yağcılar Metal Endüstri</label>
-                        <label for="main-tab-genel" class="main-tab-label">🏢 Genel</label>
-                    </div>
-
-                    <!-- Sekme İçerikleri -->
-                    <div class="tab-contents">
-                        <!-- YDÇ METAL İÇERİĞİ - GENİŞLETİLMİŞ -->
-                        <div class="main-tab-content" id="content-ydc">
-                            <!-- YDC Alt Sekme Radio Butonları - Güncellenmiş -->
-                            <input type="radio" id="ydc-sub-gunluk" name="ydc-sub-tab" class="sub-tab-radio" checked>
-                            <input type="radio" id="ydc-sub-sevkiyat" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-satis" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-uretim" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-petrol" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-lazer-planlama" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-kaynakhane" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-kalite" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-isg" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-insankaynaklari" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-ihracat" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-lazer-gunduz" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-lazer-gece" name="ydc-sub-tab" class="sub-tab-radio">
-                            <input type="radio" id="ydc-sub-depo" name="ydc-sub-tab" class="sub-tab-radio">
-
-                            <!-- YDC Alt Sekme Başlıkları - Güncellenmiş -->
-                            <div class="sub-tab-container">
-                                <label for="ydc-sub-gunluk" class="sub-tab-label">📋 Günlük</label>
-                                <label for="ydc-sub-sevkiyat" class="sub-tab-label">🚚 Sevkiyat</label>
-                                <label for="ydc-sub-satis" class="sub-tab-label">📊 Satış</label>
-                                <label for="ydc-sub-uretim" class="sub-tab-label">🏭 Üretim</label>
-                                <label for="ydc-sub-petrol" class="sub-tab-label">⛽ Petrol</label>
-                                <label for="ydc-sub-lazer-planlama" class="sub-tab-label">📐 Lazer Plan</label>
-                                <label for="ydc-sub-kaynakhane" class="sub-tab-label">🔥 Kaynakhane</label>
-                                <label for="ydc-sub-kalite" class="sub-tab-label">✅ Kalite</label>
-                                <label for="ydc-sub-isg" class="sub-tab-label">🦺 İSG</label>
-                                <label for="ydc-sub-insankaynaklari" class="sub-tab-label">👥 İK</label>
-                                <label for="ydc-sub-ihracat" class="sub-tab-label">📦 İhracat</label>
-                                <label for="ydc-sub-lazer-gunduz" class="sub-tab-label">☀️ Lazer Gündüz</label>
-                                <label for="ydc-sub-lazer-gece" class="sub-tab-label">🌙 Lazer Gece</label>
-                                <label for="ydc-sub-depo" class="sub-tab-label">🏪 Depo</label>
-                            </div>
-
-                            <!-- YDC Alt Sekme İçerikleri -->
-                            <div class="ydc-sub-contents">
-                                <div class="sub-tab-content" id="ydc-content-gunluk">
-                                    <div class="content-area">
-                                        <h4>📋 Ydç Metal - Günlük Yapılanlar</h4>
-                                        {ydc_gunluk_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-sevkiyat">
-                                    <div class="content-area">
-                                        <h4>🚚 Ydç Metal - Sevkiyat</h4>
-                                        {ydc_sevkiyat_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-satis">
-                                    <div class="content-area">
-                                        <h4>📊 Ydç Metal - Satış</h4>
-                                        {ydc_satis_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-uretim">
-                                    <div class="content-area">
-                                        <h4>🏭 Ydç Metal - Üretim</h4>
-                                        {ydc_uretim_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-petrol">
-                                    <div class="content-area">
-                                        <h4>⛽ Ydç Metal - Petrol</h4>
-                                        {ydc_petrol_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-lazer-planlama">
-                                    <div class="content-area">
-                                        <h4>📐 Ydç Metal - Lazer Planlama</h4>
-                                        {ydc_lazer_planlama_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-kaynakhane">
-                                    <div class="content-area">
-                                        <h4>🔥 Ydç Metal - Kaynakhane</h4>
-                                        {ydc_kaynakhane_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-kalite">
-                                    <div class="content-area">
-                                        <h4>✅ Ydç Metal - Kalite</h4>
-                                        {ydc_kalite_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-isg">
-                                    <div class="content-area">
-                                        <h4>🦺 Ydç Metal - İSG</h4>
-                                        {ydc_isg_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-insankaynaklari">
-                                    <div class="content-area">
-                                        <h4>👥 Ydç Metal - İnsan Kaynakları</h4>
-                                        {ydc_insankaynaklari_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-ihracat">
-                                    <div class="content-area">
-                                        <h4>📦 Ydç Metal - İhracat</h4>
-                                        {ydc_ihracat_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-lazer-gunduz">
-                                    <div class="content-area">
-                                        <h4>☀️ Ydç Metal - Lazer Gündüz</h4>
-                                        {ydc_lazer_gunduz_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-lazer-gece">
-                                    <div class="content-area">
-                                        <h4>🌙 Ydç Metal - Lazer Gece</h4>
-                                        {ydc_lazer_gece_table}
-                                    </div>
-                                </div>
-
-                                <div class="sub-tab-content" id="ydc-content-depo">
-                                    <div class="content-area">
-                                        <h4>🏪 Ydç Metal - Depo</h4>
-                                        {ydc_depo_table}
-                                    </div>
-                                </div>
+                        <input type="checkbox" id="main-ydc" {('checked="checked"' if main_tab == 'ydc' and main_tab != '' else '')}>
+                        <label for="main-ydc">🏭 Ydç Metal</label>
+                        <div class="main-tab-content">
+                            <div class="sub-tabs">
+                                {ydc_sub_tabs}
                             </div>
                         </div>
 
-                        <!-- STAR YAĞCILAR İÇERİĞİ (Mevcut) -->
-                        <div class="main-tab-content" id="content-star">
-                            <!-- Mevcut Star Yağcılar içeriği buraya gelir -->
+                        <input type="checkbox" id="main-star" {('checked="checked"' if main_tab == 'star' and main_tab != '' else '')}>
+                        <label for="main-star">⭐ Star Yağcılar</label>
+                        <div class="main-tab-content">
+                            <div class="sub-tabs">
+                                {star_sub_tabs}
+                            </div>
                         </div>
 
-                        <!-- YAĞCILAR METAL ENDÜSTRİ İÇERİĞİ (Mevcut) -->
-                        <div class="main-tab-content" id="content-yagcilar">
-                            <!-- Mevcut Yağcılar Metal Endüstri içeriği buraya gelir -->
+                        <input type="checkbox" id="main-yagcilar" {('checked="checked"' if main_tab == 'yagcilar' and main_tab != '' else '')}>
+                        <label for="main-yagcilar">⚙️ Yağcılar Metal Endüstri</label>
+                        <div class="main-tab-content">
+                            <div class="sub-tabs">
+                                {yagcilar_sub_tabs}
+                            </div>
                         </div>
 
-                        <!-- GENEL İÇERİK (Mevcut) -->
-                        <div class="main-tab-content" id="content-genel">
-                            <!-- Mevcut Genel içeriği buraya gelir -->
+                        <input type="checkbox" id="main-genel" {('checked="checked"' if main_tab == 'genel' and main_tab != '' else '')}>
+                        <label for="main-genel">🏢 Genel</label>
+                        <div class="main-tab-content">
+                            <div class="sub-tabs">
+                                {genel_sub_tabs}
+                            </div>
+                        </div>
+
+                        <div class="default-message">
+                            <h4 style="color: #6c757d; margin-bottom: 10px;">📊 Rapor Seçimi</h4>
+                            <p>Yukarıdaki ana sekmelerden birini seçerek başlayın. Ardından alt sekmeleri görüntüleyebilirsiniz.</p>
+                            <p><strong>🔄 Toggle:</strong> Aynı sekmeye tekrar tıklayarak kapatabilirsiniz (CSS-only).</p>
+                            <div style="background-color: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; margin-top: 15px;">
+                                <small><strong>🎯 Gönderilen Rapor:</strong> "{active_tab if active_tab else 'Genel'} → {active_sub_tab if active_sub_tab else 'Tümü'}" başlığında gönderildi</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -13416,1325 +14510,16 @@ def generate_email_html_content_updated(active_tab, active_sub_tab, report_data,
 
             <div class="footer">
                 <p>Bu e-posta Yağcılar Holding Günlük Raporlar sistemi tarafından otomatik olarak oluşturulmuştur.</p>
-                <p>📧 Gönderen: {sender_name} | 📅 Tarih: {date_str} {time_str}</p>
+                <p>📅 Tarih: {date_str} {time_str}</p>
             </div>
         </body>
         </html>
         """
 
-        print("DEBUG: HTML template oluşturuldu")
         return html_template
 
     except Exception as e:
-        print(f"DEBUG: generate_email_html_content hatası: {str(e)}")
-        import traceback
-        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
         raise
-
-def generate_current_report_html(report_data, active_tab, active_sub_tab):
-    """Mevcut aktif rapor için HTML oluştur."""
-    try:
-        if not report_data or 'rows' not in report_data or not report_data['rows']:
-            return ""
-
-        headers = report_data.get('headers', [])
-        rows = report_data['rows']
-
-        html = f"""
-        <div class="current-report">
-            <h3>📊 Şu An Görüntülenen Rapor: {active_tab} {('→ ' + active_sub_tab) if active_sub_tab else ''}</h3>
-            <table class="report-table">
-                <thead>
-                    <tr>
-        """
-
-        for header in headers:
-            html += f'<th>{header}</th>'
-
-        html += """
-                    </tr>
-                </thead>
-                <tbody>
-        """
-
-        for row in rows:
-            html += '<tr>'
-            for header in headers:
-                value = row.get(header, '-')
-                html += f'<td>{value}</td>'
-            html += '</tr>'
-
-        html += """
-                </tbody>
-            </table>
-        </div>
-        """
-
-        return html
-
-    except Exception as e:
-        print(f"DEBUG: generate_current_report_html hatası: {str(e)}")
-        return ""
-
-
-# Star Yağcılar veri endpoint'leri
-@app.route('/get-star-data/<data_type>')
-@login_required
-def get_star_data(data_type):
-    """Star Yağcılar verilerini getir"""
-    try:
-        print(f"DEBUG: get_star_data çağrıldı - data_type: {data_type}")
-
-        data_functions = {
-            'star_uretim': get_star_uretim_data,
-            'star_satinalma': get_star_satinalma_data,
-            'star_proje': get_star_proje_data,
-            'star_kalite': get_star_kalite_data,
-            'star_insankaynaklari': get_star_insankaynaklari_data,
-            'star_ihracat': get_star_ihracat_data,
-            'star_depo': get_star_depo_data
-        }
-
-        if data_type in data_functions:
-            print(f"DEBUG: {data_type} fonksiyonu çağrılıyor...")
-            data = data_functions[data_type]()
-            print(f"DEBUG: Fonksiyon döndü - veri sayısı: {len(data) if data else 0}")
-
-            if data:
-                print(f"DEBUG: İlk veri örneği: {data[0] if len(data) > 0 else 'Veri yok'}")
-
-            return jsonify({
-                'success': True,
-                'data': data,
-                'count': len(data) if data else 0
-            })
-        else:
-            print(f"DEBUG: Geçersiz veri tipi: {data_type}")
-            return jsonify({
-                'success': False,
-                'error': f'Geçersiz veri tipi: {data_type}'
-            }), 400
-
-    except Exception as e:
-        print(f"DEBUG: Star veri endpoint hatası: {str(e)}")
-        import traceback
-        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
-
-        return jsonify({
-            'success': False,
-            'error': f'Sunucu hatası: {str(e)}'
-        }), 500
-
-
-# Star Yağcılar rapor fonksiyonları - Güncellenmiş SQL sorgularıyla
-
-def get_star_uretim_data():
-    """Star Yağcılar Üretim verilerini getir - Üretim başlığı"""
-    try:
-        conn = get_db_connection3()
-
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-              ,[SORUMLU]
-              ,[MİKTAR ( KG )]
-              ,[MİKTAR ( ADET )]
-              ,[YARINKİ HEDEF]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_URETIM]
-        ORDER BY [SIRA]
-        """
-
-        df = pd.read_sql(query, conn)
-
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'SORUMLU', 'MİKTAR (KG)', 'MİKTAR (ADET)', 'YARINKİ HEDEF']
-
-        result = df.to_dict('records')
-
-        if len(result) > 0:
-            print(f"DEBUG: İlk kayıt: {result[0]}")
-
-        return result
-
-    except Exception as e:
-        import traceback
-        return []
-
-
-def get_star_satinalma_data():
-    """Star Yağcılar Satın Alma verilerini getir - Satın Alma başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_SATINALMA]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star Satın Alma veri hatası: {str(e)}")
-        return []
-
-
-def get_star_proje_data():
-    """Star Yağcılar Proje Ekibi verilerini getir - Proje Ekibi başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[DETAY]
-              ,[YARINKİ HEDEF]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_PROJE]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'DETAY', 'YARINKİ HEDEF']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star Proje veri hatası: {str(e)}")
-        return []
-
-
-def get_star_kalite_data():
-    """Star Yağcılar Kalite verilerini getir - Kalite başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_KALITE]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star Kalite veri hatası: {str(e)}")
-        return []
-
-
-def get_star_insankaynaklari_data():
-    """Star Yağcılar İnsan Kaynakları verilerini getir - İnsan Kaynakları başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-              ,[LOKASYON]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_INSANKAYNAKLARI]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star İnsan Kaynakları veri hatası: {str(e)}")
-        return []
-
-
-def get_star_ihracat_data():
-    """Star Yağcılar İhracat verilerini getir - İhracat başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_IHRACAT]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star İhracat veri hatası: {str(e)}")
-        return []
-
-
-def get_star_depo_data():
-    """Star Yağcılar Depo verilerini getir - Depo başlığı"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        /****** Script for SelectTopNRows command from SSMS  ******/
-SELECT TOP (1000) [SIRA]
-      ,[ AD SOYAD]
-      ,[CARİ/PROJE]
-      ,[KONU]
-      ,[DETAY]
-  FROM [MikroDB_V16_10].[dbo].[_DT_STAR_RAPOR_DEPO]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Star Depo veri hatası: {str(e)}")
-        return []
-
-
-@app.route('/send-daily-report-email', methods=['POST'])
-@login_required
-def send_daily_report_email():
-    """Günlük rapor e-postası gönderme işlevi."""
-    try:
-        print("DEBUG: E-posta gönderme işlemi başladı")
-
-        # Content-Type kontrolü
-        if not request.is_json:
-            print("DEBUG: Request JSON değil")
-            return jsonify({
-                'success': False,
-                'error': 'Content-Type application/json olmalı'
-            }), 400
-
-        data = request.get_json()
-        if not data:
-            print("DEBUG: JSON verisi alınamadı")
-            return jsonify({
-                'success': False,
-                'error': 'Geçersiz JSON verisi'
-            }), 400
-
-        print(f"DEBUG: Gelen veri: {data}")
-
-        recipient = data.get('recipient', 'bayramyagci@yagcilar.com.tr')
-        subject = data.get('subject', f'Günlük Raporlar - {datetime.now().strftime("%d.%m.%Y")}')
-        user_message = data.get('message', '')
-        active_tab = data.get('activeTab', '')
-        active_sub_tab = data.get('activeSubTab', '')
-        report_data = data.get('reportData', {})
-
-        print(f"DEBUG: E-posta bilgileri - Alıcı: {recipient}, Konu: {subject}")
-        print(f"DEBUG: Aktif sekme: {active_tab}, Alt sekme: {active_sub_tab}")
-
-        # E-posta içeriğini oluştur
-        print("DEBUG: HTML içeriği oluşturuluyor")
-        html_content = generate_email_html_content(active_tab, active_sub_tab, report_data, user_message)
-        print("DEBUG: HTML içeriği oluşturuldu")
-
-        # Gmail SMTP ayarları
-        sender_email = "yagcilarholding1@gmail.com"
-        sender_password = "bqnp sius nztz padc"
-
-        # E-posta mesajını oluştur
-        print("DEBUG: E-posta mesajı oluşturuluyor")
-        message = MIMEMultipart("alternative")
-        message["From"] = sender_email
-        message["To"] = recipient
-        message["Subject"] = subject
-        message["Date"] = formatdate(localtime=True)
-
-        # HTML içeriği ekle
-        html_part = MIMEText(html_content, "html", "utf-8")
-        message.attach(html_part)
-
-        # E-postayı gönder
-        print("DEBUG: SMTP bağlantısı kuruluyor")
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            print("DEBUG: E-posta gönderiliyor")
-            server.sendmail(sender_email, recipient, message.as_string())
-            print("DEBUG: E-posta başarıyla gönderildi")
-
-        # Başarılı gönderim logla
-        try:
-            log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL',
-                           f'Günlük rapor e-postası gönderildi: {recipient} - {active_tab}/{active_sub_tab}')
-        except Exception as log_error:
-            print(f"DEBUG: Log yazma hatası: {log_error}")
-
-        return jsonify({
-            'success': True,
-            'message': 'E-posta başarıyla gönderildi'
-        })
-
-    except Exception as e:
-        print(f"DEBUG: Hata oluştu: {str(e)}")
-        import traceback
-        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
-
-        # Hata logla
-        try:
-            log_user_action(session['user_id'], 'SEND_DAILY_REPORT_EMAIL_ERROR',
-                           f'E-posta gönderme hatası: {str(e)}')
-        except Exception as log_error:
-            print(f"DEBUG: Hata log yazma hatası: {log_error}")
-
-        return jsonify({
-            'success': False,
-            'error': f'E-posta gönderilirken hata oluştu: {str(e)}'
-        }), 500
-
-
-# generate_star_table_from_db fonksiyonunu da güncelleyelim
-def generate_star_table_from_db(table_type):
-    """Veritabanından Star Yağcılar verisiyle tablo oluştur - Güncellenmiş sorgularla."""
-    try:
-        # Veri çekme fonksiyonları mapping'i
-        data_functions = {
-            'star_uretim': get_star_uretim_data,
-            'star_satinalma': get_star_satinalma_data,
-            'star_proje': get_star_proje_data,
-            'star_kalite': get_star_kalite_data,
-            'star_insankaynaklari': get_star_insankaynaklari_data,
-            'star_ihracat': get_star_ihracat_data,
-            'star_depo': get_star_depo_data
-        }
-
-        # Tablo başlıkları mapping'i - Güncellenmiş
-        headers_mapping = {
-            'star_uretim': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'SORUMLU', 'MİKTAR (KG)', 'MİKTAR (ADET)', 'YARINKİ HEDEF'],
-            'star_satinalma': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'star_proje': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'DETAY', 'YARINKİ HEDEF'],
-            'star_kalite': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'star_insankaynaklari': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON'],
-            'star_ihracat': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'star_depo': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        }
-
-        if table_type in data_functions:
-            # Veritabanından veri çek
-            data = data_functions[table_type]()
-            headers = headers_mapping[table_type]
-
-            if not data:
-                return '<p>Veri bulunamadı.</p>'
-
-            # Tablo HTML'ini oluştur
-            html = '<table class="report-table"><thead><tr>'
-
-            for header in headers:
-                html += f'<th>{header}</th>'
-            html += '</tr></thead><tbody>'
-
-            for row in data:
-                html += '<tr>'
-                for header in headers:
-                    value = row.get(header, '-')
-                    if value is None or value == '':
-                        value = '-'
-                    html += f'<td>{value}</td>'
-                html += '</tr>'
-            html += '</tbody></table>'
-
-            return html
-        else:
-            return '<p>Geçersiz tablo tipi.</p>'
-
-    except Exception as e:
-        print(f"DEBUG: generate_star_table_from_db hatası: {str(e)}")
-        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
-
-
-# generate_sample_table fonksiyonu güncellemesi - Yeni YDC sekmeleri için örnek veriler
-
-def generate_sample_table_updated(table_type, date_str):
-    """Örnek tablo verisi oluştur - Yeni YDC sekmeleri dahil."""
-    try:
-        sample_data = {
-            # Mevcut veriler...
-            'ydc_gunluk': {
-                'headers': ['Tarih', 'Proje/Cari', 'Konu', 'Detay', 'Miktar', 'Adet'],
-                'rows': [
-                    {
-                        'Tarih': date_str,
-                        'Proje/Cari': 'Örnek Proje 1',
-                        'Konu': 'Üretim Planlaması',
-                        'Detay': 'Günlük üretim hedefleri belirlendi',
-                        'Miktar': '100 kg',
-                        'Adet': '50'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Elif Şahin',
-                        'CARİ/PROJE': 'Proje Beta',
-                        'KONU': 'Program Hazırlama',
-                        'DETAY': 'CNC lazer için program yazıldı'
-                    }
-                ]
-            },
-
-            'ydc_kaynakhane': {
-                'headers': ['SIRA', 'SORUMLU', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (ADET)',
-                            'MİKTAR (KG)', 'SÜRE (SAAT)', 'YARINKİ HEDEF'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'SORUMLU': 'Mustafa Erdoğan',
-                        'OLUŞTURMA SAATİ': '07:45',
-                        'CARİ/PROJE': 'Kaynak Projesi A',
-                        'KONU': 'TIG Kaynağı',
-                        'DETAY': 'Paslanmaz çelik kaynak işlemi',
-                        'MİKTAR (ADET)': '25',
-                        'MİKTAR (KG)': '350',
-                        'SÜRE (SAAT)': '6.5',
-                        'YARINKİ HEDEF': 'İkinci parti başlatılacak'
-                    },
-                    {
-                        'SIRA': '2',
-                        'SORUMLU': 'Kemal Arslan',
-                        'OLUŞTURMA SAATİ': '09:20',
-                        'CARİ/PROJE': 'Kaynak Projesi B',
-                        'KONU': 'MIG Kaynağı',
-                        'DETAY': 'Konstrüksiyon kaynak işlemi',
-                        'MİKTAR (ADET)': '18',
-                        'MİKTAR (KG)': '280',
-                        'SÜRE (SAAT)': '5.0',
-                        'YARINKİ HEDEF': 'Kalite kontrol yapılacak'
-                    }
-                ]
-            },
-
-            'ydc_kalite': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Ayşe Kılıç',
-                        'CARİ/PROJE': 'Kalite Projesi 1',
-                        'KONU': 'Boyut Kontrolü',
-                        'DETAY': 'Üretilen parçaların boyutsal kontrolü yapıldı'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Burak Öztürk',
-                        'CARİ/PROJE': 'Kalite Projesi 2',
-                        'KONU': 'Malzeme Testi',
-                        'DETAY': 'Çelik malzeme sertlik testi yapıldı'
-                    }
-                ]
-            },
-
-            'ydc_isg': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Gül Aydın',
-                        'CARİ/PROJE': 'İSG Eğitimi',
-                        'KONU': 'Güvenlik Eğitimi',
-                        'DETAY': 'Yeni personel güvenlik eğitimi verildi'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Emre Koç',
-                        'CARİ/PROJE': 'Risk Analizi',
-                        'KONU': 'İş Güvenliği',
-                        'DETAY': 'Kaynakhane risk analizi güncellendi'
-                    }
-                ]
-            },
-
-            'ydc_insankaynaklari': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Selin Polat',
-                        'CARİ/PROJE': 'Personel İşleri',
-                        'KONU': 'Yeni İşe Başlama',
-                        'DETAY': 'Yeni çalışan için gerekli evraklar tamamlandı',
-                        'LOKASYON': 'İK Ofisi'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Murat Güven',
-                        'CARİ/PROJE': 'Bordro İşlemleri',
-                        'KONU': 'Maaş Hesaplama',
-                        'DETAY': 'Haziran ayı bordroları hazırlandı',
-                        'LOKASYON': 'Muhasebe'
-                    }
-                ]
-            },
-
-            'ydc_ihracat': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Dilek Yılmaz',
-                        'CARİ/PROJE': 'Almanya İhracatı',
-                        'KONU': 'Evrak Hazırlama',
-                        'DETAY': 'Gümrük beyannamesi düzenlendi'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Serkan Acar',
-                        'CARİ/PROJE': 'İtalya İhracatı',
-                        'KONU': 'Sevkiyat Planı',
-                        'DETAY': 'Konteyner rezervasyonu yapıldı'
-                    }
-                ]
-            },
-
-            'ydc_lazer_gunduz': {
-                'headers': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                            'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'ADI SOYADI': 'Canan Özdemir',
-                        'OLUŞTURMA SAATİ': '08:00',
-                        'VARDİYA': 'Gündüz',
-                        'CARİ/PROJE': 'Lazer Proje A',
-                        'MAKİNE': 'Lazer 1',
-                        'PERSONEL': 'Operator A',
-                        'MİKTAR (KG)': '180',
-                        'SÜRE (SAAT)': '7.5',
-                        'KAYIP (SAAT)': '0.5',
-                        'DETAY': '5mm çelik levha kesimi',
-                        'YARINKİ HEDEF': 'Kalın levha kesilecek'
-                    },
-                    {
-                        'SIRA': '2',
-                        'ADI SOYADI': 'Yusuf Kara',
-                        'OLUŞTURMA SAATİ': '09:30',
-                        'VARDİYA': 'Gündüz',
-                        'CARİ/PROJE': 'Lazer Proje B',
-                        'MAKİNE': 'Lazer 2',
-                        'PERSONEL': 'Operator B',
-                        'MİKTAR (KG)': '220',
-                        'SÜRE (SAAT)': '6.0',
-                        'KAYIP (SAAT)': '1.0',
-                        'DETAY': '3mm paslanmaz kesimi',
-                        'YARINKİ HEDEF': 'Delik açma işlemi'
-                    }
-                ]
-            },
-
-            'ydc_lazer_gece': {
-                'headers': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                            'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'ADI SOYADI': 'Recep Yıldırım',
-                        'OLUŞTURMA SAATİ': '20:00',
-                        'VARDİYA': 'Gece',
-                        'CARİ/PROJE': 'Gece Vardiyası A',
-                        'MAKİNE': 'Lazer 1',
-                        'PERSONEL': 'Gece Operatörü 1',
-                        'MİKTAR (KG)': '150',
-                        'SÜRE (SAAT)': '8.0',
-                        'KAYIP (SAAT)': '0.0',
-                        'DETAY': '8mm çelik profil kesimi',
-                        'YARINKİ HEDEF': 'Gündüz vardiyasına devir'
-                    },
-                    {
-                        'SIRA': '2',
-                        'ADI SOYADI': 'Tuncay Arslan',
-                        'OLUŞTURMA SAATİ': '22:15',
-                        'VARDİYA': 'Gece',
-                        'CARİ/PROJE': 'Gece Vardiyası B',
-                        'MAKİNE': 'Lazer 2',
-                        'PERSONEL': 'Gece Operatörü 2',
-                        'MİKTAR (KG)': '195',
-                        'SÜRE (SAAT)': '7.5',
-                        'KAYIP (SAAT)': '0.5',
-                        'DETAY': '6mm alüminyum kesimi',
-                        'YARINKİ HEDEF': 'Makine bakımı'
-                    }
-                ]
-            },
-
-            'ydc_depo': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'Tarih': date_str,
-                        'Proje/Cari': 'Örnek Proje 2',
-                        'Konu': 'Kalite Kontrolü',
-                        'Detay': 'Ürün kalite testleri yapıldı',
-                        'Miktar': '75 kg',
-                        'Adet': '30'
-                    }
-                ]
-            },
-
-            # Yeni YDC sekmeler için örnek veriler
-            'ydc_sevkiyat': {
-                'headers': ['SIRA', 'AD SOYAD', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (KG)',
-                            'MİKTAR (ADET)'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Ahmet Kaya',
-                        'OLUŞTURMA SAATİ': '08:30',
-                        'CARİ/PROJE': 'ABC Şirketi',
-                        'KONU': 'Sevkiyat Hazırlığı',
-                        'DETAY': 'Konteyner yüklemesi tamamlandı',
-                        'MİKTAR (KG)': '2500',
-                        'MİKTAR (ADET)': '150'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Mehmet Özkan',
-                        'OLUŞTURMA SAATİ': '10:15',
-                        'CARİ/PROJE': 'DEF Ltd.',
-                        'KONU': 'Kargo Sevkiyat',
-                        'DETAY': 'Küçük parçalar kargo ile gönderildi',
-                        'MİKTAR (KG)': '450',
-                        'MİKTAR (ADET)': '85'
-                    }
-                ]
-            },
-
-            'ydc_satis': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Fatma Demir',
-                        'CARİ/PROJE': 'GHI A.Ş.',
-                        'KONU': 'Teklif Hazırlama',
-                        'DETAY': 'Yeni proje için fiyat teklifi hazırlandı'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Ali Veli',
-                        'CARİ/PROJE': 'JKL Endüstri',
-                        'KONU': 'Müşteri Ziyareti',
-                        'DETAY': 'Teknik görüşme yapıldı'
-                    }
-                ]
-            },
-
-            'ydc_petrol': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Hasan Çelik',
-                        'CARİ': 'Petrol Ofisi',
-                        'KONU': 'Yakıt Temini',
-                        'DETAY': 'Araç filosu için yakıt alındı'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Zeynep Aktaş',
-                        'CARİ': 'Shell',
-                        'KONU': 'Mazot Alımı',
-                        'DETAY': 'Jeneratör yakıtı temin edildi'
-                    }
-                ]
-            },
-
-            'ydc_lazer_planlama': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Oğuz Yıldız',
-                        'CARİ/PROJE': 'Proje Alpha',
-                        'KONU': 'Kesim Planı',
-                        'DETAY': 'Çelik levhalar için kesim planı hazırlandı'
-                    },
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Kadir Özkan',
-                        'CARİ/PROJE': 'Depo Yönetimi',
-                        'KONU': 'Stok Girişi',
-                        'DETAY': 'Yeni hammadde parti girişi yapıldı'
-                    },
-                    {
-                        'SIRA': '2',
-                        'AD SOYAD': 'Nermin Aydın',
-                        'CARİ/PROJE': 'Envanter',
-                        'KONU': 'Stok Sayımı',
-                        'DETAY': 'A bölgesi stok sayımı tamamlandı'
-                    }
-                ]
-            },
-
-            'ydc_uretim': {
-                'headers': ['Tarih', 'Ürün Kodu', 'Ürün Adı', 'Üretilen Miktar', 'Hedef Miktar', 'Verimlilik'],
-                'rows': [
-                    {
-                        'Tarih': date_str,
-                        'Ürün Kodu': 'YDC001',
-                        'Ürün Adı': 'Metal Parça A',
-                        'Üretilen Miktar': '450 adet',
-                        'Hedef Miktar': '500 adet',
-                        'Verimlilik': '<span class="badge bg-warning">%90</span>'
-                    },
-                    {
-                        'Tarih': date_str,
-                        'Ürün Kodu': 'YDC002',
-                        'Ürün Adı': 'Metal Parça B',
-                        'Üretilen Miktar': '620 adet',
-                        'Hedef Miktar': '600 adet',
-                        'Verimlilik': '<span class="badge bg-success">%103</span>'
-                    }
-                ]
-            },
-
-            # Mevcut diğer tablolar (Star, Yağcılar, Genel) burada devam eder...
-            'star_uretim': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'SORUMLU', 'MİKTAR (KG)',
-                            'MİKTAR (ADET)', 'YARINKİ HEDEF'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Ali Yılmaz',
-                        'CARİ/PROJE': 'Üretim Projesi A',
-                        'KONU': 'Makine Hazırlığı',
-                        'DETAY': 'CNC tezgahları ayarlandı',
-                        'SORUMLU': 'Mehmet Kaya',
-                        'MİKTAR (KG)': '500',
-                        'MİKTAR (ADET)': '25',
-                        'YARINKİ HEDEF': 'Üretim başlatılacak'
-                    }
-                ]
-            },
-
-            # Diğer tablolar için mevcut örnek veriler...
-            'star_satinalma': {
-                'headers': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-                'rows': [
-                    {
-                        'SIRA': '1',
-                        'AD SOYAD': 'Hasan Özkan',
-                        'CARİ/PROJE': 'Hammadde Temini',
-                        'KONU': 'Çelik Satın Alma',
-                        'DETAY': 'S355 çelik levha siparişi verildi'
-                    }
-                ]
-            },
-
-            # Genel sekmeler (değişmez)
-            'genel_mesai': {
-                'headers': ['Personel', 'Giriş Saati', 'Çıkış Saati', 'Toplam Süre', 'Durum'],
-                'rows': [
-                    {
-                        'Personel': 'Ahmet Yılmaz',
-                        'Giriş Saati': '08:00',
-                        'Çıkış Saati': '17:00',
-                        'Toplam Süre': '9 saat',
-                        'Durum': '<span class="badge bg-success">Normal</span>'
-                    }
-                ]
-            }
-        }
-
-        data = sample_data.get(table_type, sample_data['ydc_gunluk'])
-        headers = data['headers']
-        rows = data['rows']
-
-        html = '<table class="report-table"><thead><tr>'
-
-        for header in headers:
-            html += f'<th>{header}</th>'
-        html += '</tr></thead><tbody>'
-
-        for row in rows:
-            html += '<tr>'
-            for header in headers:
-                value = row.get(header, '-')
-                html += f'<td>{value}</td>'
-            html += '</tr>'
-        html += '</tbody></table>'
-
-        return html
-
-    except Exception as e:
-        print(f"DEBUG: generate_sample_table hatası: {str(e)}")
-        return "<p>Tablo oluşturulurken hata oluştu.</p>"
-@app.route('/gunluk-raporlar')
-@login_required
-@permission_required(menu_id=1027, permission_type='view')  # Menu ID'yi uygun şekilde ayarlayın
-def gunluk_raporlar():
-    """Günlük raporlar sayfası."""
-    user_id = session['user_id']
-    menu_tree, menu_permissions = get_user_menu_permissions(user_id)
-
-    return render_template('gunluk_raporlar.html',
-                           username=session['username'],
-                           fullname=session.get('fullname', ''),
-                           menus=menu_tree,
-                           permissions=menu_permissions,
-                           is_admin=session.get('is_admin', False))
-
-
-# YDÇ Metal için yeni veri çekme fonksiyonları
-
-def get_ydc_sevkiyat_data():
-    """YDÇ Metal Sevkiyat verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[AD SOYAD]
-              ,[OLUŞTURMA SAATİ]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-              ,[MİKTAR ( KG )]
-              ,[MİKTAR ( ADET )]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_SEVKIYAT]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        # Kolon adlarını temizle ve standartlaştır
-        df.columns = ['SIRA', 'AD SOYAD', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (KG)',
-                      'MİKTAR (ADET)']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Sevkiyat veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_satis_data():
-    """YDÇ Metal Satış verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_SATIS]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Satış veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_petrol_data():
-    """YDÇ Metal Petrol verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[AD SOYAD]
-              ,[CARİ]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_PETROL]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Petrol veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_lazer_planlama_data():
-    """YDÇ Metal Lazer Planlama verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_LAZER_PLANLAMA]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Lazer Planlama veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_kaynakhane_data():
-    """YDÇ Metal Kaynakhane verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[SORUMLU]
-              ,[OLUŞTURMA SAATİ]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-              ,[MİKTAR ( ADET )]
-              ,[MİKTAR ( KG )]
-              ,[SÜRE ( SAAT )]
-              ,[YARINKİ HEDEF]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_KAYNAKHANE]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'SORUMLU', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (ADET)',
-                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'YARINKİ HEDEF']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Kaynakhane veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_kalite_data():
-    """YDÇ Metal Kalite verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_KALITE]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Kalite veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_isg_data():
-    """YDÇ Metal İSG verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_ISG]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC İSG veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_insankaynaklari_data():
-    """YDÇ Metal İnsan Kaynakları verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-              ,[LOKASYON]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_INSANKAYNAKLARI]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC İnsan Kaynakları veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_ihracat_data():
-    """YDÇ Metal İhracat verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_IHRACAT]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC İhracat veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_lazer_gunduz_data():
-    """YDÇ Metal Lazer Gündüz verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ADI SOYADI]
-              ,[OLUŞTURMA SAATİ]
-              ,[VARDİYA]
-              ,[CARİ/PROJE]
-              ,[MAKİNE]
-              ,[PERSONEL]
-              ,[MİKTAR ( KG )]
-              ,[SÜRE ( SAAT )]
-              ,[KAYIP ( SAAT )]
-              ,[DETAY]
-              ,[YARINKİ HEDEF]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_GUNDUZ_LAZER]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Lazer Gündüz veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_lazer_gece_data():
-    """YDÇ Metal Lazer Gece verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ADI SOYADI]
-              ,[OLUŞTURMA SAATİ]
-              ,[VARDİYA]
-              ,[CARİ/PROJE]
-              ,[MAKİNE]
-              ,[PERSONEL]
-              ,[MİKTAR ( KG )]
-              ,[SÜRE ( SAAT )]
-              ,[KAYIP ( SAAT )]
-              ,[DETAY]
-              ,[YARINKİ HEDEF]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_GECE_LAZER]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                      'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Lazer Gece veri hatası: {str(e)}")
-        return []
-
-
-def get_ydc_depo_data():
-    """YDÇ Metal Depo verilerini getir"""
-    try:
-        conn = get_db_connection3()
-        query = """
-        SELECT TOP (1000) [SIRA]
-              ,[ AD SOYAD]
-              ,[CARİ/PROJE]
-              ,[KONU]
-              ,[DETAY]
-        FROM [MikroDB_V16_10].[dbo].[_DT_YDC_RAPOR_DEPO]
-        ORDER BY [SIRA]
-        """
-        df = pd.read_sql(query, conn)
-        conn.close()
-
-        df.columns = ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"YDC Depo veri hatası: {str(e)}")
-        return []
-
-
-# YDÇ Metal veri endpoint'i güncelleme
-@app.route('/get-ydc-data/<data_type>')
-@login_required
-def get_ydc_data(data_type):
-    """YDÇ Metal verilerini getir"""
-    try:
-        print(f"DEBUG: get_ydc_data çağrıldı - data_type: {data_type}")
-
-        data_functions = {
-            'ydc_sevkiyat': get_ydc_sevkiyat_data,
-            'ydc_satis': get_ydc_satis_data,
-            'ydc_petrol': get_ydc_petrol_data,
-            'ydc_lazer_planlama': get_ydc_lazer_planlama_data,
-            'ydc_kaynakhane': get_ydc_kaynakhane_data,
-            'ydc_kalite': get_ydc_kalite_data,
-            'ydc_isg': get_ydc_isg_data,
-            'ydc_insankaynaklari': get_ydc_insankaynaklari_data,
-            'ydc_ihracat': get_ydc_ihracat_data,
-            'ydc_lazer_gunduz': get_ydc_lazer_gunduz_data,
-            'ydc_lazer_gece': get_ydc_lazer_gece_data,
-            'ydc_depo': get_ydc_depo_data
-        }
-
-        if data_type in data_functions:
-            print(f"DEBUG: {data_type} fonksiyonu çağrılıyor...")
-            data = data_functions[data_type]()
-            print(f"DEBUG: Fonksiyon döndü - veri sayısı: {len(data) if data else 0}")
-
-            if data:
-                print(f"DEBUG: İlk veri örneği: {data[0] if len(data) > 0 else 'Veri yok'}")
-
-            return jsonify({
-                'success': True,
-                'data': data,
-                'count': len(data) if data else 0
-            })
-        else:
-            print(f"DEBUG: Geçersiz veri tipi: {data_type}")
-            return jsonify({
-                'success': False,
-                'error': f'Geçersiz veri tipi: {data_type}'
-            }), 400
-
-    except Exception as e:
-        print(f"DEBUG: YDC veri endpoint hatası: {str(e)}")
-        import traceback
-        print(f"DEBUG: Stack trace: {traceback.format_exc()}")
-
-        return jsonify({
-            'success': False,
-            'error': f'Sunucu hatası: {str(e)}'
-        }), 500
-
-
-# YDÇ Metal tablo oluşturma fonksiyonu güncelleme
-def generate_ydc_table_from_db(table_type):
-    """Veritabanından YDÇ Metal verisiyle tablo oluştur"""
-    try:
-        # Veri çekme fonksiyonları mapping'i
-        data_functions = {
-            'ydc_sevkiyat': get_ydc_sevkiyat_data,
-            'ydc_satis': get_ydc_satis_data,
-            'ydc_petrol': get_ydc_petrol_data,
-            'ydc_lazer_planlama': get_ydc_lazer_planlama_data,
-            'ydc_kaynakhane': get_ydc_kaynakhane_data,
-            'ydc_kalite': get_ydc_kalite_data,
-            'ydc_isg': get_ydc_isg_data,
-            'ydc_insankaynaklari': get_ydc_insankaynaklari_data,
-            'ydc_ihracat': get_ydc_ihracat_data,
-            'ydc_lazer_gunduz': get_ydc_lazer_gunduz_data,
-            'ydc_lazer_gece': get_ydc_lazer_gece_data,
-            'ydc_depo': get_ydc_depo_data
-        }
-
-        # Tablo başlıkları mapping'i
-        headers_mapping = {
-            'ydc_sevkiyat': ['SIRA', 'AD SOYAD', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (KG)',
-                             'MİKTAR (ADET)'],
-            'ydc_satis': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'ydc_petrol': ['SIRA', 'AD SOYAD', 'CARİ', 'KONU', 'DETAY'],
-            'ydc_lazer_planlama': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'ydc_kaynakhane': ['SIRA', 'SORUMLU', 'OLUŞTURMA SAATİ', 'CARİ/PROJE', 'KONU', 'DETAY', 'MİKTAR (ADET)',
-                               'MİKTAR (KG)', 'SÜRE (SAAT)', 'YARINKİ HEDEF'],
-            'ydc_kalite': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'ydc_isg': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'ydc_insankaynaklari': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY', 'LOKASYON'],
-            'ydc_ihracat': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY'],
-            'ydc_lazer_gunduz': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                                 'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
-            'ydc_lazer_gece': ['SIRA', 'ADI SOYADI', 'OLUŞTURMA SAATİ', 'VARDİYA', 'CARİ/PROJE', 'MAKİNE', 'PERSONEL',
-                               'MİKTAR (KG)', 'SÜRE (SAAT)', 'KAYIP (SAAT)', 'DETAY', 'YARINKİ HEDEF'],
-            'ydc_depo': ['SIRA', 'AD SOYAD', 'CARİ/PROJE', 'KONU', 'DETAY']
-        }
-
-        if table_type in data_functions:
-            # Veritabanından veri çek
-            data = data_functions[table_type]()
-            headers = headers_mapping[table_type]
-
-            if not data:
-                return '<p>Veri bulunamadı.</p>'
-
-            # Tablo HTML'ini oluştur
-            html = '<table class="report-table"><thead><tr>'
-
-            for header in headers:
-                html += f'<th>{header}</th>'
-            html += '</tr></thead><tbody>'
-
-            for row in data:
-                html += '<tr>'
-                for header in headers:
-                    value = row.get(header, '-')
-                    if value is None or value == '':
-                        value = '-'
-                    html += f'<td>{value}</td>'
-                html += '</tr>'
-            html += '</tbody></table>'
-
-            return html
-        else:
-            return '<p>Geçersiz tablo tipi.</p>'
-
-    except Exception as e:
-        print(f"DEBUG: generate_ydc_table_from_db hatası: {str(e)}")
-        return f'<p>Tablo oluşturulurken hata oluştu: {str(e)}</p>'
-
 
 if __name__ == '__main__':
     # Create required directories if they don't exist

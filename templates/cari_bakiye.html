@@ -757,13 +757,13 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="summary-box receivable">
-                                <h6>Toplam Alacak TL Karşılığı</h6>
+                                <h6>Cari Alacak TL Karşılığı</h6>
                                 <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="summary-box debt">
-                                <h6>Toplam Borç TL Karşılığı</h6>
+                                <h6>Cari Borç TL Karşılığı</h6>
                                 <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</p>
                             </div>
                         </div>
@@ -817,19 +817,33 @@
                         <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
                         <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }}</td>
                         <td class="text-end" data-sort="{{ "%.2f"|format(net) }}">
-                            <span class="{% if net > 0 %}positive{% else %}negative{% endif %}">
-                                {{ "{:,.2f}".format(net).replace(".", ",") }}
-                            </span>
-                        </td>
+    {% if net > 0 %}
+        <!-- Alacaklı ise negatif göster ve kırmızı yap -->
+        <span class="negative">
+            -{{ "{:,.2f}".format(net).replace(".", ",") }}
+        </span>
+    {% elif net < 0 %}
+        <!-- Borçlu ise pozitif göster ve yeşil yap -->
+        <span class="positive">
+            {{ "{:,.2f}".format(net|abs).replace(".", ",") }}
+        </span>
+    {% else %}
+        <span style="color: #6c757d;">
+            {{ "{:,.2f}".format(net).replace(".", ",") }}
+        </span>
+    {% endif %}
+</td>
                         <td class="text-center">
-                            {% if net > 0 %}
-                                <span class="badge bg-success">Alacaklı</span>
-                            {% elif net < 0 %}
-                                <span class="badge bg-danger">Borçlu</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Sıfır</span>
-                            {% endif %}
-                        </td>
+    {% if net > 0 %}
+        <!-- Alacaklı ise kırmızı -->
+        <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
+    {% elif net < 0 %}
+        <!-- Borçlu ise yeşil -->
+        <span class="badge" style="background-color: #28a745; color: white;">Borçlu</span>
+    {% else %}
+        <span class="badge bg-secondary">Sıfır</span>
+    {% endif %}
+</td>
                     </tr>
                     {% endif %}
                     {% endfor %}
@@ -1034,37 +1048,105 @@ $(document).ready(function() {
         },
         dom: 'Brtip', // search kutucuğunu kaldırdık (f harfini çıkardık)
         buttons: [
-            {
-                extend: 'copy',
-                className: 'buttons-copy d-none'
-            },
-            {
-                extend: 'csv',
-                className: 'buttons-csv d-none'
-            },
-            {
-                extend: 'excel',
-                className: 'buttons-excel d-none',
-                title: 'Cari Bakiye Raporu'
-            },
-            {
-                extend: 'pdf',
-                className: 'buttons-pdf d-none',
-                title: 'Cari Bakiye Raporu'
-            },
-            {
-                extend: 'print',
-                className: 'buttons-print d-none',
-                title: 'Cari Bakiye Raporu'
+        {
+            extend: 'copy',
+            className: 'buttons-copy d-none',
+            exportOptions: {
+                format: {
+                    body: function (data, row, column, node) {
+                        // Sıra no kolonu için
+                        if (column === 0) {
+                            return $(node).text();
+                        }
+                        // Diğer kolonlar için data-export varsa onu kullan
+                        if ($(node).attr('data-export')) {
+                            return $(node).attr('data-export');
+                        }
+                        // Normal text
+                        return $(node).text();
+                    }
+                }
             }
-        ],
-        columnDefs: [
-            {
-                targets: 0, // Sıra numarası kolonu
-                orderable: false, // Sıralama devre dışı
-                searchable: false // Arama devre dışı
+        },
+        {
+            extend: 'csv',
+            className: 'buttons-csv d-none',
+            exportOptions: {
+                format: {
+                    body: function (data, row, column, node) {
+                        if (column === 0) {
+                            return $(node).text();
+                        }
+                        if ($(node).attr('data-export')) {
+                            return $(node).attr('data-export');
+                        }
+                        return $(node).text();
+                    }
+                }
             }
-        ]
+        },
+        {
+            extend: 'excel',
+            className: 'buttons-excel d-none',
+            title: 'Cari Bakiye Raporu',
+            exportOptions: {
+                format: {
+                    body: function (data, row, column, node) {
+                        if (column === 0) {
+                            return $(node).text();
+                        }
+                        if ($(node).attr('data-export')) {
+                            return $(node).attr('data-export');
+                        }
+                        return $(node).text();
+                    }
+                }
+            }
+        },
+        {
+            extend: 'pdf',
+            className: 'buttons-pdf d-none',
+            title: 'Cari Bakiye Raporu',
+            exportOptions: {
+                format: {
+                    body: function (data, row, column, node) {
+                        if (column === 0) {
+                            return $(node).text();
+                        }
+                        if ($(node).attr('data-export')) {
+                            return $(node).attr('data-export');
+                        }
+                        return $(node).text();
+                    }
+                }
+            }
+        },
+        {
+            extend: 'print',
+            className: 'buttons-print d-none',
+            title: 'Cari Bakiye Raporu',
+            exportOptions: {
+                format: {
+                    body: function (data, row, column, node) {
+                        if (column === 0) {
+                            return $(node).text();
+                        }
+                        if ($(node).attr('data-export')) {
+                            return $(node).attr('data-export');
+                        }
+                        return $(node).text();
+                    }
+                }
+            }
+        }
+    ],
+    columnDefs: [
+        {
+            targets: 0, // Sıra numarası kolonu
+            orderable: false,
+            searchable: false
+        }
+    ]
     });
 
     // Sıra numarasını dinamik olarak güncelle
