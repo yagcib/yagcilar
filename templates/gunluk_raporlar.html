@@ -165,160 +165,625 @@
         <!-- Sekme İçerikleri -->
         <div class="tab-content" id="mainTabContent">
             
-            <!-- Ydç Metal Sekmesi -->
-            <div class="tab-pane fade show active" id="ydc-metal" role="tabpanel">
-                <ul class="nav nav-pills sub-tabs" id="ydcSubTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="ydc-gunluk-tab" data-bs-toggle="tab" data-bs-target="#ydc-gunluk" type="button" role="tab">
-                            Günlük Yapılanlar
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="ydc-satis-tab" data-bs-toggle="tab" data-bs-target="#ydc-satis" type="button" role="tab">
-                            Satış
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="ydc-uretim-tab" data-bs-toggle="tab" data-bs-target="#ydc-uretim" type="button" role="tab">
-                            Üretim
-                        </button>
-                    </li>
-                </ul>
-                
-                <div class="tab-content" id="ydcSubTabContent">
-                    <div class="tab-pane fade show active" id="ydc-gunluk" role="tabpanel">
-                        <div class="content-area">
-                            <h4><i class="fas fa-tasks"></i> Ydç Metal - Günlük Yapılanlar</h4>
-                            <div class="loading-spinner" id="ydc-gunluk-loading">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Yükleniyor...</span>
-                                </div>
-                                <p>Veriler yükleniyor...</p>
-                            </div>
-                            <div id="ydc-gunluk-content">
-                                <table class="table table-striped report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tarih</th>
-                                            <th>Proje/Cari</th>
-                                            <th>Konu</th>
-                                            <th>Detay</th>
-                                            <th>Miktar</th>
-                                            <th>Adet</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>23.06.2025</td>
-                                            <td>Örnek Proje</td>
-                                            <td>Üretim Planlaması</td>
-                                            <td>Günlük üretim hedefleri belirlendi</td>
-                                            <td>100 kg</td>
-                                            <td>50</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Ydç Metal Sekmesi - Güncellenmiş -->
+<div class="tab-pane fade show active" id="ydc-metal" role="tabpanel">
+    <ul class="nav nav-pills sub-tabs" id="ydcSubTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="ydc-gunluk-tab" data-bs-toggle="tab" data-bs-target="#ydc-gunluk" type="button" role="tab">
+                Günlük Yapılanlar
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-sevkiyat-tab" data-bs-toggle="tab" data-bs-target="#ydc-sevkiyat" type="button" role="tab">
+                Sevkiyat
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-satis-tab" data-bs-toggle="tab" data-bs-target="#ydc-satis" type="button" role="tab">
+                Satış
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-uretim-tab" data-bs-toggle="tab" data-bs-target="#ydc-uretim" type="button" role="tab">
+                Üretim
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-petrol-tab" data-bs-toggle="tab" data-bs-target="#ydc-petrol" type="button" role="tab">
+                Petrol
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-lazer-planlama-tab" data-bs-toggle="tab" data-bs-target="#ydc-lazer-planlama" type="button" role="tab">
+                Lazer Planlama
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-kaynakhane-tab" data-bs-toggle="tab" data-bs-target="#ydc-kaynakhane" type="button" role="tab">
+                Kaynakhane
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-kalite-tab" data-bs-toggle="tab" data-bs-target="#ydc-kalite" type="button" role="tab">
+                Kalite
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-isg-tab" data-bs-toggle="tab" data-bs-target="#ydc-isg" type="button" role="tab">
+                İSG
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-insankaynaklari-tab" data-bs-toggle="tab" data-bs-target="#ydc-insankaynaklari" type="button" role="tab">
+                İnsan Kaynakları
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-ihracat-tab" data-bs-toggle="tab" data-bs-target="#ydc-ihracat" type="button" role="tab">
+                İhracat
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-lazer-gunduz-tab" data-bs-toggle="tab" data-bs-target="#ydc-lazer-gunduz" type="button" role="tab">
+                Lazer Gündüz
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-lazer-gece-tab" data-bs-toggle="tab" data-bs-target="#ydc-lazer-gece" type="button" role="tab">
+                Lazer Gece
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ydc-depo-tab" data-bs-toggle="tab" data-bs-target="#ydc-depo" type="button" role="tab">
+                Depo
+            </button>
+        </li>
+    </ul>
 
-                    <div class="tab-pane fade" id="ydc-satis" role="tabpanel">
-                        <div class="content-area">
-                            <h4><i class="fas fa-chart-bar"></i> Ydç Metal - Satış</h4>
-                            <div id="ydc-satis-content">
-                                <table class="table table-striped report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tarih</th>
-                                            <th>Müşteri</th>
-                                            <th>Ürün</th>
-                                            <th>Miktar</th>
-                                            <th>Tutar</th>
-                                            <th>Durum</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>23.06.2025</td>
-                                            <td>ABC Şirketi</td>
-                                            <td>Metal Parça</td>
-                                            <td>500 kg</td>
-                                            <td>₺25,000</td>
-                                            <td><span class="badge bg-success">Tamamlandı</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="ydc-uretim" role="tabpanel">
-                        <div class="content-area">
-                            <h4><i class="fas fa-industry"></i> Ydç Metal - Üretim</h4>
-                            <div id="ydc-uretim-content">
-                                <table class="table table-striped report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tarih</th>
-                                            <th>Ürün Kodu</th>
-                                            <th>Ürün Adı</th>
-                                            <th>Üretilen Miktar</th>
-                                            <th>Hedef Miktar</th>
-                                            <th>Verimlilik</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>23.06.2025</td>
-                                            <td>YDC001</td>
-                                            <td>Metal Parça A</td>
-                                            <td>450 adet</td>
-                                            <td>500 adet</td>
-                                            <td><span class="badge bg-warning">%90</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+    <div class="tab-content" id="ydcSubTabContent">
+        <!-- Mevcut Günlük Yapılanlar sekmesi -->
+        <div class="tab-pane fade show active" id="ydc-gunluk" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-tasks"></i> Ydç Metal - Günlük Yapılanlar</h4>
+                <div id="ydc-gunluk-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Proje/Cari</th>
+                                <th>Konu</th>
+                                <th>Detay</th>
+                                <th>Miktar</th>
+                                <th>Adet</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-gunluk-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+
+        <!-- Yeni Sevkiyat sekmesi -->
+        <div class="tab-pane fade" id="ydc-sevkiyat" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-shipping-fast"></i> Ydç Metal - Sevkiyat</h4>
+                <div id="ydc-sevkiyat-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>OLUŞTURMA SAATİ</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                                <th>MİKTAR (KG)</th>
+                                <th>MİKTAR (ADET)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-sevkiyat-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Güncellenmiş Satış sekmesi -->
+        <div class="tab-pane fade" id="ydc-satis" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-chart-bar"></i> Ydç Metal - Satış</h4>
+                <div id="ydc-satis-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-satis-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mevcut Üretim sekmesi -->
+        <div class="tab-pane fade" id="ydc-uretim" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-industry"></i> Ydç Metal - Üretim</h4>
+                <div id="ydc-uretim-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Ürün Kodu</th>
+                                <th>Ürün Adı</th>
+                                <th>Üretilen Miktar</th>
+                                <th>Hedef Miktar</th>
+                                <th>Verimlilik</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-uretim-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Petrol sekmesi -->
+        <div class="tab-pane fade" id="ydc-petrol" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-gas-pump"></i> Ydç Metal - Petrol</h4>
+                <div id="ydc-petrol-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-petrol-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Lazer Planlama sekmesi -->
+        <div class="tab-pane fade" id="ydc-lazer-planlama" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-drafting-compass"></i> Ydç Metal - Lazer Planlama</h4>
+                <div id="ydc-lazer-planlama-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-lazer-planlama-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Kaynakhane sekmesi -->
+        <div class="tab-pane fade" id="ydc-kaynakhane" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-fire"></i> Ydç Metal - Kaynakhane</h4>
+                <div id="ydc-kaynakhane-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>SORUMLU</th>
+                                <th>OLUŞTURMA SAATİ</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                                <th>MİKTAR (ADET)</th>
+                                <th>MİKTAR (KG)</th>
+                                <th>SÜRE (SAAT)</th>
+                                <th>YARINKİ HEDEF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-kaynakhane-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Kalite sekmesi -->
+        <div class="tab-pane fade" id="ydc-kalite" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-check-circle"></i> Ydç Metal - Kalite</h4>
+                <div id="ydc-kalite-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-kalite-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni İSG sekmesi -->
+        <div class="tab-pane fade" id="ydc-isg" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-hard-hat"></i> Ydç Metal - İSG</h4>
+                <div id="ydc-isg-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-isg-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni İnsan Kaynakları sekmesi -->
+        <div class="tab-pane fade" id="ydc-insankaynaklari" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-users"></i> Ydç Metal - İnsan Kaynakları</h4>
+                <div id="ydc-insankaynaklari-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                                <th>LOKASYON</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-insankaynaklari-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni İhracat sekmesi -->
+        <div class="tab-pane fade" id="ydc-ihracat" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-ship"></i> Ydç Metal - İhracat</h4>
+                <div id="ydc-ihracat-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-ihracat-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Lazer Gündüz sekmesi -->
+        <div class="tab-pane fade" id="ydc-lazer-gunduz" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-sun"></i> Ydç Metal - Lazer Gündüz</h4>
+                <div id="ydc-lazer-gunduz-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>ADI SOYADI</th>
+                                <th>OLUŞTURMA SAATİ</th>
+                                <th>VARDİYA</th>
+                                <th>CARİ/PROJE</th>
+                                <th>MAKİNE</th>
+                                <th>PERSONEL</th>
+                                <th>MİKTAR (KG)</th>
+                                <th>SÜRE (SAAT)</th>
+                                <th>KAYIP (SAAT)</th>
+                                <th>DETAY</th>
+                                <th>YARINKİ HEDEF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-lazer-gunduz-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Lazer Gece sekmesi -->
+        <div class="tab-pane fade" id="ydc-lazer-gece" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-moon"></i> Ydç Metal - Lazer Gece</h4>
+                <div id="ydc-lazer-gece-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>ADI SOYADI</th>
+                                <th>OLUŞTURMA SAATİ</th>
+                                <th>VARDİYA</th>
+                                <th>CARİ/PROJE</th>
+                                <th>MAKİNE</th>
+                                <th>PERSONEL</th>
+                                <th>MİKTAR (KG)</th>
+                                <th>SÜRE (SAAT)</th>
+                                <th>KAYIP (SAAT)</th>
+                                <th>DETAY</th>
+                                <th>YARINKİ HEDEF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-lazer-gece-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yeni Depo sekmesi -->
+        <div class="tab-pane fade" id="ydc-depo" role="tabpanel">
+            <div class="content-area">
+                <h4><i class="fas fa-warehouse"></i> Ydç Metal - Depo</h4>
+                <div id="ydc-depo-content">
+                    <table class="table table-striped report-table">
+                        <thead>
+                            <tr>
+                                <th>SIRA</th>
+                                <th>AD SOYAD</th>
+                                <th>CARİ/PROJE</th>
+                                <th>KONU</th>
+                                <th>DETAY</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydc-depo-tbody">
+                            <!-- Veriler AJAX ile yüklenecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- Star Yağcılar Sekmesi -->
             <div class="tab-pane fade" id="star-yagcilar" role="tabpanel">
                 <ul class="nav nav-pills sub-tabs" id="starSubTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="star-gunluk-tab" data-bs-toggle="tab" data-bs-target="#star-gunluk" type="button" role="tab">
-                            Günlük Yapılanlar
+                        <button class="nav-link active" id="star-uretim-tab" data-bs-toggle="tab" data-bs-target="#star-uretim" type="button" role="tab">
+                            Üretim
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-satinalma-tab" data-bs-toggle="tab" data-bs-target="#star-satinalma" type="button" role="tab">
+                            Satın Alma
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-proje-tab" data-bs-toggle="tab" data-bs-target="#star-proje" type="button" role="tab">
+                            Proje Ekibi
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-kalite-tab" data-bs-toggle="tab" data-bs-target="#star-kalite" type="button" role="tab">
+                            Kalite
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-ik-tab" data-bs-toggle="tab" data-bs-target="#star-ik" type="button" role="tab">
+                            İnsan Kaynakları
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-ihracat-tab" data-bs-toggle="tab" data-bs-target="#star-ihracat" type="button" role="tab">
+                            İhracat
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="star-depo-tab" data-bs-toggle="tab" data-bs-target="#star-depo" type="button" role="tab">
+                            Depo
                         </button>
                     </li>
                 </ul>
 
                 <div class="tab-content" id="starSubTabContent">
-                    <div class="tab-pane fade show active" id="star-gunluk" role="tabpanel">
+                    <div class="tab-pane fade show active" id="star-uretim" role="tabpanel">
                         <div class="content-area">
-                            <h4><i class="fas fa-tasks"></i> Star Yağcılar - Günlük Yapılanlar</h4>
-                            <div id="star-gunluk-content">
+                            <h4><i class="fas fa-industry"></i> Star Yağcılar - Üretim</h4>
+                            <div id="star-uretim-content">
                                 <table class="table table-striped report-table">
                                     <thead>
                                         <tr>
-                                            <th>Tarih</th>
-                                            <th>Proje/Cari</th>
-                                            <th>Konu</th>
-                                            <th>Detay</th>
-                                            <th>Miktar</th>
-                                            <th>Adet</th>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
+                                            <th>SORUMLU</th>
+                                            <th>MİKTAR (KG)</th>
+                                            <th>MİKTAR (ADET)</th>
+                                            <th>YARINKİ HEDEF</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="star-uretim-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-satinalma" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-shopping-cart"></i> Star Yağcılar - Satın Alma</h4>
+                            <div id="star-satinalma-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
                                         <tr>
-                                            <td>23.06.2025</td>
-                                            <td>Star Projesi</td>
-                                            <td>Operasyon Planlaması</td>
-                                            <td>Günlük operasyon hedefleri belirlendi</td>
-                                            <td>200 litre</td>
-                                            <td>25</td>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
                                         </tr>
+                                    </thead>
+                                    <tbody id="star-satinalma-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-proje" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-project-diagram"></i> Star Yağcılar - Proje Ekibi</h4>
+                            <div id="star-proje-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>DETAY</th>
+                                            <th>YARINKİ HEDEF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="star-proje-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-kalite" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-check-circle"></i> Star Yağcılar - Kalite</h4>
+                            <div id="star-kalite-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="star-kalite-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-ik" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-users"></i> Star Yağcılar - İnsan Kaynakları</h4>
+                            <div id="star-ik-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
+                                            <th>LOKASYON</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="star-ik-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-ihracat" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-ship"></i> Star Yağcılar - İhracat</h4>
+                            <div id="star-ihracat-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="star-ihracat-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="star-depo" role="tabpanel">
+                        <div class="content-area">
+                            <h4><i class="fas fa-warehouse"></i> Star Yağcılar - Depo</h4>
+                            <div id="star-depo-content">
+                                <table class="table table-striped report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>SIRA</th>
+                                            <th>AD SOYAD</th>
+                                            <th>CARİ/PROJE</th>
+                                            <th>KONU</th>
+                                            <th>DETAY</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="star-depo-tbody">
+                                        <!-- Veriler AJAX ile yüklenecek -->
                                     </tbody>
                                 </table>
                             </div>
@@ -677,39 +1142,274 @@
 
 {% block scripts %}
 <script>
-// Sekme değişikliklerini dinle ve içeriği güncelle
+// Güncellenmiş JavaScript kodu - YDÇ Metal alt sekmeler için
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Ana sekme değişikliklerini dinle
     const mainTabs = document.querySelectorAll('#mainTabs button[data-bs-toggle="tab"]');
+    const subTabs = document.querySelectorAll('.sub-tabs button[data-bs-toggle="tab"]');
+
     mainTabs.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function(event) {
-            loadTabContent(event.target.getAttribute('data-bs-target'));
+            const mainTabId = event.target.getAttribute('data-bs-target');
+
+            if (mainTabId === '#star-yagcilar') {
+                setTimeout(() => {
+                    loadStarSubTabContent('#star-uretim');
+                }, 300);
+            } else if (mainTabId === '#ydc-metal') {
+                setTimeout(() => {
+                    loadYdcSubTabContent('#ydc-gunluk');
+                }, 300);
+            }
         });
     });
-    
-    // Alt sekme değişikliklerini dinle
-    const subTabs = document.querySelectorAll('.sub-tabs button[data-bs-toggle="tab"]');
+
     subTabs.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function(event) {
-            loadTabContent(event.target.getAttribute('data-bs-target'));
+            const tabId = event.target.getAttribute('data-bs-target');
+
+            // Star Yağcılar sekmeleri
+            if (tabId.startsWith('#star-')) {
+                loadStarSubTabContent(tabId);
+            }
+            // YDÇ Metal sekmeleri
+            else if (tabId.startsWith('#ydc-')) {
+                loadYdcSubTabContent(tabId);
+            }
         });
     });
-    
-    // İlk sekmeyi yükle
-    loadTabContent('#ydc-gunluk');
+
+    // Sayfa yüklendiğinde tüm verileri yükle
+    setTimeout(() => {
+        // Star sekmelerini yükle
+        const starTabs = ['#star-uretim', '#star-satinalma', '#star-proje', '#star-kalite', '#star-ik', '#star-ihracat', '#star-depo'];
+        starTabs.forEach((tab, index) => {
+            setTimeout(() => loadStarSubTabContent(tab), index * 500);
+        });
+
+        // YDÇ Metal sekmelerini yükle
+        const ydcTabs = ['#ydc-gunluk', '#ydc-sevkiyat', '#ydc-satis', '#ydc-uretim', '#ydc-petrol',
+                        '#ydc-lazer-planlama', '#ydc-kaynakhane', '#ydc-kalite', '#ydc-isg',
+                        '#ydc-insankaynaklari', '#ydc-ihracat', '#ydc-lazer-gunduz', '#ydc-lazer-gece', '#ydc-depo'];
+        ydcTabs.forEach((tab, index) => {
+            setTimeout(() => loadYdcSubTabContent(tab), (starTabs.length + index) * 500);
+        });
+    }, 1000);
 });
 
-function loadTabContent(tabId) {
-    // Burada gerçek veriler için AJAX çağrıları yapılabilir
-    console.log('Loading content for tab:', tabId);
-    
-    // Örnek: Yükleme animasyonu göster
-    const loadingElement = document.querySelector(tabId.replace('#', '#') + '-loading');
-    if (loadingElement) {
-        loadingElement.style.display = 'block';
-        setTimeout(() => {
-            loadingElement.style.display = 'none';
-        }, 1000);
+// YDÇ Metal alt sekme içeriklerini yükleme fonksiyonu
+function loadYdcSubTabContent(tabId) {
+    const ydcTabMappings = {
+        '#ydc-gunluk': 'ydc_gunluk',
+        '#ydc-sevkiyat': 'ydc_sevkiyat',
+        '#ydc-satis': 'ydc_satis',
+        '#ydc-uretim': 'ydc_uretim',
+        '#ydc-petrol': 'ydc_petrol',
+        '#ydc-lazer-planlama': 'ydc_lazer_planlama',
+        '#ydc-kaynakhane': 'ydc_kaynakhane',
+        '#ydc-kalite': 'ydc_kalite',
+        '#ydc-isg': 'ydc_isg',
+        '#ydc-insankaynaklari': 'ydc_insankaynaklari',
+        '#ydc-ihracat': 'ydc_ihracat',
+        '#ydc-lazer-gunduz': 'ydc_lazer_gunduz',
+        '#ydc-lazer-gece': 'ydc_lazer_gece',
+        '#ydc-depo': 'ydc_depo'
+    };
+
+    const dataType = ydcTabMappings[tabId];
+    if (dataType) {
+        fetch(`/get-ydc-data/${dataType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateYdcTable(tabId, data.data);
+                } else {
+                    showErrorMessage(tabId, data.error || 'Veri yüklenirken hata oluştu');
+                }
+            })
+            .catch(error => {
+                showErrorMessage(tabId, 'Ağ hatası: ' + error.message);
+            });
+    }
+}
+
+// YDÇ Metal tablosunu güncelleme fonksiyonu
+function updateYdcTable(tabId, data) {
+    const tableBodyId = tabId.replace('#', '') + '-tbody';
+    const tbody = document.getElementById(tableBodyId);
+
+    if (!tbody) return;
+
+    if (data && data.length > 0) {
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            let orderedValues = [];
+
+            // Her alt sekme için kolon sırası belirleme
+            if (tabId === '#ydc-sevkiyat') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['OLUŞTURMA SAATİ'] || '',
+                    row['CARİ/PROJE'] || '', row['KONU'] || '', row['DETAY'] || '',
+                    row['MİKTAR (KG)'] || '', row['MİKTAR (ADET)'] || ''
+                ];
+            } else if (tabId === '#ydc-satis') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-petrol') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-lazer-planlama') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-kaynakhane') {
+                orderedValues = [
+                    row['SIRA'] || '', row['SORUMLU'] || '', row['OLUŞTURMA SAATİ'] || '',
+                    row['CARİ/PROJE'] || '', row['KONU'] || '', row['DETAY'] || '',
+                    row['MİKTAR (ADET)'] || '', row['MİKTAR (KG)'] || '',
+                    row['SÜRE (SAAT)'] || '', row['YARINKİ HEDEF'] || ''
+                ];
+            } else if (tabId === '#ydc-kalite') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-isg') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-insankaynaklari') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || '', row['LOKASYON'] || ''
+                ];
+            } else if (tabId === '#ydc-ihracat') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else if (tabId === '#ydc-lazer-gunduz' || tabId === '#ydc-lazer-gece') {
+                orderedValues = [
+                    row['SIRA'] || '', row['ADI SOYADI'] || '', row['OLUŞTURMA SAATİ'] || '',
+                    row['VARDİYA'] || '', row['CARİ/PROJE'] || '', row['MAKİNE'] || '',
+                    row['PERSONEL'] || '', row['MİKTAR (KG)'] || '', row['SÜRE (SAAT)'] || '',
+                    row['KAYIP (SAAT)'] || '', row['DETAY'] || '', row['YARINKİ HEDEF'] || ''
+                ];
+            } else if (tabId === '#ydc-depo') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            } else {
+                // Diğer sekmeler için varsayılan sıralama
+                const keys = Object.keys(row);
+                orderedValues = keys.map(key => row[key] || '');
+            }
+
+            orderedValues.forEach(cellValue => {
+                const td = document.createElement('td');
+                td.textContent = cellValue || '-';
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="100%" class="text-center">Veri bulunamadı</td></tr>';
+    }
+}
+
+
+function loadStarSubTabContent(tabId) {
+    const starTabMappings = {
+        '#star-uretim': 'star_uretim',
+        '#star-satinalma': 'star_satinalma',
+        '#star-proje': 'star_proje',
+        '#star-kalite': 'star_kalite',
+        '#star-ik': 'star_insankaynaklari',
+        '#star-ihracat': 'star_ihracat',
+        '#star-depo': 'star_depo'
+    };
+
+    const dataType = starTabMappings[tabId];
+    if (dataType) {
+        fetch(`/get-star-data/${dataType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStarTable(tabId, data.data);
+                } else {
+                    showErrorMessage(tabId, data.error || 'Veri yüklenirken hata oluştu');
+                }
+            })
+            .catch(error => {
+                showErrorMessage(tabId, 'Ağ hatası: ' + error.message);
+            });
+    }
+}
+
+function updateStarTable(tabId, data) {
+    const tableBodyId = tabId.replace('#', '') + '-tbody';
+    const tbody = document.getElementById(tableBodyId);
+
+    if (!tbody) return;
+
+    if (data && data.length > 0) {
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            let orderedValues = [];
+
+            if (tabId === '#star-uretim') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || '', row['SORUMLU'] || '',
+                    row['MİKTAR (KG)'] || '', row['MİKTAR (ADET)'] || '', row['YARINKİ HEDEF'] || ''
+                ];
+            } else if (tabId === '#star-proje') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['DETAY'] || '', row['YARINKİ HEDEF'] || ''
+                ];
+            } else if (tabId === '#star-ik') {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || '', row['LOKASYON'] || ''
+                ];
+            } else {
+                orderedValues = [
+                    row['SIRA'] || '', row['AD SOYAD'] || '', row['CARİ/PROJE'] || '',
+                    row['KONU'] || '', row['DETAY'] || ''
+                ];
+            }
+
+            orderedValues.forEach(cellValue => {
+                const td = document.createElement('td');
+                td.textContent = cellValue || '-';
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="100%" class="text-center">Veri bulunamadı</td></tr>';
+    }
+}
+
+function showErrorMessage(tabId, message) {
+    const tableBodyId = tabId.replace('#', '') + '-tbody';
+    const tbody = document.getElementById(tableBodyId);
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="100%" class="text-center text-danger">Hata: ${message}</td></tr>`;
     }
 }
 
@@ -718,18 +1418,15 @@ function sendEmailReport() {
     const subject = document.getElementById('emailSubject').value;
     const message = document.getElementById('emailMessage').value;
     const statusDiv = document.getElementById('emailStatus');
-    
-    // Aktif sekmeyi belirle
+
     const activeMainTab = document.querySelector('#mainTabs .nav-link.active').textContent.trim();
     const activeSubTab = document.querySelector('.sub-tabs .nav-link.active')?.textContent.trim() || '';
-    
-    // Buton durumunu değiştir
+
     const sendButton = event.target;
     const originalText = sendButton.innerHTML;
     sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
     sendButton.disabled = true;
-    
-    // E-posta gönderme işlemi (AJAX)
+
     fetch('/send-daily-report-email', {
         method: 'POST',
         headers: {
@@ -754,8 +1451,7 @@ function sendEmailReport() {
             statusDiv.textContent = 'E-posta gönderilirken bir hata oluştu: ' + (data.error || 'Bilinmeyen hata');
         }
         statusDiv.style.display = 'block';
-        
-        // 5 saniye sonra mesajı gizle
+
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 5000);
@@ -764,30 +1460,28 @@ function sendEmailReport() {
         statusDiv.className = 'email-status error';
         statusDiv.textContent = 'E-posta gönderilirken bir hata oluştu: ' + error.message;
         statusDiv.style.display = 'block';
-        
+
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 5000);
     })
     .finally(() => {
-        // Buton durumunu eski haline getir
         sendButton.innerHTML = originalText;
         sendButton.disabled = false;
     });
 }
 
 function getCurrentTabData() {
-    // Aktif sekmenin verilerini topla
     const activeTabPane = document.querySelector('.tab-pane.active .content-area');
     if (!activeTabPane) return null;
-    
+
     const table = activeTabPane.querySelector('table');
     if (!table) return null;
-    
+
     const data = [];
     const rows = table.querySelectorAll('tbody tr');
     const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
-    
+
     rows.forEach(row => {
         const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
         const rowData = {};
@@ -796,14 +1490,13 @@ function getCurrentTabData() {
         });
         data.push(rowData);
     });
-    
+
     return {
         headers: headers,
         rows: data
     };
 }
 
-// DataTables'ı başlat
 $(document).ready(function() {
     $('.report-table').DataTable({
         language: {
@@ -811,9 +1504,8 @@ $(document).ready(function() {
         },
         responsive: true,
         pageLength: 25,
-        order: [[0, 'desc']] // Tarihe göre azalan sıralama
+        order: [[0, 'desc']]
     });
 });
 </script>
 {% endblock %}
-
