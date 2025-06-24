@@ -146,10 +146,10 @@
         font-weight: bold;
     }
 
-    /* Borç ve alacak arka plan renkleri */
+    /* Alacak ve borç arka plan renkleri (eski borç->alacak, eski alacak->borç) */
     .table .debt-amount,
     #detailTable .debt-amount {
-        background-color: #fef9e7 !important;
+        background-color: #f0f4f8 !important;
         font-weight: 600;
         padding: 4px 8px;
         border-radius: 4px;
@@ -157,7 +157,7 @@
 
     .table .receivable-amount,
     #detailTable .receivable-amount {
-        background-color: #f0f4f8 !important;
+        background-color: #fef9e7 !important;
         font-weight: 600;
         padding: 4px 8px;
         border-radius: 4px;
@@ -165,7 +165,7 @@
 
     .table .total-debt,
     #detailTable .total-debt {
-        background-color: #fff8e1 !important;
+        background-color: #e8f4f8 !important;
         font-weight: bold;
         padding: 6px 10px;
         border-radius: 6px;
@@ -173,7 +173,7 @@
 
     .table .total-receivable,
     #detailTable .total-receivable {
-        background-color: #e8f4f8 !important;
+        background-color: #fff8e1 !important;
         font-weight: bold;
         padding: 6px 10px;
         border-radius: 6px;
@@ -390,13 +390,13 @@
     }
 
     .summary-box.debt {
-        background: #e9ecef; /* Soft gri */
-        border: 1px solid #ced4da;
+        background: #fff8dc; /* Açık tonlarda sarı - eski receivable rengi */
+        border: 1px solid #f1c40f;
     }
 
     .summary-box.receivable {
-        background: #fff8dc; /* Açık tonlarda sarı */
-        border: 1px solid #f1c40f;
+        background: #e9ecef; /* Soft gri - eski debt rengi */
+        border: 1px solid #ced4da;
     }
 
     .summary-box.net-positive {
@@ -419,6 +419,74 @@
         font-size: 1.2rem;
         font-weight: bold;
         margin: 0;
+    }
+
+    /* Sıra numarası kolonu için stil */
+    .sequence-column {
+        width: 60px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* Trend analizi sekmeleri için stiller */
+    .nav-pills .nav-link {
+        border-radius: 25px;
+        font-weight: 500;
+        padding: 10px 20px;
+        margin: 0 3px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-pills .nav-link:not(.active) {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+
+    .nav-pills .nav-link:not(.active):hover {
+        background: #e9ecef;
+        color: #495057;
+        transform: translateY(-2px);
+    }
+
+    #receivable-trend-tab.active {
+        background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%) !important;
+        color: white !important;
+    }
+
+    #net-trend-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+    }
+
+    /* Trend tabloları için stiller */
+    .table-sm th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        font-size: 0.8rem;
+        padding: 8px 5px;
+    }
+
+    .table-sm td {
+        font-size: 0.8rem;
+        padding: 6px 5px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .trend-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .trend-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .trend-neutral {
+        color: #6c757d;
+        font-weight: bold;
     }
 </style>
 {% endblock %}
@@ -618,14 +686,6 @@
             <div class="col-md-3">
                 <div class="summary-card text-center">
                     <div class="summary-value" id="total-debt">
-                        {{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺
-                    </div>
-                    <div class="summary-label">Toplam Borç</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="summary-card text-center">
-                    <div class="summary-value" id="total-receivable">
                         {{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺
                     </div>
                     <div class="summary-label">Toplam Alacak</div>
@@ -633,8 +693,16 @@
             </div>
             <div class="col-md-3">
                 <div class="summary-card text-center">
+                    <div class="summary-value" id="total-receivable">
+                        {{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺
+                    </div>
+                    <div class="summary-label">Toplam Borç</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card text-center">
                     <div class="summary-value" id="net-position">
-                        {% set net = results|sum(attribute='TOPLAM_TL_BORC') - results|sum(attribute='TOPLAM_TL_ALACAK') %}
+                        {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
                         {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                     </div>
                     <div class="summary-label">Net Pozisyon</div>
@@ -653,7 +721,7 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="chart-container">
-                    <h6 class="text-center mb-3">Firmalar Bazında Borç Dağılımı</h6>
+                    <h6 class="text-center mb-3">Firmalar Bazında Alacak Dağılımı</h6>
                     <canvas id="debtChart"></canvas>
                 </div>
             </div>
@@ -668,7 +736,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="chart-container">
-                    <h6 class="text-center mb-3">Borç-Alacak Karşılaştırması</h6>
+                    <h6 class="text-center mb-3">Alacak-Borç Karşılaştırması</h6>
                     <canvas id="comparisonChart"></canvas>
                 </div>
             </div>
@@ -688,19 +756,19 @@
                 <div class="col-md-8">
                     <div class="row">
                         <div class="col-md-4">
-                            <div class="summary-box debt">
-                                <h6>Toplam Borç TL Karşılığı</h6>
-                                <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
                             <div class="summary-box receivable">
                                 <h6>Toplam Alacak TL Karşılığı</h6>
                                 <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺</p>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            {% set net = results|sum(attribute='TOPLAM_TL_BORC') - results|sum(attribute='TOPLAM_TL_ALACAK') %}
+                            <div class="summary-box debt">
+                                <h6>Toplam Borç TL Karşılığı</h6>
+                                <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
                             <div class="summary-box {% if net > 0 %}net-positive{% else %}net-negative{% endif %}">
                                 <h6>Net Durum</h6>
                                 <p class="amount">{{ "{:,.2f}".format(net).replace(".", ",") }} ₺</p>
@@ -715,37 +783,39 @@
             <table class="table table-hover" id="detailTable">
                 <thead>
                     <tr>
+                        <th class="sequence-column">Sıra No</th>
                         <th>Firma</th>
                         <th>VKN/TCKNO</th>
                         <th>Cari Ünvanı</th>
-                        <th>USD Borç</th>
-                        <th>EUR Borç</th>
-                        <th>TL Borç</th>
-                        <th>Toplam Borç TL Karşılığı</th>
                         <th>USD Alacak</th>
                         <th>EUR Alacak</th>
                         <th>TL Alacak</th>
                         <th>Toplam Alacak TL Karşılığı</th>
+                        <th>USD Borç</th>
+                        <th>EUR Borç</th>
+                        <th>TL Borç</th>
+                        <th>Toplam Borç TL Karşılığı</th>
                         <th>Net Durum</th>
                         <th>Durum</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in results %}
-                    {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
+                    {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
                     {% if net != 0 %}
                     <tr>
+                        <td class="text-center sequence-column"></td>
                         <td><strong>{{ row.FIRMA }}</strong></td>
                         <td>{{ row['VKN&TCKNO'] }}</td>
                         <td>{{ row.CARI_UNVANI }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.USD_BORC }}">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
-                        <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }}</td>
                         <td class="text-end receivable-amount" data-export="{{ row.USD_ALACAK }}">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
                         <td class="text-end receivable-amount" data-export="{{ row.EURO_ALACAK }}">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
                         <td class="text-end receivable-amount" data-export="{{ row.TL_ALACAK }}">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
                         <td class="text-end total-receivable" data-export="{{ row.TOPLAM_TL_ALACAK }}">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }}</td>
+                        <td class="text-end debt-amount" data-export="{{ row.USD_BORC }}">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
+                        <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
+                        <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
+                        <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }}</td>
                         <td class="text-end" data-sort="{{ "%.2f"|format(net) }}">
                             <span class="{% if net > 0 %}positive{% else %}negative{% endif %}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }}
@@ -753,9 +823,9 @@
                         </td>
                         <td class="text-center">
                             {% if net > 0 %}
-                                <span class="badge bg-success">Borçlu</span>
+                                <span class="badge bg-success">Alacaklı</span>
                             {% elif net < 0 %}
-                                <span class="badge bg-danger">Alacaklı</span>
+                                <span class="badge bg-danger">Borçlu</span>
                             {% else %}
                                 <span class="badge bg-secondary">Sıfır</span>
                             {% endif %}
@@ -797,13 +867,13 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Toplam USD Pozisyon:</strong>
-                                    {% set usd_net = results|sum(attribute='USD_ALACAK') - results|sum(attribute='USD_BORC') %}
+                                    {% set usd_net = results|sum(attribute='USD_BORC') - results|sum(attribute='USD_ALACAK') %}
                                     <span class="{% if usd_net >= 0 %}positive{% else %}negative{% endif %}">
                                         {{ "{:,.2f}".format(usd_net).replace(".", ",") }} USD
                                     </span>
                                 </p>
                                 <p><strong>Toplam EUR Pozisyon:</strong>
-                                    {% set eur_net = results|sum(attribute='EURO_ALACAK') - results|sum(attribute='EURO_BORC') %}
+                                    {% set eur_net = results|sum(attribute='EURO_BORC') - results|sum(attribute='EURO_ALACAK') %}
                                     <span class="{% if eur_net >= 0 %}positive{% else %}negative{% endif %}">
                                         {{ "{:,.2f}".format(eur_net).replace(".", ",") }} EUR
                                     </span>
@@ -832,16 +902,16 @@
                     <div class="card-body text-center">
                         <h6 class="card-title">{{ firma }}</h6>
                         <p class="card-text">
-                            <strong>Toplam Borç:</strong><br>
-                            <span class="negative">{{ "{:,.2f}".format(firma_data|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</span>
-                        </p>
-                        <p class="card-text">
                             <strong>Toplam Alacak:</strong><br>
                             <span class="positive">{{ "{:,.2f}".format(firma_data|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺</span>
                         </p>
                         <p class="card-text">
+                            <strong>Toplam Borç:</strong><br>
+                            <span class="negative">{{ "{:,.2f}".format(firma_data|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</span>
+                        </p>
+                        <p class="card-text">
                             <strong>Net Pozisyon:</strong><br>
-                            {% set net = firma_data|sum(attribute='TOPLAM_TL_BORC') - firma_data|sum(attribute='TOPLAM_TL_ALACAK') %}
+                            {% set net = firma_data|sum(attribute='TOPLAM_TL_ALACAK') - firma_data|sum(attribute='TOPLAM_TL_BORC') %}
                             <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                             </span>
@@ -898,17 +968,17 @@
                         <td>{{ row.CARI_UNVANI }}</td>
                         <td>{{ row.FIRMA }}</td>
                         <td class="text-end">
-                            {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
+                            {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
                             <span class="{% if net >= 0 %}positive{% else %}negative{% endif %}">
                                 {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                             </span>
                         </td>
                         <td class="text-end">
-                            {% set fx_exposure = (row.USD_BORC + row.USD_ALACAK) * row.USD_SATIS_KURU + (row.EURO_BORC + row.EURO_ALACAK) * row.EUR_SATIS_KURU %}
+                            {% set fx_exposure = (row.USD_ALACAK + row.USD_BORC) * row.USD_SATIS_KURU + (row.EURO_ALACAK + row.EURO_BORC) * row.EUR_SATIS_KURU %}
                             {{ "{:,.2f}".format(fx_exposure).replace(".", ",") }} ₺
                         </td>
                         <td>
-                            {% set total_exposure = row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK %}
+                            {% set total_exposure = row.TOPLAM_TL_ALACAK + row.TOPLAM_TL_BORC %}
                             {% if total_exposure < 100000 %}
                                 <span class="risk-indicator risk-low">Düşük</span>
                             {% elif total_exposure < 500000 %}
@@ -958,7 +1028,7 @@ $(document).ready(function() {
     table = $('#detailTable').DataTable({
         responsive: true,
         pageLength: 250,
-        order: [[11, 'desc']], // Net Durum sütunu için varsayılan büyükten küçüğe sıralama
+        order: [[12, 'desc']], // Net Durum sütunu için varsayılan büyükten küçüğe sıralama (sıra no eklendi, 11->12 oldu)
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
         },
@@ -987,8 +1057,23 @@ $(document).ready(function() {
                 className: 'buttons-print d-none',
                 title: 'Cari Bakiye Raporu'
             }
+        ],
+        columnDefs: [
+            {
+                targets: 0, // Sıra numarası kolonu
+                orderable: false, // Sıralama devre dışı
+                searchable: false // Arama devre dışı
+            }
         ]
     });
+
+    // Sıra numarasını dinamik olarak güncelle
+    table.on('draw.dt', function() {
+        updateSequenceNumbers();
+    });
+
+    // İlk yüklemede sıra numarasını ayarla
+    updateSequenceNumbers();
 
     // Cari detay arama fonksiyonu
     $('#detail-search').on('keyup', function() {
@@ -1270,26 +1355,26 @@ function initCharts() {
         return;
     }
 
-    // Firma bazında borç dağılımı
-    const firmaDebts = {};
+    // Firma bazında alacak dağılımı (eski borç grafiği)
+    const firmaReceivables = {};
     results.forEach(row => {
-        if (!firmaDebts[row.FIRMA]) {
-            firmaDebts[row.FIRMA] = 0;
+        if (!firmaReceivables[row.FIRMA]) {
+            firmaReceivables[row.FIRMA] = 0;
         }
-        firmaDebts[row.FIRMA] += row.TOPLAM_TL_BORC;
+        firmaReceivables[row.FIRMA] += row.TOPLAM_TL_ALACAK;
     });
 
-    console.log('Firma borçları:', firmaDebts);
+    console.log('Firma alacakları:', firmaReceivables);
 
-    // Borç grafiği
+    // Alacak grafiği (eski borç grafiği)
     const debtChartElement = document.getElementById('debtChart');
     if (debtChartElement) {
         new Chart(debtChartElement, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(firmaDebts),
+                labels: Object.keys(firmaReceivables),
                 datasets: [{
-                    data: Object.values(firmaDebts),
+                    data: Object.values(firmaReceivables),
                     backgroundColor: [
                         '#667eea',
                         '#764ba2',
@@ -1320,9 +1405,9 @@ function initCharts() {
     // Döviz türlerine göre dağılım
     let totalUSD = 0, totalEUR = 0, totalTL = 0;
     results.forEach(row => {
-        totalUSD += (row.USD_BORC + row.USD_ALACAK) * row.USD_SATIS_KURU;
-        totalEUR += (row.EURO_BORC + row.EURO_ALACAK) * row.EUR_SATIS_KURU;
-        totalTL += row.TL_BORC + row.TL_ALACAK;
+        totalUSD += (row.USD_ALACAK + row.USD_BORC) * row.USD_SATIS_KURU;
+        totalEUR += (row.EURO_ALACAK + row.EURO_BORC) * row.EUR_SATIS_KURU;
+        totalTL += row.TL_ALACAK + row.TL_BORC;
     });
 
     const currencyChartElement = document.getElementById('currencyChart');
@@ -1356,13 +1441,13 @@ function initCharts() {
         });
     }
 
-    // Borç-Alacak karşılaştırması
-    const firmaReceivables = {};
+    // Alacak-Borç karşılaştırması (eski borç-alacak)
+    const firmaDebts = {};
     results.forEach(row => {
-        if (!firmaReceivables[row.FIRMA]) {
-            firmaReceivables[row.FIRMA] = 0;
+        if (!firmaDebts[row.FIRMA]) {
+            firmaDebts[row.FIRMA] = 0;
         }
-        firmaReceivables[row.FIRMA] += row.TOPLAM_TL_ALACAK;
+        firmaDebts[row.FIRMA] += row.TOPLAM_TL_BORC;
     });
 
     const comparisonChartElement = document.getElementById('comparisonChart');
@@ -1370,16 +1455,16 @@ function initCharts() {
         new Chart(comparisonChartElement, {
             type: 'bar',
             data: {
-                labels: Object.keys(firmaDebts),
+                labels: Object.keys(firmaReceivables),
                 datasets: [{
-                    label: 'Borç',
-                    data: Object.values(firmaDebts),
-                    backgroundColor: '#ff6b6b',
-                    borderRadius: 5
-                }, {
                     label: 'Alacak',
                     data: Object.values(firmaReceivables),
                     backgroundColor: '#4ecdc4',
+                    borderRadius: 5
+                }, {
+                    label: 'Borç',
+                    data: Object.values(firmaDebts),
+                    backgroundColor: '#ff6b6b',
                     borderRadius: 5
                 }]
             },
@@ -1412,11 +1497,11 @@ function initCharts() {
         });
     }
 
-    // Döviz pozisyon analizi
+    // Döviz pozisyon analizi (başlıklar değiştirildi)
     let usdPosition = 0, eurPosition = 0;
     results.forEach(row => {
-        usdPosition += (row.USD_ALACAK - row.USD_BORC);
-        eurPosition += (row.EURO_ALACAK - row.EURO_BORC);
+        usdPosition += (row.USD_BORC - row.USD_ALACAK);
+        eurPosition += (row.EURO_BORC - row.EURO_ALACAK);
     });
 
     const currencyPositionChartElement = document.getElementById('currencyPositionChart');
@@ -1476,7 +1561,7 @@ function initCharts() {
                         Math.min(Math.abs(usdPosition) / 100000 * 100, 100),
                         Math.min(Math.abs(eurPosition) / 100000 * 100, 100),
                         Math.min(totalTL / (totalUSD + totalEUR + totalTL) * 100, 100),
-                        Math.min(Object.keys(firmaDebts).length * 20, 100),
+                        Math.min(Object.keys(firmaReceivables).length * 20, 100),
                         80
                     ],
                     backgroundColor: 'rgba(102, 126, 234, 0.2)',
@@ -1504,10 +1589,10 @@ function initCharts() {
         new Chart(firmaComparisonChartElement, {
             type: 'line',
             data: {
-                labels: Object.keys(firmaDebts),
+                labels: Object.keys(firmaReceivables),
                 datasets: [{
                     label: 'Net Pozisyon',
-                    data: Object.keys(firmaDebts).map(firma => firmaDebts[firma] - firmaReceivables[firma]),
+                    data: Object.keys(firmaReceivables).map(firma => firmaReceivables[firma] - firmaDebts[firma]),
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 3,
@@ -1544,7 +1629,7 @@ function initCharts() {
     // Risk dağılım grafiği
     const riskLevels = { 'Düşük': 0, 'Orta': 0, 'Yüksek': 0 };
     results.forEach(row => {
-        const totalExposure = row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK;
+        const totalExposure = row.TOPLAM_TL_ALACAK + row.TOPLAM_TL_BORC;
         if (totalExposure < 100000) {
             riskLevels['Düşük']++;
         } else if (totalExposure < 500000) {
@@ -1587,8 +1672,8 @@ function initCharts() {
                 datasets: [{
                     label: 'Cari Risk',
                     data: results.map(row => ({
-                        x: row.TOPLAM_TL_BORC + row.TOPLAM_TL_ALACAK,
-                        y: Math.abs(row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK)
+                        x: row.TOPLAM_TL_ALACAK + row.TOPLAM_TL_BORC,
+                        y: Math.abs(row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC)
                     })),
                     backgroundColor: 'rgba(102, 126, 234, 0.6)',
                     borderColor: '#667eea'
@@ -1635,6 +1720,9 @@ function initCharts() {
     }
 
     console.log('Tüm grafikler oluşturuldu');
+
+    // Trend analizi grafiklerini başlat
+    initTrendAnalysis();
 }
 
 function showLoading() {
@@ -1645,6 +1733,464 @@ function showLoading() {
 function hideLoading() {
     $('.loading-spinner').hide();
     $('#reportTabContent').show();
+}
+
+// Sıra numarasını dinamik olarak güncelleme fonksiyonu
+function updateSequenceNumbers() {
+    if (!table) return;
+
+    // Görünür satırları al (sayfalama ve filtreleme dikkate alınarak)
+    const visibleRows = table.rows({ page: 'current', search: 'applied' }).nodes();
+
+    // Her satıra sıra numarası ekle
+    $(visibleRows).each(function(index) {
+        $(this).find('td:first-child').text(index + 1);
+    });
+}
+
+// Trend analizi başlatma fonksiyonu
+function initTrendAnalysis() {
+    console.log('Trend analizi başlatılıyor...');
+
+    // Mevcut verilerden aylık trend verisi oluştur
+    const trendData = generateMonthlyTrendData();
+
+    // Grafikleri oluştur
+    createTrendCharts(trendData);
+
+    // Tabloları doldur
+    populateTrendTables(trendData);
+
+    console.log('Trend analizi tamamlandı');
+}
+
+// Aylık trend verisi oluşturma fonksiyonu
+function generateMonthlyTrendData() {
+    if (!results || results.length === 0) return [];
+
+    // 2025 yılı için aylık dönemler
+    const periods = [
+        { name: 'Ocak 2025', startDate: '2025-01-01', endDate: '2025-01-31' },
+        { name: 'Şubat 2025', startDate: '2025-02-01', endDate: '2025-02-28' },
+        { name: 'Mart 2025', startDate: '2025-03-01', endDate: '2025-03-31' },
+        { name: 'Nisan 2025', startDate: '2025-04-01', endDate: '2025-04-30' },
+        { name: 'Mayıs 2025', startDate: '2025-05-01', endDate: '2025-05-31' },
+        { name: 'Haziran 2025', startDate: '2025-06-01', endDate: '2025-06-30' }
+    ];
+
+    // NOT: Gerçek implementasyon için backend API'den veri çekilmeli
+    // Her dönem için ay başı ve ay sonu verileri simüle edilmiş
+    const monthlyTrendData = [];
+
+    periods.forEach((period, index) => {
+        // Simüle edilmiş ay başı kur değerleri
+        const startUsdRate = 34.5 + (Math.random() * 2); // 34.5-36.5 arası
+        const startEurRate = 36.8 + (Math.random() * 2); // 36.8-38.8 arası
+
+        // Simüle edilmiş ay sonu kur değerleri (genelde biraz farklı)
+        const endUsdRate = startUsdRate + (Math.random() * 1.5 - 0.75); // ±0.75 değişim
+        const endEurRate = startEurRate + (Math.random() * 1.5 - 0.75);
+
+        // Mevcut verileri temel alarak ay başı/sonu hesaplaması
+        // Gerçekte her tarih için backend'den çekilmeli
+        let startTotalDebt = 0, startTotalReceivable = 0;
+        let endTotalDebt = 0, endTotalReceivable = 0;
+
+        results.forEach(row => {
+            // Ay başı değerleri (simüle edilmiş - gerçekte API'den gelecek)
+            const startDebtTL = (row.USD_BORC * startUsdRate) + (row.EURO_BORC * startEurRate) + row.TL_BORC;
+            const startReceivableTL = (row.USD_ALACAK * startUsdRate) + (row.EURO_ALACAK * startEurRate) + row.TL_ALACAK;
+
+            // Aylık varyasyon faktörü (simülasyon için)
+            const monthlyVariation = 0.9 + (Math.random() * 0.2); // %90-110 arası
+
+            // Ay sonu değerleri (simüle edilmiş)
+            const endDebtTL = (row.USD_BORC * monthlyVariation * endUsdRate) +
+                              (row.EURO_BORC * monthlyVariation * endEurRate) +
+                              (row.TL_BORC * monthlyVariation);
+            const endReceivableTL = (row.USD_ALACAK * monthlyVariation * endUsdRate) +
+                                   (row.EURO_ALACAK * monthlyVariation * endEurRate) +
+                                   (row.TL_ALACAK * monthlyVariation);
+
+            startTotalDebt += startDebtTL;
+            startTotalReceivable += startReceivableTL;
+            endTotalDebt += endDebtTL;
+            endTotalReceivable += endReceivableTL;
+        });
+
+        const startNet = startTotalReceivable - startTotalDebt;
+        const endNet = endTotalReceivable - endTotalDebt;
+
+        monthlyTrendData.push({
+            month: period.name,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            startUsdRate: startUsdRate,
+            startEurRate: startEurRate,
+            endUsdRate: endUsdRate,
+            endEurRate: endEurRate,
+            debt: {
+                start: startTotalDebt,
+                end: endTotalDebt,
+                change: endTotalDebt - startTotalDebt
+            },
+            receivable: {
+                start: startTotalReceivable,
+                end: endTotalReceivable,
+                change: endTotalReceivable - startTotalReceivable
+            },
+            net: {
+                start: startNet,
+                end: endNet,
+                change: endNet - startNet
+            }
+        });
+    });
+
+    return monthlyTrendData;
+}
+
+// Gerçek API implementasyonu için örnek fonksiyon
+async function fetchRealMonthlyData() {
+    // Bu fonksiyon gerçek projede kullanılmalı
+    const periods = [
+        { startDate: '2025-01-01', endDate: '2025-01-31' },
+        { startDate: '2025-02-01', endDate: '2025-02-28' },
+        { startDate: '2025-03-01', endDate: '2025-03-31' },
+        { startDate: '2025-04-01', endDate: '2025-04-30' },
+        { startDate: '2025-05-01', endDate: '2025-05-31' },
+        { startDate: '2025-06-01', endDate: '2025-06-30' }
+    ];
+
+    const monthlyData = [];
+
+    for (const period of periods) {
+        try {
+            // Ay başı verisi
+            const startResponse = await fetch(`/cari_bakiye_api?date=${period.startDate}&firmas=${getSelectedFirmas()}&cari_grups=${getSelectedCariGrups()}&cari_turs=${getSelectedCariTurs()}&durums=${getSelectedDurums()}`);
+            const startData = await startResponse.json();
+
+            // Ay sonu verisi
+            const endResponse = await fetch(`/cari_bakiye_api?date=${period.endDate}&firmas=${getSelectedFirmas()}&cari_grups=${getSelectedCariGrups()}&cari_turs=${getSelectedCariTurs()}&durums=${getSelectedDurums()}`);
+            const endData = await endResponse.json();
+
+            if (startData.success && endData.success) {
+                const monthName = new Date(period.startDate).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+
+                monthlyData.push({
+                    month: monthName,
+                    startDate: period.startDate,
+                    endDate: period.endDate,
+                    debt: {
+                        start: startData.summary.reduce((sum, item) => sum + item.TOPLAM_BORC, 0),
+                        end: endData.summary.reduce((sum, item) => sum + item.TOPLAM_BORC, 0)
+                    },
+                    receivable: {
+                        start: startData.summary.reduce((sum, item) => sum + item.TOPLAM_ALACAK, 0),
+                        end: endData.summary.reduce((sum, item) => sum + item.TOPLAM_ALACAK, 0)
+                    },
+                    startUsdRate: startData.summary[0]?.USD_KURU || 0,
+                    endUsdRate: endData.summary[0]?.USD_KURU || 0,
+                    startEurRate: startData.summary[0]?.EUR_KURU || 0,
+                    endEurRate: endData.summary[0]?.EUR_KURU || 0
+                });
+            }
+        } catch (error) {
+            console.error(`Ay başı/sonu veri çekme hatası - ${period.startDate}:`, error);
+        }
+    }
+
+    return monthlyData;
+}
+
+// Seçili filtreleri alma yardımcı fonksiyonları
+function getSelectedFirmas() {
+    const selected = [];
+    $('#firma-select input[type="checkbox"]:checked').each(function() {
+        selected.push($(this).val());
+    });
+    return selected.join(',');
+}
+
+function getSelectedCariGrups() {
+    const selected = [];
+    $('#cari-grup-select input[type="checkbox"]:checked').each(function() {
+        selected.push($(this).val());
+    });
+    return selected.join(',');
+}
+
+function getSelectedCariTurs() {
+    const selected = [];
+    $('#cari-tur-select input[type="checkbox"]:checked').each(function() {
+        selected.push($(this).val());
+    });
+    return selected.join(',');
+}
+
+function getSelectedDurums() {
+    const selected = [];
+    $('#durum-select input[type="checkbox"]:checked').each(function() {
+        selected.push($(this).val());
+    });
+    return selected.join(',');
+}
+
+// Trend grafiklerini oluşturma fonksiyonu
+function createTrendCharts(trendData) {
+    if (!trendData || trendData.length === 0) return;
+
+    const months = trendData.map(data => data.month);
+
+    // Borç Trend Grafiği
+    const debtTrendElement = document.getElementById('debtTrendChart');
+    if (debtTrendElement) {
+        new Chart(debtTrendElement, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Ay Başı Borç',
+                    data: trendData.map(data => data.debt.start),
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: 'Ay Sonu Borç',
+                    data: trendData.map(data => data.debt.end),
+                    borderColor: '#ee5a52',
+                    backgroundColor: 'rgba(238, 90, 82, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatMoney(value) + ' ₺';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatMoney(context.raw) + ' ₺';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Alacak Trend Grafiği
+    const receivableTrendElement = document.getElementById('receivableTrendChart');
+    if (receivableTrendElement) {
+        new Chart(receivableTrendElement, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Ay Başı Alacak',
+                    data: trendData.map(data => data.receivable.start),
+                    borderColor: '#4ecdc4',
+                    backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: 'Ay Sonu Alacak',
+                    data: trendData.map(data => data.receivable.end),
+                    borderColor: '#44a08d',
+                    backgroundColor: 'rgba(68, 160, 141, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatMoney(value) + ' ₺';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatMoney(context.raw) + ' ₺';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Net Durum Trend Grafiği
+    const netTrendElement = document.getElementById('netTrendChart');
+    if (netTrendElement) {
+        new Chart(netTrendElement, {
+            type: 'bar',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Ay Başı Net Durum',
+                    data: trendData.map(data => data.net.start),
+                    backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 5
+                }, {
+                    label: 'Ay Sonu Net Durum',
+                    data: trendData.map(data => data.net.end),
+                    backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                    borderColor: '#764ba2',
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return formatMoney(value) + ' ₺';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatMoney(context.raw) + ' ₺';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Trend tablolarını doldurma fonksiyonu
+function populateTrendTables(trendData) {
+    if (!trendData || trendData.length === 0) return;
+
+    // Borç Trend Tablosu
+    const debtTrendBody = document.getElementById('debtTrendBody');
+    if (debtTrendBody) {
+        debtTrendBody.innerHTML = '';
+        trendData.forEach(data => {
+            const changeClass = data.debt.change > 0 ? 'trend-negative' : data.debt.change < 0 ? 'trend-positive' : 'trend-neutral';
+            const changeIcon = data.debt.change > 0 ? '↗' : data.debt.change < 0 ? '↘' : '→';
+
+            // Kur değişimi hesapla
+            const kurEtkisi = ((data.endUsdRate - data.startUsdRate) + (data.endEurRate - data.startEurRate)) / 2;
+            const kurEtkisiClass = kurEtkisi > 0 ? 'trend-negative' : kurEtkisi < 0 ? 'trend-positive' : 'trend-neutral';
+            const kurEtkisiIcon = kurEtkisi > 0 ? '↗' : kurEtkisi < 0 ? '↘' : '→';
+
+            const row = `
+                <tr>
+                    <td><strong>${data.month.split(' ')[0]}</strong></td>
+                    <td>${formatMoney(data.debt.start)} ₺</td>
+                    <td>${formatMoney(data.debt.end)} ₺</td>
+                    <td class="${changeClass}">${changeIcon} ${formatMoney(Math.abs(data.debt.change))} ₺</td>
+                    <td class="${kurEtkisiClass}" title="USD: ${data.startUsdRate.toFixed(4)}→${data.endUsdRate.toFixed(4)}, EUR: ${data.startEurRate.toFixed(4)}→${data.endEurRate.toFixed(4)}">
+                        ${kurEtkisiIcon} ${Math.abs(kurEtkisi).toFixed(3)} ₺
+                    </td>
+                </tr>
+            `;
+            debtTrendBody.innerHTML += row;
+        });
+    }
+
+    // Alacak Trend Tablosu
+    const receivableTrendBody = document.getElementById('receivableTrendBody');
+    if (receivableTrendBody) {
+        receivableTrendBody.innerHTML = '';
+        trendData.forEach(data => {
+            const changeClass = data.receivable.change > 0 ? 'trend-positive' : data.receivable.change < 0 ? 'trend-negative' : 'trend-neutral';
+            const changeIcon = data.receivable.change > 0 ? '↗' : data.receivable.change < 0 ? '↘' : '→';
+
+            // Kur değişimi hesapla
+            const kurEtkisi = ((data.endUsdRate - data.startUsdRate) + (data.endEurRate - data.startEurRate)) / 2;
+            const kurEtkisiClass = kurEtkisi > 0 ? 'trend-positive' : kurEtkisi < 0 ? 'trend-negative' : 'trend-neutral';
+            const kurEtkisiIcon = kurEtkisi > 0 ? '↗' : kurEtkisi < 0 ? '↘' : '→';
+
+            const row = `
+                <tr>
+                    <td><strong>${data.month.split(' ')[0]}</strong></td>
+                    <td>${formatMoney(data.receivable.start)} ₺</td>
+                    <td>${formatMoney(data.receivable.end)} ₺</td>
+                    <td class="${changeClass}">${changeIcon} ${formatMoney(Math.abs(data.receivable.change))} ₺</td>
+                    <td class="${kurEtkisiClass}" title="USD: ${data.startUsdRate.toFixed(4)}→${data.endUsdRate.toFixed(4)}, EUR: ${data.startEurRate.toFixed(4)}→${data.endEurRate.toFixed(4)}">
+                        ${kurEtkisiIcon} ${Math.abs(kurEtkisi).toFixed(3)} ₺
+                    </td>
+                </tr>
+            `;
+            receivableTrendBody.innerHTML += row;
+        });
+    }
+
+    // Net Durum Trend Tablosu
+    const netTrendBody = document.getElementById('netTrendBody');
+    if (netTrendBody) {
+        netTrendBody.innerHTML = '';
+        trendData.forEach(data => {
+            const changeClass = data.net.change > 0 ? 'trend-positive' : data.net.change < 0 ? 'trend-negative' : 'trend-neutral';
+            const changeIcon = data.net.change > 0 ? '↗' : data.net.change < 0 ? '↘' : '→';
+
+            // Net durum için kur etkisi
+            const kurEtkisi = ((data.endUsdRate - data.startUsdRate) + (data.endEurRate - data.startEurRate)) / 2;
+            const kurEtkisiClass = Math.abs(kurEtkisi) > 0.5 ? 'trend-negative' : 'trend-neutral';
+            const kurEtkisiIcon = Math.abs(kurEtkisi) > 0.5 ? '⚠' : '→';
+
+            const row = `
+                <tr>
+                    <td><strong>${data.month.split(' ')[0]}</strong></td>
+                    <td>${formatMoney(data.net.start)} ₺</td>
+                    <td>${formatMoney(data.net.end)} ₺</td>
+                    <td class="${changeClass}">${changeIcon} ${formatMoney(Math.abs(data.net.change))} ₺</td>
+                    <td class="${kurEtkisiClass}" title="Ay içi ortalama kur değişimi">
+                        ${kurEtkisiIcon} ${Math.abs(kurEtkisi).toFixed(3)} ₺
+                    </td>
+                </tr>
+            `;
+            netTrendBody.innerHTML += row;
+        });
+    }
 }
 </script>
 {% endblock %}
