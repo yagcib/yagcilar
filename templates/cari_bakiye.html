@@ -743,114 +743,115 @@
         </div>
     </div>
 
-    <!-- Cari Detaylı Bakiye Sekmesi -->
-    <div class="tab-pane fade" id="detay" role="tabpanel">
-        <!-- Cari Arama ve Toplam Alanları -->
-        <div class="search-summary-area">
-            <div class="row">
-                <div class="col-md-4">
-                    <label for="detail-search" class="form-label"><strong>Cari Detay Arama</strong></label>
-                    <input type="text" class="form-control" id="detail-search" placeholder="Tabloda arama yapın...">
-                    <small class="text-muted">Net Durum ≠ 0 olan {{ results|length }} cari hesap listelendi</small>
-                </div>
-                <div class="col-md-8">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="summary-box receivable">
-                                <h6>Cari Alacak TL Karşılığı</h6>
-                                <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(".", ",") }} ₺</p>
-                            </div>
+    <!-- Cari Detaylı Bakiye Sekmesi - Güncellenmiş Sayı Formatları -->
+<div class="tab-pane fade" id="detay" role="tabpanel">
+    <!-- Cari Arama ve Toplam Alanları -->
+    <div class="search-summary-area">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="detail-search" class="form-label"><strong>Cari Detay Arama</strong></label>
+                <input type="text" class="form-control" id="detail-search" placeholder="Tabloda arama yapın...">
+                <small class="text-muted">Net Durum ≠ 0 olan {{ results|length }} cari hesap listelendi</small>
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="summary-box receivable">
+                            <h6>Cari Alacak TL Karşılığı</h6>
+                            <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_ALACAK')).replace(",", "X").replace(".", ",").replace("X", ".") }} ₺</p>
                         </div>
-                        <div class="col-md-4">
-                            <div class="summary-box debt">
-                                <h6>Cari Borç TL Karşılığı</h6>
-                                <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(".", ",") }} ₺</p>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-box debt">
+                            <h6>Cari Borç TL Karşılığı</h6>
+                            <p class="amount">{{ "{:,.2f}".format(results|sum(attribute='TOPLAM_TL_BORC')).replace(",", "X").replace(".", ",").replace("X", ".") }} ₺</p>
                         </div>
-                        <div class="col-md-4">
-                            {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
-                            <div class="summary-box {% if net > 0 %}net-positive{% else %}net-negative{% endif %}">
-                                <h6>Net Durum</h6>
-                                <p class="amount">{{ "{:,.2f}".format(net).replace(".", ",") }} ₺</p>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
+                        <div class="summary-box {% if net > 0 %}net-positive{% else %}net-negative{% endif %}">
+                            <h6>Net Durum</h6>
+                            <p class="amount">{{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }} ₺</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="table-responsive detail-table">
-            <table class="table table-hover" id="detailTable">
-                <thead>
-                    <tr>
-                        <th class="sequence-column">Sıra No</th>
-                        <th>Firma</th>
-                        <th>VKN/TCKNO</th>
-                        <th>Cari Ünvanı</th>
-                        <th>USD Alacak</th>
-                        <th>EUR Alacak</th>
-                        <th>TL Alacak</th>
-                        <th>Toplam Alacak TL Karşılığı</th>
-                        <th>USD Borç</th>
-                        <th>EUR Borç</th>
-                        <th>TL Borç</th>
-                        <th>Toplam Borç TL Karşılığı</th>
-                        <th>Net Durum</th>
-                        <th>Durum</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in results %}
-                    {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
-                    {% if net != 0 %}
-                    <tr>
-                        <td class="text-center sequence-column"></td>
-                        <td><strong>{{ row.FIRMA }}</strong></td>
-                        <td>{{ row['VKN&TCKNO'] }}</td>
-                        <td>{{ row.CARI_UNVANI }}</td>
-                        <td class="text-end receivable-amount" data-export="{{ row.USD_ALACAK }}">{{ "{:,.2f}".format(row.USD_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end receivable-amount" data-export="{{ row.EURO_ALACAK }}">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end receivable-amount" data-export="{{ row.TL_ALACAK }}">{{ "{:,.2f}".format(row.TL_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end total-receivable" data-export="{{ row.TOPLAM_TL_ALACAK }}">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.USD_BORC }}">{{ "{:,.2f}".format(row.USD_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(".", ",") }}</td>
-                        <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(".", ",") }}</td>
-                        <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(".", ",") }}</td>
-                        <td class="text-end" data-sort="{{ "%.2f"|format(net) }}">
-    {% if net > 0 %}
-        <!-- Alacaklı ise negatif göster ve kırmızı yap -->
-        <span class="negative">
-            -{{ "{:,.2f}".format(net).replace(".", ",") }}
-        </span>
-    {% elif net < 0 %}
-        <!-- Borçlu ise pozitif göster ve yeşil yap -->
-        <span class="positive">
-            {{ "{:,.2f}".format(net|abs).replace(".", ",") }}
-        </span>
-    {% else %}
-        <span style="color: #6c757d;">
-            {{ "{:,.2f}".format(net).replace(".", ",") }}
-        </span>
-    {% endif %}
-</td>
-                        <td class="text-center">
-    {% if net > 0 %}
-        <!-- Alacaklı ise kırmızı -->
-        <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
-    {% elif net < 0 %}
-        <!-- Borçlu ise yeşil -->
-        <span class="badge" style="background-color: #28a745; color: white;">Borçlu</span>
-    {% else %}
-        <span class="badge bg-secondary">Sıfır</span>
-    {% endif %}
-</td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
     </div>
+
+    <div class="table-responsive detail-table">
+        <table class="table table-hover" id="detailTable">
+            <thead>
+                <tr>
+                    <th class="sequence-column">Sıra No</th>
+                    <th>Firma</th>
+                    <th>VKN/TCKNO</th>
+                    <th>Cari Ünvanı</th>
+                    <th>USD Alacak</th>
+                    <th>EUR Alacak</th>
+                    <th>TL Alacak</th>
+                    <th>Toplam Alacak TL Karşılığı</th>
+                    <th>USD Borç</th>
+                    <th>EUR Borç</th>
+                    <th>TL Borç</th>
+                    <th>Toplam Borç TL Karşılığı</th>
+                    <th>Net Durum</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
+                {% if net != 0 %}
+                <tr>
+                    <td class="text-center sequence-column"></td>
+                    <td><strong>{{ row.FIRMA }}</strong></td>
+                    <td>{{ row['VKN&TCKNO'] }}</td>
+                    <td>{{ row.CARI_UNVANI }}</td>
+                    <td class="text-end receivable-amount" data-export="{{ row.USD_ALACAK }}">{{ "{:,.2f}".format(row.USD_ALACAK).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end receivable-amount" data-export="{{ row.EURO_ALACAK }}">{{ "{:,.2f}".format(row.EURO_ALACAK).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end receivable-amount" data-export="{{ row.TL_ALACAK }}">{{ "{:,.2f}".format(row.TL_ALACAK).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end total-receivable" data-export="{{ row.TOPLAM_TL_ALACAK }}">{{ "{:,.2f}".format(row.TOPLAM_TL_ALACAK).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end debt-amount" data-export="{{ row.USD_BORC }}">{{ "{:,.2f}".format(row.USD_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                    <td class="text-end" data-sort="{{ "%.2f"|format(net) }}" data-export="{{ "%.2f"|format(net) }}">
+                        {% if net > 0 %}
+                            <!-- Alacaklı ise negatif göster ve kırmızı yap -->
+                            <span class="negative">
+                                -{{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        {% elif net < 0 %}
+                            <!-- Borçlu ise pozitif göster ve yeşil yap -->
+                            <span class="positive">
+                                {{ "{:,.2f}".format(net|abs).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        {% else %}
+                            <span style="color: #6c757d;">
+                                {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if net > 0 %}
+                            <!-- Alacaklı ise kırmızı -->
+                            <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
+                        {% elif net < 0 %}
+                            <!-- Borçlu ise yeşil -->
+                            <span class="badge" style="background-color: #28a745; color: white;">Borçlu</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Sıfır</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 
     <!-- Kur Analizi Sekmesi -->
     <div class="tab-pane fade" id="kur" role="tabpanel">
@@ -1024,129 +1025,164 @@
 let table;
 let results = {{ results|tojson }};
 
-// Para formatı fonksiyonu - Global olarak tanımla
+// Türkçe sayı formatı fonksiyonu - Güncellenmiş
 function formatMoney(amount) {
     if (amount === null || amount === undefined || isNaN(amount)) {
         return '0,00';
     }
+
+    // Türkçe format: binlik ayracı nokta (.), ondalık ayracı virgül (,)
     return new Intl.NumberFormat('tr-TR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(amount);
 }
 
-$(document).ready(function() {
-    console.log('Sayfa yüklendi, results:', results);
+// Sayıyı Türkçe formatına çeviren yardımcı fonksiyon
+function formatNumberTurkish(num) {
+    if (num === null || num === undefined || isNaN(num)) {
+        return '0,00';
+    }
 
-    // DataTable initialization
+    const parts = Math.abs(num).toFixed(2).split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // Binlik ayracı ekle (nokta)
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    // Sonucu birleştir (ondalık ayracı virgül)
+    return (num < 0 ? '-' : '') + formattedInteger + ',' + decimalPart;
+}
+
+// DataTable sütun formatları için özel render fonksiyonları
+$.fn.dataTable.render.turkishNumber = function() {
+    return function(data, type, row) {
+        if (type === 'display' || type === 'type') {
+            return formatNumberTurkish(parseFloat(data) || 0);
+        }
+        return data;
+    };
+};
+
+
+
+// DataTable konfigürasyonuna sütun formatları ekle
+$(document).ready(function() {
+    // Mevcut DataTable yapılandırmasına columnDefs ekle
+    if (table) {
+        table.destroy(); // Mevcut tabloyu yok et
+    }
+
     table = $('#detailTable').DataTable({
         responsive: true,
         pageLength: 250,
-        order: [[12, 'desc']], // Net Durum sütunu için varsayılan büyükten küçüğe sıralama (sıra no eklendi, 11->12 oldu)
+        order: [[12, 'desc']],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
         },
-        dom: 'Brtip', // search kutucuğunu kaldırdık (f harfini çıkardık)
+        dom: 'Brtip',
+        columnDefs: [
+            {
+                targets: 0, // Sıra numarası kolonu
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [4, 5, 6, 7, 8, 9, 10, 11, 12], // Sayısal kolonlar
+                className: 'text-end'
+            }
+        ],
         buttons: [
-        {
-            extend: 'copy',
-            className: 'buttons-copy d-none',
-            exportOptions: {
-                format: {
-                    body: function (data, row, column, node) {
-                        // Sıra no kolonu için
-                        if (column === 0) {
+            {
+                extend: 'copy',
+                className: 'buttons-copy d-none',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
                             return $(node).text();
                         }
-                        // Diğer kolonlar için data-export varsa onu kullan
-                        if ($(node).attr('data-export')) {
-                            return $(node).attr('data-export');
+                    }
+                }
+            },
+            {
+                extend: 'csv',
+                className: 'buttons-csv d-none',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
                         }
-                        // Normal text
-                        return $(node).text();
+                    }
+                }
+            },
+            {
+                extend: 'excel',
+                className: 'buttons-excel d-none',
+                title: '',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'pdf',
+                className: 'buttons-pdf d-none',
+                title: '',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'print',
+                className: 'buttons-print d-none',
+                title: '',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
                     }
                 }
             }
-        },
-        {
-            extend: 'csv',
-            className: 'buttons-csv d-none',
-            exportOptions: {
-                format: {
-                    body: function (data, row, column, node) {
-                        if (column === 0) {
-                            return $(node).text();
-                        }
-                        if ($(node).attr('data-export')) {
-                            return $(node).attr('data-export');
-                        }
-                        return $(node).text();
-                    }
-                }
-            }
-        },
-        {
-            extend: 'excel',
-            className: 'buttons-excel d-none',
-            title: 'Cari Bakiye Raporu',
-            exportOptions: {
-                format: {
-                    body: function (data, row, column, node) {
-                        if (column === 0) {
-                            return $(node).text();
-                        }
-                        if ($(node).attr('data-export')) {
-                            return $(node).attr('data-export');
-                        }
-                        return $(node).text();
-                    }
-                }
-            }
-        },
-        {
-            extend: 'pdf',
-            className: 'buttons-pdf d-none',
-            title: 'Cari Bakiye Raporu',
-            exportOptions: {
-                format: {
-                    body: function (data, row, column, node) {
-                        if (column === 0) {
-                            return $(node).text();
-                        }
-                        if ($(node).attr('data-export')) {
-                            return $(node).attr('data-export');
-                        }
-                        return $(node).text();
-                    }
-                }
-            }
-        },
-        {
-            extend: 'print',
-            className: 'buttons-print d-none',
-            title: 'Cari Bakiye Raporu',
-            exportOptions: {
-                format: {
-                    body: function (data, row, column, node) {
-                        if (column === 0) {
-                            return $(node).text();
-                        }
-                        if ($(node).attr('data-export')) {
-                            return $(node).attr('data-export');
-                        }
-                        return $(node).text();
-                    }
-                }
-            }
-        }
-    ],
-    columnDefs: [
-        {
-            targets: 0, // Sıra numarası kolonu
-            orderable: false,
-            searchable: false
-        }
-    ]
+        ]
     });
 
     // Sıra numarasını dinamik olarak güncelle
