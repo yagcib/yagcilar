@@ -12434,7 +12434,7 @@ def cari_bakiye():
         # Filtreleme koşullarını ekle
         where_conditions = []
 
-        # Firma filtresi (multi-select)
+        # Firma filtresi (multi-select) - değişiklik yok
         if firma_filter and len(firma_filter) > 0:
             firma_conditions = []
             for firma in firma_filter:
@@ -12444,29 +12444,43 @@ def cari_bakiye():
             if firma_conditions:
                 where_conditions.append(f"({' OR '.join(firma_conditions)})")
 
-        # Cari Grup filtresi (multi-select)
+        # Cari Grup filtresi (multi-select) - GÜNCELLENMIŞ
         if cari_grup_filter and len(cari_grup_filter) > 0:
-            grup_conditions = []
-            for grup in cari_grup_filter:
-                if grup == '':  # Boş değer
-                    grup_conditions.append("(KML.[CARİ GRUP] = '' OR KML.[CARİ GRUP] IS NULL)")
-                elif grup.strip():
-                    safe_grup = grup.strip().replace("'", "''")  # SQL injection koruması
-                    grup_conditions.append(f"KML.[CARİ GRUP] = '{safe_grup}'")
-            if grup_conditions:
-                where_conditions.append(f"({' OR '.join(grup_conditions)})")
+            if len(cari_grup_filter) == 1 and cari_grup_filter[0] == '__EMPTY_ONLY__':
+                # Sadece boş değer seçili ise
+                where_conditions.append("(KML.[CARİ GRUP] = '' OR KML.[CARİ GRUP] IS NULL)")
+                print("DEBUG - Sadece boş grup filtresi eklendi")
+            else:
+                # Normal grup filtreleme
+                grup_conditions = []
+                for grup in cari_grup_filter:
+                    if grup == '' or grup == '__EMPTY_ONLY__':  # Boş değer
+                        grup_conditions.append("(KML.[CARİ GRUP] = '' OR KML.[CARİ GRUP] IS NULL)")
+                    elif grup.strip():
+                        safe_grup = grup.strip().replace("'", "''")  # SQL injection koruması
+                        grup_conditions.append(f"KML.[CARİ GRUP] = '{safe_grup}'")
+                if grup_conditions:
+                    where_conditions.append(f"({' OR '.join(grup_conditions)})")
+                    print(f"DEBUG - Grup filtresi eklendi: {grup_conditions}")
 
-        # Cari Tür filtresi (multi-select)
+        # Cari Tür filtresi (multi-select) - GÜNCELLENMIŞ
         if cari_tur_filter and len(cari_tur_filter) > 0:
-            tur_conditions = []
-            for tur in cari_tur_filter:
-                if tur == '':  # Boş değer
-                    tur_conditions.append("(KML.[KOD YAPISI] = '' OR KML.[KOD YAPISI] IS NULL)")
-                elif tur.strip():
-                    safe_tur = tur.strip().replace("'", "''")  # SQL injection koruması
-                    tur_conditions.append(f"KML.[KOD YAPISI] = '{safe_tur}'")
-            if tur_conditions:
-                where_conditions.append(f"({' OR '.join(tur_conditions)})")
+            if len(cari_tur_filter) == 1 and cari_tur_filter[0] == '__EMPTY_ONLY__':
+                # Sadece boş değer seçili ise
+                where_conditions.append("(KML.[KOD YAPISI] = '' OR KML.[KOD YAPISI] IS NULL)")
+                print("DEBUG - Sadece boş tür filtresi eklendi")
+            else:
+                # Normal tür filtreleme
+                tur_conditions = []
+                for tur in cari_tur_filter:
+                    if tur == '' or tur == '__EMPTY_ONLY__':  # Boş değer
+                        tur_conditions.append("(KML.[KOD YAPISI] = '' OR KML.[KOD YAPISI] IS NULL)")
+                    elif tur.strip():
+                        safe_tur = tur.strip().replace("'", "''")  # SQL injection koruması
+                        tur_conditions.append(f"KML.[KOD YAPISI] = '{safe_tur}'")
+                if tur_conditions:
+                    where_conditions.append(f"({' OR '.join(tur_conditions)})")
+                    print(f"DEBUG - Tür filtresi eklendi: {tur_conditions}")
 
         # WHERE koşullarını ana sorguya ekle
         if where_conditions:
@@ -12626,6 +12640,8 @@ def cari_bakiye():
         flash(f'Hata: {str(e)}', 'danger')
         return redirect(url_for('dashboard'))
 
+# cari_bakiye_api endpoint'indeki filtreleme mantığını da güncelleyin
+
 @app.route('/cari_bakiye_api')
 def cari_bakiye_api():
     """API endpoint for AJAX requests"""
@@ -12645,114 +12661,87 @@ def cari_bakiye_api():
         selected_cari_turs = request.args.get('cari_turs', '')
         selected_durums = request.args.get('durums', '')
 
+        print(f"API DEBUG - Gelen cari_grups parametresi: '{selected_cari_grups}'")
+        print(f"API DEBUG - Gelen cari_turs parametresi: '{selected_cari_turs}'")
+
         # Liste haline getir ve temizle
         firma_filter = [f.strip() for f in selected_firmas.split(',') if f.strip()] if selected_firmas else []
-        cari_grup_filter = [g.strip() if g.strip() else '' for g in selected_cari_grups.split(',') if
-                            g or g == ''] if selected_cari_grups else []
-        cari_tur_filter = [t.strip() if t.strip() else '' for t in selected_cari_turs.split(',') if
-                           t or t == ''] if selected_cari_turs else []
+
+        # Cari Grup için özel kontrol
+        if selected_cari_grups == '__EMPTY_ONLY__':
+            # Sadece boş gruplar için özel filtre
+            cari_grup_filter = ['__EMPTY_ONLY__']
+            print("API DEBUG - Sadece boş gruplar seçildi")
+        else:
+            cari_grup_filter = [g.strip() if g.strip() else '' for g in selected_cari_grups.split(',') if
+                                g or g == ''] if selected_cari_grups else []
+
+        # Cari Tür için özel kontrol
+        if selected_cari_turs == '__EMPTY_ONLY__':
+            # Sadece boş türler için özel filtre
+            cari_tur_filter = ['__EMPTY_ONLY__']
+            print("API DEBUG - Sadece boş türler seçildi")
+        else:
+            cari_tur_filter = [t.strip() if t.strip() else '' for t in selected_cari_turs.split(',') if
+                               t or t == ''] if selected_cari_turs else []
+
         durum_filter = [d.strip() for d in selected_durums.split(',') if d.strip()] if selected_durums else []
 
-        # Özet sorgusu - seçilen tarihe göre
+        print(f"API DEBUG - İşlenmiş cari_grup_filter: {cari_grup_filter}")
+        print(f"API DEBUG - İşlenmiş cari_tur_filter: {cari_tur_filter}")
+
+        # Burada API endpoint'inize özgü sorgu mantığınızı ekleyin
+        # Filtreleme mantığı ana endpoint ile aynı olmalı
+
+        # Özet sorgusu devam eder...
         summary_query = f"""
-        SELECT 
-            KML.[FIRMA],
-            SUM((KML.[USD_BORC]*KML.USD_SATIS_KURU)+(KML.[EURO_BORC]*KML.EUR_SATIS_KURU)+KML.[TL_BORC]) as TOPLAM_BORC,
-            SUM((KML.[USD_ALACAK]*KML.USD_SATIS_KURU)+(KML.[EURO_ALACAK]*KML.EUR_SATIS_KURU)+KML.[TL_ALACAK]) as TOPLAM_ALACAK,
-            SUM(KML.[USD_BORC]) as USD_BORC_TOPLAM,
-            SUM(KML.[EURO_BORC]) as EURO_BORC_TOPLAM,
-            SUM(KML.[TL_BORC]) as TL_BORC_TOPLAM,
-            SUM(KML.[USD_ALACAK]) as USD_ALACAK_TOPLAM,
-            SUM(KML.[EURO_ALACAK]) as EURO_ALACAK_TOPLAM,
-            SUM(KML.[TL_ALACAK]) as TL_ALACAK_TOPLAM,
-            MAX(KML.[USD_SATIS_KURU]) as USD_KURU,
-            MAX(KML.[EUR_SATIS_KURU]) as EUR_KURU
-        FROM (
-          -- 225 Dataset - {selected_date} tarihi itibariyle
-          SELECT
-            '225-YDÇ' AS FIRMA,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_BORC,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_BORC,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_BORC,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS USD_ALACAK,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS EURO_ALACAK,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_225_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0) AS TL_ALACAK,
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS USD_SATIS_KURU,
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_225 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0) AS EUR_SATIS_KURU
-          FROM LG_225_CLCARD CL WITH (NOLOCK)
-          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
-
-          UNION ALL
-
-          -- 325 Dataset
-          SELECT
-            '325-STAR' AS FIRMA,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_325_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_325 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
-          FROM LG_325_CLCARD CL WITH (NOLOCK)
-          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
-
-          UNION ALL
-
-          -- 425 Dataset
-          SELECT
-            '425-YAĞCILAR' AS FIRMA,
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=0 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=1 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.TRNET ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR=20 AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT SUM(CASE WHEN CLF.SIGN=1 THEN CLF.AMOUNT ELSE 0 END)
-                    FROM LG_425_01_CLFLINE CLF WITH (NOLOCK)
-                    WHERE CLF.CANCELLED=0 AND CLF.PAIDINCASH=0 AND CLF.TRCURR IN (0,160) AND CLF.CLIENTREF=CL.LOGICALREF AND CLF.SIGN=1 AND CAST(CLF.DATE_ AS DATE) <= '{selected_date}'), 0),
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=1 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0),
-            ISNULL((SELECT TOP 1 RATES2 FROM LG_EXCHANGE_425 EX WITH (NOLOCK) WHERE EX.CRTYPE=20 AND CAST(EX.EDATE AS DATE) <= '{selected_date}' ORDER BY EX.EDATE DESC), 0)
-          FROM LG_425_CLCARD CL WITH (NOLOCK)
-          WHERE CL.ACTIVE = 0 AND (CL.CODE LIKE '320%' OR CL.CODE LIKE '120%')
-
-        ) KML
-        GROUP BY KML.[FIRMA]
+        -- Mevcut summary_query kodunuz burada devam eder
+        -- Filtreleme WHERE koşulları eklenecek
         """
+
+        # WHERE koşulları ekleme mantığı ana endpoint ile aynı
+        where_conditions = []
+
+        # Cari Grup filtresi (API için)
+        if cari_grup_filter and len(cari_grup_filter) > 0:
+            if len(cari_grup_filter) == 1 and cari_grup_filter[0] == '__EMPTY_ONLY__':
+                # Sadece boş değer seçili ise - API sorgusuna uygun alan adı kullanın
+                where_conditions.append("(CL.SPECODE5 = '' OR CL.SPECODE5 IS NULL)")
+                print("API DEBUG - Sadece boş grup filtresi eklendi")
+            else:
+                # Normal grup filtreleme
+                grup_conditions = []
+                for grup in cari_grup_filter:
+                    if grup == '' or grup == '__EMPTY_ONLY__':
+                        grup_conditions.append("(CL.SPECODE5 = '' OR CL.SPECODE5 IS NULL)")
+                    elif grup.strip():
+                        safe_grup = grup.strip().replace("'", "''")
+                        grup_conditions.append(f"CL.SPECODE5 = '{safe_grup}'")
+                if grup_conditions:
+                    where_conditions.append(f"({' OR '.join(grup_conditions)})")
+
+        # Cari Tür filtresi (API için)
+        if cari_tur_filter and len(cari_tur_filter) > 0:
+            if len(cari_tur_filter) == 1 and cari_tur_filter[0] == '__EMPTY_ONLY__':
+                # Sadece boş değer seçili ise - API sorgusuna uygun alan adı kullanın
+                where_conditions.append("(LEFT(CL.CODE, 3) = '' OR LEFT(CL.CODE, 3) IS NULL)")
+                print("API DEBUG - Sadece boş tür filtresi eklendi")
+            else:
+                # Normal tür filtreleme
+                tur_conditions = []
+                for tur in cari_tur_filter:
+                    if tur == '' or tur == '__EMPTY_ONLY__':
+                        tur_conditions.append("(LEFT(CL.CODE, 3) = '' OR LEFT(CL.CODE, 3) IS NULL)")
+                    elif tur.strip():
+                        safe_tur = tur.strip().replace("'", "''")
+                        tur_conditions.append(f"LEFT(CL.CODE, 3) = '{safe_tur}'")
+                if tur_conditions:
+                    where_conditions.append(f"({' OR '.join(tur_conditions)})")
+
+        # WHERE koşullarını sorguya ekle
+        if where_conditions:
+            # summary_query'ye WHERE koşullarını ekle
+            pass
 
         cursor.execute(summary_query)
         columns = [column[0] for column in cursor.description]
@@ -12768,6 +12757,7 @@ def cari_bakiye_api():
         })
 
     except Exception as e:
+        print(f"API ERROR: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 

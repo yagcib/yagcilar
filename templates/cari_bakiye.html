@@ -148,7 +148,8 @@
 
     /* Alacak ve borç arka plan renkleri (eski borç->alacak, eski alacak->borç) */
     .table .debt-amount,
-    #detailTable .debt-amount {
+    #detailTable .debt-amount,
+    #summaryTable .debt-amount {
         background-color: #f0f4f8 !important;
         font-weight: 600;
         padding: 4px 8px;
@@ -156,7 +157,8 @@
     }
 
     .table .receivable-amount,
-    #detailTable .receivable-amount {
+    #detailTable .receivable-amount,
+    #summaryTable .receivable-amount {
         background-color: #fef9e7 !important;
         font-weight: 600;
         padding: 4px 8px;
@@ -164,7 +166,8 @@
     }
 
     .table .total-debt,
-    #detailTable .total-debt {
+    #detailTable .total-debt,
+    #summaryTable .total-debt {
         background-color: #e8f4f8 !important;
         font-weight: bold;
         padding: 6px 10px;
@@ -172,7 +175,8 @@
     }
 
     .table .total-receivable,
-    #detailTable .total-receivable {
+    #detailTable .total-receivable,
+    #summaryTable .total-receivable {
         background-color: #fff8e1 !important;
         font-weight: bold;
         padding: 6px 10px;
@@ -659,6 +663,12 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ozet-tab" data-bs-toggle="tab"
+                data-bs-target="#ozet" type="button" role="tab">
+            <i class="fas fa-list-alt"></i> Genel Durum Özet
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" id="kur-tab" data-bs-toggle="tab"
                 data-bs-target="#kur" type="button" role="tab">
             <i class="fas fa-chart-line"></i> Kur Analizi
@@ -702,7 +712,7 @@
             <div class="col-md-3">
                 <div class="summary-card text-center">
                     <div class="summary-value" id="net-position">
-                        {% set net = results|sum(attribute='TOPLAM_TL_ALACAK') - results|sum(attribute='TOPLAM_TL_BORC') %}
+                        {% set net = results|sum(attribute='TOPLAM_TL_BORC') - results|sum(attribute='TOPLAM_TL_ALACAK') %}
                         {{ "{:,.2f}".format(net).replace(".", ",") }} ₺
                     </div>
                     <div class="summary-label">Net Pozisyon</div>
@@ -801,7 +811,7 @@
             </thead>
             <tbody>
                 {% for row in results %}
-                {% set net = row.TOPLAM_TL_ALACAK - row.TOPLAM_TL_BORC %}
+                {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
                 {% if net != 0 %}
                 <tr>
                     <td class="text-center sequence-column"></td>
@@ -816,16 +826,16 @@
                     <td class="text-end debt-amount" data-export="{{ row.EURO_BORC }}">{{ "{:,.2f}".format(row.EURO_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
                     <td class="text-end debt-amount" data-export="{{ row.TL_BORC }}">{{ "{:,.2f}".format(row.TL_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
                     <td class="text-end total-debt" data-export="{{ row.TOPLAM_TL_BORC }}">{{ "{:,.2f}".format(row.TOPLAM_TL_BORC).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
-                    <td class="text-end" data-sort="{{ "%.2f"|format(net) }}" data-export="{{ "%.2f"|format(net) }}">
+                    <td class="text-end" data-sort="{{ "%.2f"|format(net) }}" data-export="{{ net }}">
                         {% if net > 0 %}
-                            <!-- Alacaklı ise negatif göster ve kırmızı yap -->
-                            <span class="negative">
-                                -{{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
-                            </span>
-                        {% elif net < 0 %}
                             <!-- Borçlu ise pozitif göster ve yeşil yap -->
                             <span class="positive">
-                                {{ "{:,.2f}".format(net|abs).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                                {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        {% elif net < 0 %}
+                            <!-- Alacaklı ise negatif göster ve kırmızı yap -->
+                            <span class="negative">
+                                {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
                             </span>
                         {% else %}
                             <span style="color: #6c757d;">
@@ -833,13 +843,13 @@
                             </span>
                         {% endif %}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" data-export="{% if net > 0 %}Borçlu{% elif net < 0 %}Alacaklı{% else %}Sıfır{% endif %}">
                         {% if net > 0 %}
-                            <!-- Alacaklı ise kırmızı -->
-                            <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
-                        {% elif net < 0 %}
                             <!-- Borçlu ise yeşil -->
                             <span class="badge" style="background-color: #28a745; color: white;">Borçlu</span>
+                        {% elif net < 0 %}
+                            <!-- Alacaklı ise kırmızı -->
+                            <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
                         {% else %}
                             <span class="badge bg-secondary">Sıfır</span>
                         {% endif %}
@@ -852,6 +862,128 @@
     </div>
 </div>
 
+    <!-- YENİ SEKME: Genel Durum Özet -->
+    <div class="tab-pane fade" id="ozet" role="tabpanel">
+        <!-- Cari Arama ve Toplam Alanları -->
+        <div class="search-summary-area">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="summary-search" class="form-label"><strong>Özet Tablo Arama</strong></label>
+                    <input type="text" class="form-control" id="summary-search" placeholder="Tabloda arama yapın...">
+                    <small class="text-muted">Net Durum ≠ 0 olan {{ results|length }} cari hesap listelendi</small>
+                </div>
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-3">
+                            {% set total_usd_bakiye = results|sum(attribute='USD_BORC') - results|sum(attribute='USD_ALACAK') %}
+                            <div class="summary-box {% if total_usd_bakiye > 0 %}net-positive{% else %}net-negative{% endif %}">
+                                <h6>Toplam USD Bakiye</h6>
+                                <p class="amount">{{ "{:,.2f}".format(total_usd_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }} USD</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            {% set total_eur_bakiye = results|sum(attribute='EURO_BORC') - results|sum(attribute='EURO_ALACAK') %}
+                            <div class="summary-box {% if total_eur_bakiye > 0 %}net-positive{% else %}net-negative{% endif %}">
+                                <h6>Toplam EUR Bakiye</h6>
+                                <p class="amount">{{ "{:,.2f}".format(total_eur_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }} EUR</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            {% set total_tl_bakiye = results|sum(attribute='TL_BORC') - results|sum(attribute='TL_ALACAK') %}
+                            <div class="summary-box {% if total_tl_bakiye > 0 %}net-positive{% else %}net-negative{% endif %}">
+                                <h6>Toplam TL Bakiye</h6>
+                                <p class="amount">{{ "{:,.2f}".format(total_tl_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }} ₺</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            {% set net = results|sum(attribute='TOPLAM_TL_BORC') - results|sum(attribute='TOPLAM_TL_ALACAK') %}
+                            <div class="summary-box {% if net > 0 %}net-positive{% else %}net-negative{% endif %}">
+                                <h6>Net Durum (TL)</h6>
+                                <p class="amount">{{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }} ₺</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive detail-table">
+            <table class="table table-hover" id="summaryTable">
+                <thead>
+                    <tr>
+                        <th class="sequence-column">Sıra No</th>
+                        <th>Firma</th>
+                        <th>VKN/TCKNO</th>
+                        <th>Cari Ünvanı</th>
+                        <th>USD Bakiye</th>
+                        <th>Euro Bakiye</th>
+                        <th>TL Bakiye</th>
+                        <th>Net Durum</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    {% set usd_bakiye = row.USD_BORC - row.USD_ALACAK %}
+                    {% set euro_bakiye = row.EURO_BORC - row.EURO_ALACAK %}
+                    {% set tl_bakiye = row.TL_BORC - row.TL_ALACAK %}
+                    {% set net = row.TOPLAM_TL_BORC - row.TOPLAM_TL_ALACAK %}
+                    {% if net != 0 %}
+                    <tr>
+                        <td class="text-center sequence-column"></td>
+                        <td><strong>{{ row.FIRMA }}</strong></td>
+                        <td>{{ row['VKN&TCKNO'] }}</td>
+                        <td>{{ row.CARI_UNVANI }}</td>
+                        <td class="text-end" data-export="{{ usd_bakiye }}">
+                            <span class="{% if usd_bakiye > 0 %}positive{% elif usd_bakiye < 0 %}negative{% else %}text-muted{% endif %}">
+                                {{ "{:,.2f}".format(usd_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        </td>
+                        <td class="text-end" data-export="{{ euro_bakiye }}">
+                            <span class="{% if euro_bakiye > 0 %}positive{% elif euro_bakiye < 0 %}negative{% else %}text-muted{% endif %}">
+                                {{ "{:,.2f}".format(euro_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        </td>
+                        <td class="text-end" data-export="{{ tl_bakiye }}">
+                            <span class="{% if tl_bakiye > 0 %}positive{% elif tl_bakiye < 0 %}negative{% else %}text-muted{% endif %}">
+                                {{ "{:,.2f}".format(tl_bakiye).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            </span>
+                        </td>
+                        <td class="text-end" data-sort="{{ "%.2f"|format(net) }}" data-export="{{ net }}">
+                            {% if net > 0 %}
+                                <!-- Borçlu ise pozitif göster ve yeşil yap -->
+                                <span class="positive">
+                                    {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                                </span>
+                            {% elif net < 0 %}
+                                <!-- Alacaklı ise negatif göster ve kırmızı yap -->
+                                <span class="negative">
+                                    {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                                </span>
+                            {% else %}
+                                <span style="color: #6c757d;">
+                                    {{ "{:,.2f}".format(net).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center" data-export="{% if net > 0 %}Borçlu{% elif net < 0 %}Alacaklı{% else %}Sıfır{% endif %}">
+                            {% if net > 0 %}
+                                <!-- Borçlu ise yeşil -->
+                                <span class="badge" style="background-color: #28a745; color: white;">Borçlu</span>
+                            {% elif net < 0 %}
+                                <!-- Alacaklı ise kırmızı -->
+                                <span class="badge" style="background-color: #dc3545; color: white;">Alacaklı</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Sıfır</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <!-- Kur Analizi Sekmesi -->
     <div class="tab-pane fade" id="kur" role="tabpanel">
@@ -1023,6 +1155,7 @@
 <script>
 // Global değişkenler
 let table;
+let summaryTable;
 let results = {{ results|tojson }};
 
 // Türkçe sayı formatı fonksiyonu - Güncellenmiş
@@ -1065,8 +1198,6 @@ $.fn.dataTable.render.turkishNumber = function() {
     };
 };
 
-
-
 // DataTable konfigürasyonuna sütun formatları ekle
 $(document).ready(function() {
     // Mevcut DataTable yapılandırmasına columnDefs ekle
@@ -1074,6 +1205,7 @@ $(document).ready(function() {
         table.destroy(); // Mevcut tabloyu yok et
     }
 
+    // Ana tablo (Cari Detaylı Bakiye)
     table = $('#detailTable').DataTable({
         responsive: true,
         pageLength: 250,
@@ -1091,6 +1223,10 @@ $(document).ready(function() {
             {
                 targets: [4, 5, 6, 7, 8, 9, 10, 11, 12], // Sayısal kolonlar
                 className: 'text-end'
+            },
+            {
+                targets: 13, // Durum sütunu
+                className: 'text-center'
             }
         ],
         buttons: [
@@ -1185,37 +1321,187 @@ $(document).ready(function() {
         ]
     });
 
+    // Özet tablosu (Genel Durum Özet)
+    summaryTable = $('#summaryTable').DataTable({
+        responsive: true,
+        pageLength: 250,
+        order: [[7, 'desc']], // Net Durum sütununa göre sırala
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/tr.json'
+        },
+        dom: 'Brtip',
+        columnDefs: [
+            {
+                targets: 0, // Sıra numarası kolonu
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [4, 5, 6, 7], // Sayısal kolonlar (USD Bakiye, Euro Bakiye, TL Bakiye, Net Durum)
+                className: 'text-end'
+            },
+            {
+                targets: 8, // Durum sütunu
+                className: 'text-center'
+            }
+        ],
+        buttons: [
+            {
+                extend: 'copy',
+                className: 'buttons-copy-summary d-none',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'csv',
+                className: 'buttons-csv-summary d-none',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'excel',
+                className: 'buttons-excel-summary d-none',
+                title: 'Genel Durum Özet',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'pdf',
+                className: 'buttons-pdf-summary d-none',
+                title: 'Genel Durum Özet',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            },
+            {
+                extend: 'print',
+                className: 'buttons-print-summary d-none',
+                title: 'Genel Durum Özet',
+                exportOptions: {
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 0) {
+                                return $(node).text();
+                            }
+                            if ($(node).attr('data-export')) {
+                                return $(node).attr('data-export');
+                            }
+                            return $(node).text();
+                        }
+                    }
+                }
+            }
+        ]
+    });
+
     // Sıra numarasını dinamik olarak güncelle
     table.on('draw.dt', function() {
-        updateSequenceNumbers();
+        updateSequenceNumbers(table, '#detailTable');
+    });
+
+    summaryTable.on('draw.dt', function() {
+        updateSequenceNumbers(summaryTable, '#summaryTable');
     });
 
     // İlk yüklemede sıra numarasını ayarla
-    updateSequenceNumbers();
+    updateSequenceNumbers(table, '#detailTable');
+    updateSequenceNumbers(summaryTable, '#summaryTable');
 
     // Cari detay arama fonksiyonu
     $('#detail-search').on('keyup', function() {
         table.search(this.value).draw();
     });
 
-    // Export functions
+    // Özet arama fonksiyonu
+    $('#summary-search').on('keyup', function() {
+        summaryTable.search(this.value).draw();
+    });
+
+    // Export functions - Aktif sekmede olan tablo için export yap
     window.exportData = function(type) {
-        switch(type) {
-            case 'copy':
-                table.button('.buttons-copy').trigger();
-                break;
-            case 'csv':
-                table.button('.buttons-csv').trigger();
-                break;
-            case 'excel':
-                table.button('.buttons-excel').trigger();
-                break;
-            case 'pdf':
-                table.button('.buttons-pdf').trigger();
-                break;
-            case 'print':
-                table.button('.buttons-print').trigger();
-                break;
+        const activeTab = $('.nav-tabs .nav-link.active').attr('id');
+
+        if (activeTab === 'ozet-tab') {
+            // Özet sekmesi aktifse, özet tablosundan export yap
+            switch(type) {
+                case 'copy':
+                    summaryTable.button('.buttons-copy-summary').trigger();
+                    break;
+                case 'csv':
+                    summaryTable.button('.buttons-csv-summary').trigger();
+                    break;
+                case 'excel':
+                    summaryTable.button('.buttons-excel-summary').trigger();
+                    break;
+                case 'pdf':
+                    summaryTable.button('.buttons-pdf-summary').trigger();
+                    break;
+                case 'print':
+                    summaryTable.button('.buttons-print-summary').trigger();
+                    break;
+            }
+        } else {
+            // Diğer sekmeler aktifse, ana tablodan export yap
+            switch(type) {
+                case 'copy':
+                    table.button('.buttons-copy').trigger();
+                    break;
+                case 'csv':
+                    table.button('.buttons-csv').trigger();
+                    break;
+                case 'excel':
+                    table.button('.buttons-excel').trigger();
+                    break;
+                case 'pdf':
+                    table.button('.buttons-pdf').trigger();
+                    break;
+                case 'print':
+                    table.button('.buttons-print').trigger();
+                    break;
+            }
         }
     }
 
@@ -1240,35 +1526,66 @@ $(document).ready(function() {
         $('.multi-select-dropdown').hide();
     });
 
-    // Form submission
-    $('#filterForm').on('submit', function(e) {
-        const selectedFirmas = [];
-        $('#firma-select input[type="checkbox"]:checked').each(function() {
-            selectedFirmas.push($(this).val());
-        });
+    // Form submission - Güncellenmiş kod
+$('#filterForm').on('submit', function(e) {
+    const selectedFirmas = [];
+    $('#firma-select input[type="checkbox"]:checked').each(function() {
+        selectedFirmas.push($(this).val());
+    });
 
-        const selectedCariGrups = [];
-        $('#cari-grup-select input[type="checkbox"]:checked').each(function() {
+    const selectedCariGrups = [];
+    const cariGrupCheckboxes = $('#cari-grup-select input[type="checkbox"]:checked');
+
+    // Cari Grup için özel kontrol
+    if (cariGrupCheckboxes.length === 1) {
+        const singleValue = cariGrupCheckboxes.first().val();
+        if (singleValue === '') {
+            // Sadece "(Boş)" seçili ise özel değer gönder
+            selectedCariGrups.push('__EMPTY_ONLY__');
+        } else {
+            selectedCariGrups.push(singleValue);
+        }
+    } else {
+        // Birden fazla seçim varsa normal işlem
+        cariGrupCheckboxes.each(function() {
             selectedCariGrups.push($(this).val());
         });
+    }
 
-        const selectedCariTurs = [];
-        $('#cari-tur-select input[type="checkbox"]:checked').each(function() {
+    const selectedCariTurs = [];
+    const cariTurCheckboxes = $('#cari-tur-select input[type="checkbox"]:checked');
+
+    // Cari Tür için özel kontrol
+    if (cariTurCheckboxes.length === 1) {
+        const singleValue = cariTurCheckboxes.first().val();
+        if (singleValue === '') {
+            // Sadece "(Boş)" seçili ise özel değer gönder
+            selectedCariTurs.push('__EMPTY_ONLY__');
+        } else {
+            selectedCariTurs.push(singleValue);
+        }
+    } else {
+        // Birden fazla seçim varsa normal işlem
+        cariTurCheckboxes.each(function() {
             selectedCariTurs.push($(this).val());
         });
+    }
 
-        const selectedDurums = [];
-        $('#durum-select input[type="checkbox"]:checked').each(function() {
-            selectedDurums.push($(this).val());
-        });
-
-        $('#selected-firmas').val(selectedFirmas.join(','));
-        $('#selected-cari-grups').val(selectedCariGrups.join(','));
-        $('#selected-cari-turs').val(selectedCariTurs.join(','));
-        $('#selected-durums').val(selectedDurums.join(','));
-
-        showLoading();
+    const selectedDurums = [];
+    $('#durum-select input[type="checkbox"]:checked').each(function() {
+        selectedDurums.push($(this).val());
     });
+
+    $('#selected-firmas').val(selectedFirmas.join(','));
+    $('#selected-cari-grups').val(selectedCariGrups.join(','));
+    $('#selected-cari-turs').val(selectedCariTurs.join(','));
+    $('#selected-durums').val(selectedDurums.join(','));
+
+    console.log('Gönderilen Cari Gruplar:', selectedCariGrups);
+    console.log('Gönderilen Cari Türler:', selectedCariTurs);
+
+    showLoading();
+});
 });
 
 function initMultiSelect() {
@@ -1314,11 +1631,56 @@ function updateMultiSelectText(multiSelectElement) {
         } else if (selectId === 'durum-select') {
             textElement.text('Hiç Durum Seçilmedi');
         }
+    } else if (selectId === 'cari-grup-select') {
+        // Cari Grup için özel mantık
+        const bosSelected = $(multiSelectElement).find('input[value=""]:checked').length > 0;
+        const otherGroupsSelected = $(multiSelectElement).find('input[value!=""]:checked').length;
+        const totalOtherGroups = $(multiSelectElement).find('input[value!=""]').length;
+
+        if (checkboxes.length === 1 && bosSelected) {
+            // Sadece "(Boş)" seçili ise
+            textElement.text('(Boş)');
+        } else if (bosSelected && otherGroupsSelected === totalOtherGroups) {
+            // "(Boş)" + tüm diğer gruplar seçili ise
+            textElement.text('Tüm Gruplar');
+        } else if (!bosSelected && otherGroupsSelected === totalOtherGroups) {
+            // Sadece tüm gerçek gruplar seçili, "(Boş)" seçili değil
+            textElement.text('Tüm Gerçek Gruplar');
+        } else if (checkboxes.length === 1) {
+            // Tek bir seçenek seçili
+            const selectedLabel = checkboxes.first().next('label').text();
+            textElement.text(selectedLabel);
+        } else {
+            // Birden fazla seçenek seçili
+            textElement.text(`${checkboxes.length} Seçili`);
+        }
+    } else if (selectId === 'cari-tur-select') {
+        // Cari Türü için özel mantık (Cari Grup ile aynı)
+        const bosSelected = $(multiSelectElement).find('input[value=""]:checked').length > 0;
+        const otherTypesSelected = $(multiSelectElement).find('input[value!=""]:checked').length;
+        const totalOtherTypes = $(multiSelectElement).find('input[value!=""]').length;
+
+        if (checkboxes.length === 1 && bosSelected) {
+            // Sadece "(Boş)" seçili ise
+            textElement.text('(Boş)');
+        } else if (bosSelected && otherTypesSelected === totalOtherTypes) {
+            // "(Boş)" + tüm diğer türler seçili ise
+            textElement.text('Tüm Türler');
+        } else if (!bosSelected && otherTypesSelected === totalOtherTypes) {
+            // Sadece tüm gerçek türler seçili, "(Boş)" seçili değil
+            textElement.text('Tüm Gerçek Türler');
+        } else if (checkboxes.length === 1) {
+            // Tek bir seçenek seçili
+            const selectedLabel = checkboxes.first().next('label').text();
+            textElement.text(selectedLabel);
+        } else {
+            // Birden fazla seçenek seçili
+            textElement.text(`${checkboxes.length} Seçili`);
+        }
     } else if (checkboxes.length === totalCheckboxes) {
+        // Diğer dropdown'lar için normal mantık
         if (selectId === 'firma-select') {
             textElement.text('Tüm Firmalar');
-        } else if (selectId === 'cari-grup-select') {
-            textElement.text('Tüm Gruplar');
         } else if (selectId === 'cari-tur-select') {
             textElement.text('Tüm Türler');
         } else if (selectId === 'durum-select') {
@@ -1338,9 +1700,13 @@ function restoreSelectedValues() {
     const selectedCariTursRaw = '{{ selected_cari_turs }}';
     const selectedDurumsRaw = '{{ selected_durums }}';
 
+    // Eğer hiçbir filtre seçilmemişse varsayılan olarak tümünü seç
     if (!selectedFirmasRaw && !selectedCariGrupsRaw && !selectedCariTursRaw && !selectedDurumsRaw) {
+        // Sadece gerçek grupları seç, "(Boş)" için özel durum
         $('#cari-grup-select input[type="checkbox"]').prop('checked', true);
+        $('#cari-tur-select input[type="checkbox"]').prop('checked', true);
         updateMultiSelectText(document.getElementById('cari-grup-select'));
+        updateMultiSelectText(document.getElementById('cari-tur-select'));
         return;
     }
 
@@ -1356,26 +1722,48 @@ function restoreSelectedValues() {
     if (selectedCariGrupsRaw) {
         const selectedCariGrups = selectedCariGrupsRaw.split(',').map(g => g.trim());
         $('#cari-grup-select input[type="checkbox"]').prop('checked', false);
-        selectedCariGrups.forEach(grup => {
-            if (grup === '') {
-                $('#cari-grup-select input[value=""]').prop('checked', true);
-            } else if (grup) {
-                $('#cari-grup-select input[value="' + grup + '"]').prop('checked', true);
-            }
-        });
+
+        // Özel değer kontrolü: __EMPTY_ONLY__ sadece "(Boş)" seçeneği demek
+        if (selectedCariGrups.length === 1 && selectedCariGrups[0] === '__EMPTY_ONLY__') {
+            $('#cari-grup-select input[value=""]').prop('checked', true);
+        } else if (selectedCariGrups.length === 1 && selectedCariGrups[0] === '') {
+            $('#cari-grup-select input[value=""]').prop('checked', true);
+        } else {
+            // Normal restore işlemi
+            selectedCariGrups.forEach(grup => {
+                if (grup === '__EMPTY_ONLY__') {
+                    $('#cari-grup-select input[value=""]').prop('checked', true);
+                } else if (grup === '') {
+                    $('#cari-grup-select input[value=""]').prop('checked', true);
+                } else if (grup) {
+                    $('#cari-grup-select input[value="' + grup + '"]').prop('checked', true);
+                }
+            });
+        }
         updateMultiSelectText(document.getElementById('cari-grup-select'));
     }
 
     if (selectedCariTursRaw) {
         const selectedCariTurs = selectedCariTursRaw.split(',').map(t => t.trim());
         $('#cari-tur-select input[type="checkbox"]').prop('checked', false);
-        selectedCariTurs.forEach(tur => {
-            if (tur === '') {
-                $('#cari-tur-select input[value=""]').prop('checked', true);
-            } else if (tur) {
-                $('#cari-tur-select input[value="' + tur + '"]').prop('checked', true);
-            }
-        });
+
+        // Özel değer kontrolü: __EMPTY_ONLY__ sadece "(Boş)" seçeneği demek
+        if (selectedCariTurs.length === 1 && selectedCariTurs[0] === '__EMPTY_ONLY__') {
+            $('#cari-tur-select input[value=""]').prop('checked', true);
+        } else if (selectedCariTurs.length === 1 && selectedCariTurs[0] === '') {
+            $('#cari-tur-select input[value=""]').prop('checked', true);
+        } else {
+            // Normal restore işlemi
+            selectedCariTurs.forEach(tur => {
+                if (tur === '__EMPTY_ONLY__') {
+                    $('#cari-tur-select input[value=""]').prop('checked', true);
+                } else if (tur === '') {
+                    $('#cari-tur-select input[value=""]').prop('checked', true);
+                } else if (tur) {
+                    $('#cari-tur-select input[value="' + tur + '"]').prop('checked', true);
+                }
+            });
+        }
         updateMultiSelectText(document.getElementById('cari-tur-select'));
     }
 
@@ -1854,11 +2242,11 @@ function hideLoading() {
 }
 
 // Sıra numarasını dinamik olarak güncelleme fonksiyonu
-function updateSequenceNumbers() {
-    if (!table) return;
+function updateSequenceNumbers(dataTable, tableSelector) {
+    if (!dataTable) return;
 
     // Görünür satırları al (sayfalama ve filtreleme dikkate alınarak)
-    const visibleRows = table.rows({ page: 'current', search: 'applied' }).nodes();
+    const visibleRows = dataTable.rows({ page: 'current', search: 'applied' }).nodes();
 
     // Her satıra sıra numarası ekle
     $(visibleRows).each(function(index) {
