@@ -1338,7 +1338,7 @@ def urun_barkodu():
     user_id = session['user_id']
     menu_tree, menu_permissions = get_user_menu_permissions(user_id)
 
-    # Get product data from database
+    # Get product data from database (Mikroskop Verileri)
     conn = get_db_connection2()
     cursor = conn.cursor()
 
@@ -1374,8 +1374,46 @@ def urun_barkodu():
         cursor.close()
         conn.close()
 
+    # Get Octopus data from YAGCILAR database
+    conn = get_db_connection()  # YAGCILAR veritabanı için doğru bağlantı
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT 
+                lp.SiparisID,
+                ls.CariKodu,
+                lp.PartNo,
+                lp.ParcaKodu,
+                lp.TotalQuantityInJob
+            FROM LazerParcalar lp
+            INNER JOIN LazerSiparisler ls ON lp.SiparisID = ls.SiparisID
+            ORDER BY lp.SiparisID
+        """)
+
+        octopus_data = []
+        while True:
+            row = cursor.fetchone()
+            if not row:
+                break
+
+            octopus_data.append({
+                'grup_no': row[0],  # SiparisID
+                'cari_kod': row[1],  # CariKodu
+                'parca_adi': row[2],  # PartNo
+                'parca_kodu': row[3],  # ParcaKodu
+                'parca_miktar': row[4]  # TotalQuantityInJob
+            })
+
+    except Exception as e:
+        flash(f'Oktapus verisi çekilirken bir hata oluştu: {str(e)}', 'error')
+        octopus_data = []
+    finally:
+        cursor.close()
+        conn.close()
+
     # Get personnel data
-    conn = get_db_connection()
+    conn = get_db_connection()  # Personel ve makine verileri için yeni bağlantı
     cursor = conn.cursor()
 
     try:
@@ -1438,6 +1476,7 @@ def urun_barkodu():
                            menus=menu_tree,
                            permissions=menu_permissions,
                            urun_data=urun_data,
+                           octopus_data=octopus_data,  # Added octopus data
                            personeller=personeller,
                            makineler=makineler)
 

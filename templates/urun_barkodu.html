@@ -5,9 +5,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Ürün Barkodu</h5>
-            <button id="printSelectedBtn" class="btn btn-primary">
-                <i class="fas fa-print me-2"></i> Seçilenleri Yazdır
-            </button>
+            <div class="d-flex gap-2">
+                <button id="printSelectedBtn" class="btn btn-primary">
+                    <i class="fas fa-print me-2"></i> Seçilenleri Yazdır
+                </button>
+                <button id="readDataBtn" class="btn btn-success" onclick="window.open('http://192.168.4.249:2026', '_blank')">
+                    <i class="fas fa-qrcode me-2"></i> Verileri Okut
+                </button>
+            </div>
         </div>
         <div class="card-body">
             <!-- Filtreleme Bölümü - Üste Taşındı -->
@@ -62,49 +67,114 @@
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="40">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="selectAllItems">
-                                </div>
-                            </th>
-                            <th>Grup No</th>
-                            <th>Cari Kod</th>
-                            <th>Parça Adı</th>
-                            <th>Parça Kodu</th>
-                            <th width="150">Parça Miktar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="urunTable">
-                        {% for urun in urun_data %}
-                        <tr data-item='{{ urun|tojson }}'>
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input item-select" type="checkbox" value="{{ loop.index }}">
-                                </div>
-                            </td>
-                            <td>{{ urun.grup_no }}</td>
-                            <td>{{ urun.cari_kod }}</td>
-                            <td>{{ urun.parca_adi }}</td>
-                            <td>{{ urun.parca_kodu }}</td>
-                            <td>
-                                <input type="number" min="0" class="form-control form-control-sm parca-miktar"
-                                       value="{{ urun.parca_miktar }}" data-original="{{ urun.parca_miktar }}">
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <!-- Sekmeler -->
+            <ul class="nav nav-tabs mt-4" id="dataTabsNav" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="microscope-data-tab" data-bs-toggle="tab" data-bs-target="#microscope-data" type="button" role="tab" aria-controls="microscope-data" aria-selected="true">
+                        <i class="fas fa-microscope me-2"></i>Mikroskop Verileri
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="octopus-data-tab" data-bs-toggle="tab" data-bs-target="#octopus-data" type="button" role="tab" aria-controls="octopus-data" aria-selected="false">
+                        <i class="fas fa-industry me-2"></i>Oktapus Verileri
+                    </button>
+                </li>
+            </ul>
 
-            {% if not urun_data %}
-            <div class="alert alert-info mt-3">
-                <i class="fas fa-info-circle me-2"></i> Gösterilecek kayıt bulunamadı.
+            <div class="tab-content" id="dataTabsContent">
+                <div class="tab-pane fade show active" id="microscope-data" role="tabpanel" aria-labelledby="microscope-data-tab">
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllItems">
+                                        </div>
+                                    </th>
+                                    <th>Grup No</th>
+                                    <th>Cari Kod</th>
+                                    <th>Parça Adı</th>
+                                    <th>Parça Kodu</th>
+                                    <th width="150">Parça Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="urunTable">
+                                {% for urun in urun_data %}
+                                <tr data-item='{{ urun|tojson }}'>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input item-select" type="checkbox" value="{{ loop.index }}">
+                                        </div>
+                                    </td>
+                                    <td>{{ urun.grup_no }}</td>
+                                    <td>{{ urun.cari_kod }}</td>
+                                    <td>{{ urun.parca_adi }}</td>
+                                    <td>{{ urun.parca_kodu }}</td>
+                                    <td>
+                                        <input type="number" min="0" class="form-control form-control-sm parca-miktar"
+                                               value="{{ urun.parca_miktar }}" data-original="{{ urun.parca_miktar }}">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if not urun_data %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> Gösterilecek kayıt bulunamadı.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Oktapus Verileri Sekmesi -->
+                <div class="tab-pane fade" id="octopus-data" role="tabpanel" aria-labelledby="octopus-data-tab">
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllOctopusItems">
+                                        </div>
+                                    </th>
+                                    <th>Grup No</th>
+                                    <th>Cari Kod</th>
+                                    <th>Parça Adı</th>
+                                    <th>Parça Kodu</th>
+                                    <th width="150">Parça Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="octopusTable">
+                                {% for octopus in octopus_data %}
+                                <tr data-item='{{ octopus|tojson }}'>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input octopus-item-select" type="checkbox" value="{{ loop.index }}">
+                                        </div>
+                                    </td>
+                                    <td>{{ octopus.grup_no }}</td>
+                                    <td>{{ octopus.cari_kod }}</td>
+                                    <td>{{ octopus.parca_adi }}</td>
+                                    <td>{{ octopus.parca_kodu }}</td>
+                                    <td>
+                                        <input type="number" min="0" class="form-control form-control-sm octopus-parca-miktar"
+                                               value="{{ octopus.parca_miktar }}" data-original="{{ octopus.parca_miktar }}">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if not octopus_data %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> Gösterilecek oktapus verisi bulunamadı.
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -148,17 +218,28 @@ $(document).ready(function() {
         var operatorFilter = $("#filterOperator").val();
         var isMerkeziFilter = $("#filterIsMerkezi").val();
 
+        // Mikroskop verileri filtreleme
         $("#urunTable tr").each(function() {
             var $row = $(this);
             var grupNo = $row.find("td:eq(1)").text().toLowerCase();
             var cariKod = $row.find("td:eq(2)").text().toLowerCase();
             var parcaAdi = $row.find("td:eq(3)").text().toLowerCase();
 
-            // Ürün verilerini JSON'dan al
-            var itemData = JSON.parse($row.attr("data-item"));
+            var showRow =
+                grupNo.includes(grupNoFilter) &&
+                cariKod.includes(cariKodFilter) &&
+                parcaAdi.includes(parcaAdiFilter);
 
-            // Operatör ve İş Merkezi seçimleri filtrelemeyi etkilemiyor,
-            // bunları sadece yazdırma için alıyoruz
+            $row.toggle(showRow);
+        });
+
+        // Oktapus verileri filtreleme
+        $("#octopusTable tr").each(function() {
+            var $row = $(this);
+            var grupNo = $row.find("td:eq(1)").text().toLowerCase();
+            var cariKod = $row.find("td:eq(2)").text().toLowerCase();
+            var parcaAdi = $row.find("td:eq(3)").text().toLowerCase();
+
             var showRow =
                 grupNo.includes(grupNoFilter) &&
                 cariKod.includes(cariKodFilter) &&
@@ -178,16 +259,29 @@ $(document).ready(function() {
         filterTable();
     });
 
-    // Tümünü seç/kaldır
+    // Tümünü seç/kaldır - Mikroskop verileri
     $("#selectAllItems").change(function() {
         var isChecked = $(this).prop("checked");
         $("#urunTable tr:visible .item-select").prop("checked", isChecked);
     });
 
+    // Tümünü seç/kaldır - Oktapus verileri
+    $("#selectAllOctopusItems").change(function() {
+        var isChecked = $(this).prop("checked");
+        $("#octopusTable tr:visible .octopus-item-select").prop("checked", isChecked);
+    });
+
     // Yazdır butonu
     $("#printSelectedBtn").click(function() {
         var selectedItems = [];
-        var $checkedBoxes = $("#urunTable tr:visible .item-select:checked");
+        var activeTab = $('.tab-pane.active').attr('id');
+        var $checkedBoxes;
+
+        if (activeTab === 'microscope-data') {
+            $checkedBoxes = $("#urunTable tr:visible .item-select:checked");
+        } else if (activeTab === 'octopus-data') {
+            $checkedBoxes = $("#octopusTable tr:visible .octopus-item-select:checked");
+        }
 
         if ($checkedBoxes.length === 0) {
             alert("Lütfen yazdırmak için en az bir ürün seçin.");
@@ -209,7 +303,11 @@ $(document).ready(function() {
             var itemData = JSON.parse($row.attr("data-item"));
 
             // Güncellenen parça miktarını al ve tam sayıya çevir
-            itemData.parca_miktar = parseInt($row.find(".parca-miktar").val());
+            if (activeTab === 'microscope-data') {
+                itemData.parca_miktar = parseInt($row.find(".parca-miktar").val());
+            } else if (activeTab === 'octopus-data') {
+                itemData.parca_miktar = parseInt($row.find(".octopus-parca-miktar").val());
+            }
 
             // Şu anki tarih ve saati ekle
             var now = new Date();
