@@ -693,7 +693,19 @@ $(document).ready(function() {
                     title: 'Stok Listesi',
                     className: 'btn btn-success d-none',
                     exportOptions: {
-                        columns: ':visible'
+                        columns: ':visible',
+                        format: {
+                            body: function(data, row, column, node) {
+                                // Sayısal sütunlar (9,10,11,12. sütunlar) için binlik ayırıcıları temizle
+                                if (column === 9 || column === 10 || column === 11 || column === 12) {
+                                    // Binlik ayırıcıları kaldır ve sayıya çevir
+                                    var cleanValue = data.replace(/\./g, '').replace(/,/g, '.');
+                                    var numValue = parseFloat(cleanValue);
+                                    return isNaN(numValue) ? 0 : numValue;
+                                }
+                                return data;
+                            }
+                        }
                     }
                 },
                 {
