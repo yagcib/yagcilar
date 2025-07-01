@@ -1338,19 +1338,23 @@ def urun_barkodu():
     user_id = session['user_id']
     menu_tree, menu_permissions = get_user_menu_permissions(user_id)
 
-    # Get product data from database (Mikroskop Verileri)
+    # Get product data from database (Mikroskop Verileri) - Cari adı ile birlikte
     conn = get_db_connection2()
     cursor = conn.cursor()
 
     try:
         cursor.execute("""
             SELECT 
-                grpd_grup_no, 
-                grpd_CARIFIRMA,
-                grpd_PARCAADI,
-                grpd_PARCAMIKTAR,
-                grpd_PARCAKODU  -- Added this field
-            FROM MS_ISEMRI_GRUPLAMA_D WHERE grpd_grup_no LIKE 'YDC%'
+                MS.grpd_grup_no, 
+                MS.grpd_CARIFIRMA,
+                MS.grpd_PARCAADI,
+                MS.grpd_PARCAMIKTAR,
+                MS.grpd_PARCAKODU,
+                ISNULL(CL.DEFINITION_, 'BILINMEYEN') as cari_adi
+            FROM MS_ISEMRI_GRUPLAMA_D MS
+            LEFT OUTER JOIN LG_225_CLCARD CL ON MS.grpd_CARIFIRMA = CL.CODE
+            WHERE MS.grpd_grup_no LIKE 'YDC%'
+            ORDER BY MS.grpd_KayNo desc
         """)
 
         urun_data = []
@@ -1359,12 +1363,18 @@ def urun_barkodu():
             if not row:
                 break
 
+            # Cari adının ilk 3 harfini al ve büyük harfe çevir
+            cari_adi = row[5] if row[5] else 'BIL'
+            cari_adi_kisaltma = cari_adi[:4].upper()
+
             urun_data.append({
                 'grup_no': row[0],
                 'cari_kod': row[1],
                 'parca_adi': row[2],
                 'parca_miktar': row[3],
-                'parca_kodu': row[4]  # Store the new field
+                'parca_kodu': row[4],
+                'cari_adi': cari_adi,
+                'cari_adi_kisaltma': cari_adi_kisaltma
             })
 
     except Exception as e:
@@ -1379,16 +1389,18 @@ def urun_barkodu():
     cursor = conn.cursor()
 
     try:
+        # LazerParcalar ve LazerSiparisler verilerini al - CariAdi de dahil
         cursor.execute("""
             SELECT 
                 lp.SiparisID,
                 ls.CariKodu,
+                ISNULL(ls.CariAdi, 'BILINMEYEN') as cari_adi,
                 lp.PartNo,
                 lp.ParcaKodu,
                 lp.TotalQuantityInJob
             FROM LazerParcalar lp
             INNER JOIN LazerSiparisler ls ON lp.SiparisID = ls.SiparisID
-            ORDER BY lp.SiparisID
+            ORDER BY lp.SiparisID desc
         """)
 
         octopus_data = []
@@ -1397,12 +1409,18 @@ def urun_barkodu():
             if not row:
                 break
 
+            # Cari adının ilk 3 harfini al ve büyük harfe çevir
+            cari_adi = row[2] if row[2] else 'BILINMEYEN'
+            cari_adi_kisaltma = cari_adi[:4].upper()
+
             octopus_data.append({
                 'grup_no': row[0],  # SiparisID
                 'cari_kod': row[1],  # CariKodu
-                'parca_adi': row[2],  # PartNo
-                'parca_kodu': row[3],  # ParcaKodu
-                'parca_miktar': row[4]  # TotalQuantityInJob
+                'cari_adi': cari_adi,  # CariAdi (düzeltildi)
+                'parca_adi': row[3],  # PartNo (düzeltildi)
+                'parca_kodu': row[4],  # ParcaKodu
+                'parca_miktar': row[5],  # TotalQuantityInJob
+                'cari_adi_kisaltma': cari_adi_kisaltma
             })
 
     except Exception as e:

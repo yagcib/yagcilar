@@ -1,6 +1,54 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
+<style>
+/* Tablo optimizasyonu için ek CSS */
+.table-sm th,
+.table-sm td {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Uzun metinler için elipsis */
+.table td:nth-child(4), /* Cari Adı */
+.table td:nth-child(5)  /* Parça Adı */
+{
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Miktar input'u için özel stil */
+.parca-miktar,
+.octopus-parca-miktar {
+    text-align: center;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.25rem;
+    }
+}
+</style>
 <div class="container-fluid">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -42,16 +90,22 @@
             </div>
 
             <div class="row mb-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="input-group">
                         <span class="input-group-text">Grup No</span>
                         <input type="text" id="filterGrupNo" class="form-control" placeholder="Filtrele...">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="input-group">
                         <span class="input-group-text">Cari Kod</span>
                         <input type="text" id="filterCariKod" class="form-control" placeholder="Filtrele...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group">
+                        <span class="input-group-text">Cari Adı</span>
+                        <input type="text" id="filterCariAdi" class="form-control" placeholder="Filtrele...">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -60,9 +114,9 @@
                         <input type="text" id="filterParcaAdi" class="form-control" placeholder="Filtrele...">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-1">
                     <button id="clearFiltersBtn" class="btn btn-secondary w-100">
-                        <i class="fas fa-times me-2"></i> Filtreleri Temizle
+                        <i class="fas fa-times me-2"></i> Temizle
                     </button>
                 </div>
             </div>
@@ -82,98 +136,105 @@
             </ul>
 
             <div class="tab-content" id="dataTabsContent">
-                <div class="tab-pane fade show active" id="microscope-data" role="tabpanel" aria-labelledby="microscope-data-tab">
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="40">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="selectAllItems">
-                                        </div>
-                                    </th>
-                                    <th>Grup No</th>
-                                    <th>Cari Kod</th>
-                                    <th>Parça Adı</th>
-                                    <th>Parça Kodu</th>
-                                    <th width="150">Parça Miktar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="urunTable">
-                                {% for urun in urun_data %}
-                                <tr data-item='{{ urun|tojson }}'>
-                                    <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input item-select" type="checkbox" value="{{ loop.index }}">
-                                        </div>
-                                    </td>
-                                    <td>{{ urun.grup_no }}</td>
-                                    <td>{{ urun.cari_kod }}</td>
-                                    <td>{{ urun.parca_adi }}</td>
-                                    <td>{{ urun.parca_kodu }}</td>
-                                    <td>
-                                        <input type="number" min="0" class="form-control form-control-sm parca-miktar"
-                                               value="{{ urun.parca_miktar }}" data-original="{{ urun.parca_miktar }}">
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+<!-- Mikroskop Verileri Tablosu - Optimize Edilmiş Sütun Genişlikleri -->
+<div class="tab-pane fade show active" id="microscope-data" role="tabpanel" aria-labelledby="microscope-data-tab">
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th width="35">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllItems">
+                        </div>
+                    </th>
+                    <th width="110" class="sortable" data-column="1">Grup No <i class="fas fa-sort"></i></th>
+                    <th width="80" class="sortable" data-column="2">Cari Kod <i class="fas fa-sort"></i></th>
+                    <th width="120" class="sortable" data-column="3">Cari Adı <i class="fas fa-sort"></i></th>
+                    <th width="180" class="sortable" data-column="4">Parça Adı <i class="fas fa-sort"></i></th>
+                    <th width="120" class="sortable" data-column="5">Parça Kodu <i class="fas fa-sort"></i></th>
+                    <th width="90" class="sortable" data-column="6">Miktar <i class="fas fa-sort"></i></th>
+                </tr>
+            </thead>
+            <tbody id="urunTable">
+                {% for urun in urun_data %}
+                <tr data-item='{{ urun|tojson }}'>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input item-select" type="checkbox" value="{{ loop.index }}">
+                        </div>
+                    </td>
+                    <td class="text-nowrap">{{ urun.grup_no }}</td>
+                    <td class="text-center">{{ urun.cari_kod }}</td>
+                    <td>{{ urun.cari_adi }}</td>
+                    <td>{{ urun.parca_adi }}</td>
+                    <td class="text-nowrap">{{ urun.parca_kodu }}</td>
+                    <td>
+                        <input type="number" min="0" class="form-control form-control-sm parca-miktar"
+                               value="{{ urun.parca_miktar }}" data-original="{{ urun.parca_miktar }}"
+                               style="width: 70px;">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-                    {% if not urun_data %}
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle me-2"></i> Gösterilecek kayıt bulunamadı.
-                    </div>
-                    {% endif %}
-                </div>
-
+    {% if not urun_data %}
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle me-2"></i> Gösterilecek kayıt bulunamadı.
+    </div>
+    {% endif %}
+</div>
                 <!-- Oktapus Verileri Sekmesi -->
-                <div class="tab-pane fade" id="octopus-data" role="tabpanel" aria-labelledby="octopus-data-tab">
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="40">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="selectAllOctopusItems">
-                                        </div>
-                                    </th>
-                                    <th>Grup No</th>
-                                    <th>Cari Kod</th>
-                                    <th>Parça Adı</th>
-                                    <th>Parça Kodu</th>
-                                    <th width="150">Parça Miktar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="octopusTable">
-                                {% for octopus in octopus_data %}
-                                <tr data-item='{{ octopus|tojson }}'>
-                                    <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input octopus-item-select" type="checkbox" value="{{ loop.index }}">
-                                        </div>
-                                    </td>
-                                    <td>{{ octopus.grup_no }}</td>
-                                    <td>{{ octopus.cari_kod }}</td>
-                                    <td>{{ octopus.parca_adi }}</td>
-                                    <td>{{ octopus.parca_kodu }}</td>
-                                    <td>
-                                        <input type="number" min="0" class="form-control form-control-sm octopus-parca-miktar"
-                                               value="{{ octopus.parca_miktar }}" data-original="{{ octopus.parca_miktar }}">
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+<!-- Oktapus Verileri Tablosu - Optimize Edilmiş Sütun Genişlikleri -->
+<div class="tab-pane fade" id="octopus-data" role="tabpanel" aria-labelledby="octopus-data-tab">
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered table-hover table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th width="35">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllOctopusItems">
+                        </div>
+                    </th>
+                    <th width="110" class="sortable" data-column="1">Grup No <i class="fas fa-sort"></i></th>
+                    <th width="80" class="sortable" data-column="2">Cari Kod <i class="fas fa-sort"></i></th>
+                    <th width="120" class="sortable" data-column="3">Cari Adı <i class="fas fa-sort"></i></th>
+                    <th width="180" class="sortable" data-column="4">Parça Adı <i class="fas fa-sort"></i></th>
+                    <th width="120" class="sortable" data-column="5">Parça Kodu <i class="fas fa-sort"></i></th>
+                    <th width="90" class="sortable" data-column="6">Miktar <i class="fas fa-sort"></i></th>
+                </tr>
+            </thead>
+            <tbody id="octopusTable">
+                {% for octopus in octopus_data %}
+                <tr data-item='{{ octopus|tojson }}'>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input octopus-item-select" type="checkbox" value="{{ loop.index }}">
+                        </div>
+                    </td>
+                    <td class="text-nowrap">{{ octopus.grup_no }}</td>
+                    <td class="text-center">{{ octopus.cari_kod }}</td>
+                    <td>{{ octopus.cari_adi }}</td>
+                    <td>{{ octopus.parca_adi }}</td>
+                    <td class="text-nowrap">{{ octopus.parca_kodu }}</td>
+                    <td>
+                        <input type="number" min="0" class="form-control form-control-sm octopus-parca-miktar"
+                               value="{{ octopus.parca_miktar }}" data-original="{{ octopus.parca_miktar }}"
+                               style="width: 70px;">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-                    {% if not octopus_data %}
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle me-2"></i> Gösterilecek oktapus verisi bulunamadı.
-                    </div>
-                    {% endif %}
-                </div>
+    {% if not octopus_data %}
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle me-2"></i> Gösterilecek oktapus verisi bulunamadı.
+    </div>
+    {% endif %}
+</div>
             </div>
         </div>
     </div>
@@ -210,10 +271,79 @@
 $(document).ready(function() {
     console.log("jQuery ve sayfa yüklendi");
 
+    // Sıralama değişkenleri
+    var sortDirection = {};
+
+    // Sıralama fonksiyonu
+    function sortTable(table, column) {
+        var tbody = table.find("tbody");
+        var rows = tbody.find("tr").get();
+        var tableId = tbody.attr('id');
+
+        // Sıralama yönünü belirle
+        var currentDirection = sortDirection[tableId + "_" + column] || 'asc';
+        var newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+        sortDirection[tableId + "_" + column] = newDirection;
+
+        // Sıralama ikonlarını güncelle
+        table.find(".sortable i").removeClass("fa-sort-up fa-sort-down").addClass("fa-sort");
+        var clickedHeader = table.find(".sortable[data-column='" + column + "'] i");
+        clickedHeader.removeClass("fa-sort").addClass(newDirection === 'asc' ? "fa-sort-up" : "fa-sort-down");
+
+        rows.sort(function(a, b) {
+            var aVal = $(a).find("td:eq(" + column + ")").text().trim();
+            var bVal = $(b).find("td:eq(" + column + ")").text().trim();
+
+            // Sayısal değerler için özel işlem (parça miktar sütunu)
+            if (column == 6) {
+                var aInput = $(a).find("td:eq(" + column + ") input");
+                var bInput = $(b).find("td:eq(" + column + ") input");
+                if (aInput.length > 0 && bInput.length > 0) {
+                    aVal = parseInt(aInput.val()) || 0;
+                    bVal = parseInt(bInput.val()) || 0;
+                }
+            }
+
+            // Grup No ve Cari Kod için sayısal karşılaştırma
+            if (column == 1 || column == 2) {
+                var aNum = parseInt(aVal.replace(/[^0-9]/g, '')) || 0;
+                var bNum = parseInt(bVal.replace(/[^0-9]/g, '')) || 0;
+                if (aNum !== bNum) {
+                    return newDirection === 'asc' ? (aNum - bNum) : (bNum - aNum);
+                }
+            }
+
+            // String karşılaştırma
+            if (typeof aVal === 'string' && typeof bVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+
+            if (aVal < bVal) return newDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return newDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Sıralanmış satırları tabloya geri ekle
+        $.each(rows, function(index, row) {
+            tbody.append(row);
+        });
+    }
+
+    // Sıralama click olayları
+    $(document).on('click', '.sortable', function(e) {
+        e.preventDefault();
+        var column = $(this).data('column');
+        var table = $(this).closest('table');
+
+        sortTable(table, column);
+    });
+
     // Filtreleme işlevi
     function filterTable() {
         var grupNoFilter = $("#filterGrupNo").val().toLowerCase();
         var cariKodFilter = $("#filterCariKod").val().toLowerCase();
+        var cariAdiFilter = $("#filterCariAdi").val().toLowerCase();
         var parcaAdiFilter = $("#filterParcaAdi").val().toLowerCase();
         var operatorFilter = $("#filterOperator").val();
         var isMerkeziFilter = $("#filterIsMerkezi").val();
@@ -223,11 +353,13 @@ $(document).ready(function() {
             var $row = $(this);
             var grupNo = $row.find("td:eq(1)").text().toLowerCase();
             var cariKod = $row.find("td:eq(2)").text().toLowerCase();
-            var parcaAdi = $row.find("td:eq(3)").text().toLowerCase();
+            var cariAdi = $row.find("td:eq(3)").text().toLowerCase();
+            var parcaAdi = $row.find("td:eq(4)").text().toLowerCase();
 
             var showRow =
                 grupNo.includes(grupNoFilter) &&
                 cariKod.includes(cariKodFilter) &&
+                cariAdi.includes(cariAdiFilter) &&
                 parcaAdi.includes(parcaAdiFilter);
 
             $row.toggle(showRow);
@@ -238,11 +370,13 @@ $(document).ready(function() {
             var $row = $(this);
             var grupNo = $row.find("td:eq(1)").text().toLowerCase();
             var cariKod = $row.find("td:eq(2)").text().toLowerCase();
-            var parcaAdi = $row.find("td:eq(3)").text().toLowerCase();
+            var cariAdi = $row.find("td:eq(3)").text().toLowerCase();
+            var parcaAdi = $row.find("td:eq(4)").text().toLowerCase();
 
             var showRow =
                 grupNo.includes(grupNoFilter) &&
                 cariKod.includes(cariKodFilter) &&
+                cariAdi.includes(cariAdiFilter) &&
                 parcaAdi.includes(parcaAdiFilter);
 
             $row.toggle(showRow);
@@ -250,11 +384,11 @@ $(document).ready(function() {
     }
 
     // Filtre olayları
-    $("#filterGrupNo, #filterCariKod, #filterParcaAdi").on("keyup", filterTable);
+    $("#filterGrupNo, #filterCariKod, #filterCariAdi, #filterParcaAdi").on("keyup", filterTable);
 
     // Filtreleri temizle
     $("#clearFiltersBtn").click(function() {
-        $("#filterGrupNo, #filterCariKod, #filterParcaAdi").val("");
+        $("#filterGrupNo, #filterCariKod, #filterCariAdi, #filterParcaAdi").val("");
         $("#filterOperator, #filterIsMerkezi").val("");
         filterTable();
     });
@@ -432,6 +566,20 @@ $(document).ready(function() {
                         right: 5mm;
                         height: 10mm; /* Logo boyutunu biraz küçülttüm */
                     }
+
+                    .sortable {
+                        cursor: pointer;
+                        user-select: none;
+                    }
+
+                    .sortable:hover {
+                        background-color: #f8f9fa;
+                    }
+
+                    .sortable i {
+                        margin-left: 5px;
+                        color: #6c757d;
+                    }
                 </style>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
                 <script>
@@ -462,7 +610,7 @@ $(document).ready(function() {
                     <div class="label-page">
                         <div class="logo-header">
                             <img src="/static/images/ydc.png" class="logo" alt="YDC Logo">
-                            <div class="cari-kod">CK ${item.cari_kod}</div>
+                            <div class="cari-kod">CK-${item.cari_adi_kisaltma || 'BIL'}-${item.cari_kod}</div>
                         </div>
 
                         <div class="details">
