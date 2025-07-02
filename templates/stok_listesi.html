@@ -271,6 +271,26 @@
         border-color: #0d6efd;
         background-color: #f0f8ff;
     }
+
+    /* Elimizdeki stokları göster butonu */
+    .btn-stock-available {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+
+    .btn-stock-available:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+        color: white;
+    }
+
+    .btn-stock-available.active {
+        background-color: #155724;
+        border-color: #155724;
+        color: white;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
+    }
 </style>
 {% endblock %}
 
@@ -453,6 +473,9 @@
                 <input type="text" id="filterStokAdi" class="form-control" placeholder="Stok adı ara...">
             </div>
             <div class="col-md-6 text-end align-self-end">
+                <button id="btnShowAvailableStock" class="btn btn-stock-available me-2">
+                    <i class="fas fa-boxes"></i> Elimizdeki Stokları Göster
+                </button>
                 <button id="btnResetFilters" class="btn btn-secondary">
                     <i class="fas fa-undo"></i> Tüm Filtreleri Sıfırla
                 </button>
@@ -549,6 +572,9 @@ $(document).ready(function() {
         stokAdi: ''
     };
 
+    // Variable to track if "available stock only" filter is active
+    let showAvailableStockOnly = false;
+
     // Debounce timer for text input
     let textFilterTimer = null;
 
@@ -584,6 +610,9 @@ $(document).ready(function() {
 
             // Setup real-time text filtering
             setupTextFiltering();
+
+            // Setup available stock filter
+            setupAvailableStockFilter();
         },
         error: function(xhr, status, error) {
             console.error("Error loading data:", error);
@@ -758,6 +787,23 @@ $(document).ready(function() {
                     alert("Veri yenilenirken bir hata oluştu: " + error);
                 }
             });
+        });
+    }
+
+    // Function to setup available stock filter
+    function setupAvailableStockFilter() {
+        $('#btnShowAvailableStock').on('click', function() {
+            showAvailableStockOnly = !showAvailableStockOnly;
+
+            // Update button appearance
+            if (showAvailableStockOnly) {
+                $(this).addClass('active').html('<i class="fas fa-boxes"></i> Elimizdeki Stoklar (Aktif)');
+            } else {
+                $(this).removeClass('active').html('<i class="fas fa-boxes"></i> Elimizdeki Stokları Göster');
+            }
+
+            // Apply filters with the new stock availability setting
+            applyFiltersRealTime('availableStock');
         });
     }
 
@@ -967,6 +1013,11 @@ $(document).ready(function() {
     function applyFilters() {
         // Filter the data
         filteredData = allData.filter(function(item) {
+            // Check available stock filter first (DEPO_ADET > 0)
+            if (showAvailableStockOnly && item.DEPO_ADET <= 0) {
+                return false;
+            }
+
             // Check each filter condition
             for (let field in fieldMappings) {
                 let dataField = fieldMappings[field];
@@ -1006,6 +1057,11 @@ $(document).ready(function() {
             // Calculate available values based on current filtered data
             // (excluding the current field's filter to show what's available)
             var availableData = allData.filter(function(item) {
+                // Check available stock filter
+                if (showAvailableStockOnly && item.DEPO_ADET <= 0) {
+                    return false;
+                }
+
                 for (let otherField in fieldMappings) {
                     if (otherField === field) continue; // Skip current field
 
@@ -1066,6 +1122,10 @@ $(document).ready(function() {
             kalite: [],
             stokAdi: ''
         };
+
+        // Reset available stock filter
+        showAvailableStockOnly = false;
+        $('#btnShowAvailableStock').removeClass('active').html('<i class="fas fa-boxes"></i> Elimizdeki Stokları Göster');
 
         // Clear stok adı input
         $('#filterStokAdi').val('').removeClass('filtered');
